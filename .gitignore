@@ -16,6 +16,7 @@ target/
 
 ### IntelliJ IDEA ###
 .idea/  # Ignora cualquier carpeta .idea en el proyecto
+backend/.idea/  # Asegura que también se ignore la carpeta .idea dentro de backend
 *.iws
 *.iml
 *.ipr
