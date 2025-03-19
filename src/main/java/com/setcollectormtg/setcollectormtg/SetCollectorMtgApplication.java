@@ -10,4 +10,6 @@ public class SetCollectorMtgApplication {
 		SpringApplication.run(SetCollectorMtgApplication.class, args);
 	}
 
+
+
 }
