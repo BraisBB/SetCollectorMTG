@@ -1,0 +1,40 @@
+/* Estilos para el header */
+.header {
+    background-color: #282c34;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos para el logo */
+.logo h1 {
+    color: #61dafb;
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+/* Estilos para la navegación */
+.navList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 1rem;
+}
+
+.navItem {
+    margin: 0;
+}
+
+.navLink {
+    color: white;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: color 0.3s ease;
+}
+
+.navLink:hover {
+    color: #61dafb;
+}

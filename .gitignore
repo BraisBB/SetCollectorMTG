@@ -1,6 +1,6 @@
 # --- BACKEND ---
 backend/HELP.md
-target/
+backend/target/
 !backend/.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
@@ -15,8 +15,7 @@ target/
 .sts4-cache
 
 ### IntelliJ IDEA ###
-.idea/  # Ignora cualquier carpeta .idea en el proyecto
-backend/.idea/  # Asegura que también se ignore la carpeta .idea dentro de backend
+.idea/  
 *.iws
 *.iml
 *.ipr
@@ -46,9 +45,9 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # Node.js dependencies & builds
-node_modules/
-dist/
-dist-ssr/
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
 *.local
 
 # Editor directories and files (general)
