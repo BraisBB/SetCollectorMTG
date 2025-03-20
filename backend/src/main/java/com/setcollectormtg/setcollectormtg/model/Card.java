@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -40,4 +42,7 @@ public class Card {
     @ManyToOne
     @JoinColumn(name = "set_id", nullable = false)
     private Set set;
+
+    @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<UserCollectionCard> userCollectionCards;
 }

@@ -24,4 +24,8 @@ public class Deck {
 
     @Column(name = "deck_color", nullable = false)
     private String deckColor;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 }
