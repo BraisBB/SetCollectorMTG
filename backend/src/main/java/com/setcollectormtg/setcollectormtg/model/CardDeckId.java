@@ -1,7 +1,6 @@
 package com.setcollectormtg.setcollectormtg.model;
 
 import jakarta.persistence.Embeddable;
-import jakarta.persistence.Entity;
 import lombok.Data;
 
 import java.io.Serializable;
