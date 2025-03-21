@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getHello } from './services/api';
-import Header from "./components/header";
+import Header from "./components/Header";
 import Footer from "./components/Footer";
 
 const App: React.FC = () => {

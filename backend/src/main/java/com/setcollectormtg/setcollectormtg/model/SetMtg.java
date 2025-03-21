@@ -1,6 +1,15 @@
 package com.setcollectormtg.setcollectormtg.model;
 
-import jakarta.persistence.*;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,8 +21,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "set")
-public class Set {
+@Table(name = "set_mtg")
+public class SetMtg {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "set_id")
@@ -28,6 +37,6 @@ public class Set {
     @Column(name = "release_date", nullable = false)
     private LocalDate releaseDate;
 
-    @OneToMany(mappedBy = "set", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "setMtg", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Card> cards;
 }
