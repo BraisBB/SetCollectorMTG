@@ -31,6 +31,9 @@ public class SetMtg {
     @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false)
+    private String setCode;
+
     @Column(name = "total_cards", nullable = false)
     private Integer totalCards;
 

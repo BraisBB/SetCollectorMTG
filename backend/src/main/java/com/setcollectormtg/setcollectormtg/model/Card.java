@@ -51,7 +51,7 @@ public class Card {
     private String imageUrl;
 
     @ManyToOne
-    @JoinColumn(name = "set_id", nullable = false)
+    @JoinColumn(name = "set_id", nullable = true)
     private SetMtg setMtg;
 
     @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
