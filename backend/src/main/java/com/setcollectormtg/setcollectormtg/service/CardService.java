@@ -1,12 +1,13 @@
 package com.setcollectormtg.setcollectormtg.service;
 
-import com.setcollectormtg.setcollectormtg.model.Card;
+import com.setcollectormtg.setcollectormtg.dto.CardCreateDto;
+import com.setcollectormtg.setcollectormtg.dto.CardDto;
 import java.util.List;
 
 public interface CardService {
-    List<Card> getAllCards();
-    Card getCardById(Long id);
-    Card saveCard(Card card);
-    Card updateCard(Long id, Card card);
+    List<CardDto> getAllCards();
+    CardDto getCardById(Long id);
+    CardDto createCard(CardCreateDto cardCreateDto);
+    CardDto updateCard(Long id, CardDto cardDto);
     void deleteCard(Long id);
 }

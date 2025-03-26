@@ -1,6 +1,7 @@
 package com.setcollectormtg.setcollectormtg.model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -55,5 +56,6 @@ public class Card {
     private SetMtg setMtg;
 
     @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<UserCollectionCard> userCollectionCards;
 }
