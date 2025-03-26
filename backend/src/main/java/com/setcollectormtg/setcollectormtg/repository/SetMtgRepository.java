@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface SetMtgRepository extends JpaRepository<SetMtg, Long> {
     Optional<SetMtg> findBySetCode(String setCode);
+    boolean existsBySetCode(String setCode);
 }
