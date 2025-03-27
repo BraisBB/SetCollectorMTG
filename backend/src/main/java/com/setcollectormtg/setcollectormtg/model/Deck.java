@@ -33,6 +33,9 @@ public class Deck {
     @Column(name = "deck_color", nullable = false)
     private String deckColor;
 
+    @Column(name = "total_cards")
+    private Integer totalCards;
+
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

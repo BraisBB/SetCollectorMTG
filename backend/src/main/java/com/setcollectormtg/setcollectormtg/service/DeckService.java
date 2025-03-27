@@ -1,13 +1,14 @@
 package com.setcollectormtg.setcollectormtg.service;
 
-import com.setcollectormtg.setcollectormtg.model.Deck;
+import com.setcollectormtg.setcollectormtg.dto.DeckCreateDto;
+import com.setcollectormtg.setcollectormtg.dto.DeckDto;
 import java.util.List;
 
 public interface DeckService {
-    List<Deck> getAllDecks();
-    Deck getDeckById(Long id);
-    Deck createDeck(Deck deck);
-    Deck updateDeck(Long id, Deck deck);
+    List<DeckDto> getAllDecks();
+    DeckDto getDeckById(Long id);
+    DeckDto createDeck(DeckCreateDto deckCreateDto);
+    DeckDto updateDeck(Long id, DeckDto deckDto);
     void deleteDeck(Long id);
-    List<Deck> getDecksByUser(Long userId); // Metodo adicional
+    List<DeckDto> getDecksByUser(Long userId);
 }

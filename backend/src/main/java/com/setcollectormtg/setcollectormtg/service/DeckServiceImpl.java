@@ -1,69 +1,90 @@
 package com.setcollectormtg.setcollectormtg.service;
 
+import com.setcollectormtg.setcollectormtg.dto.DeckCreateDto;
+import com.setcollectormtg.setcollectormtg.dto.DeckDto;
+import com.setcollectormtg.setcollectormtg.exception.ResourceNotFoundException;
+import com.setcollectormtg.setcollectormtg.mapper.DeckMapper;
 import com.setcollectormtg.setcollectormtg.model.Deck;
 import com.setcollectormtg.setcollectormtg.model.User;
 import com.setcollectormtg.setcollectormtg.repository.DeckRepository;
 import com.setcollectormtg.setcollectormtg.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class DeckServiceImpl implements DeckService {
 
     private final DeckRepository deckRepository;
-    private final UserRepository userRepository; // Necesario para relaciones
+    private final UserRepository userRepository;
+    private final DeckMapper deckMapper;
 
     @Override
-    public List<Deck> getAllDecks() {
-        return deckRepository.findAll();
+    @Transactional(readOnly = true)
+    public List<DeckDto> getAllDecks() {
+        return deckRepository.findAll().stream()
+                .map(deckMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public Deck getDeckById(Long id) {
+    @Transactional(readOnly = true)
+    public DeckDto getDeckById(Long id) {
         return deckRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Deck not found with id: " + id));
+                .map(deckMapper::toDto)
+                .orElseThrow(() -> new ResourceNotFoundException("Deck not found with id: " + id));
     }
 
     @Override
-    public Deck createDeck(Deck deck) {
-        // Verificar que el usuario existe
-        User user = userRepository.findById(deck.getUser().getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    @Transactional
+    public DeckDto createDeck(DeckCreateDto deckCreateDto) {
+        User user = userRepository.findById(deckCreateDto.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + deckCreateDto.getUserId()));
 
-        deck.setUser(user);
-        return deckRepository.save(deck);
+        Deck deck = deckMapper.toEntity(deckCreateDto, user);
+        Deck savedDeck = deckRepository.save(deck);
+        return deckMapper.toDto(savedDeck);
     }
 
     @Override
-    public Deck updateDeck(Long id, Deck deckDetails) {
-        Deck deck = getDeckById(id);
+    @Transactional
+    public DeckDto updateDeck(Long id, DeckDto deckDto) {
+        Deck existingDeck = deckRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Deck not found with id: " + id));
 
-        deck.setDeckName(deckDetails.getDeckName());
-        deck.setGameType(deckDetails.getGameType());
-        deck.setDeckColor(deckDetails.getDeckColor());
+        existingDeck.setDeckName(deckDto.getDeckName());
+        existingDeck.setGameType(deckDto.getGameType());
+        existingDeck.setDeckColor(deckDto.getDeckColor());
+        existingDeck.setTotalCards(deckDto.getTotalCards());
 
-        // Actualizar usuario si es necesario
-        if (deckDetails.getUser() != null &&
-                !deck.getUser().getUserId().equals(deckDetails.getUser().getUserId())) {
-            User user = userRepository.findById(deckDetails.getUser().getUserId())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-            deck.setUser(user);
+        // Actualizar usuario solo si es diferente
+        if (!existingDeck.getUser().getUserId().equals(deckDto.getUserId())) {
+            User user = userRepository.findById(deckDto.getUserId())
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + deckDto.getUserId()));
+            existingDeck.setUser(user);
         }
 
-        return deckRepository.save(deck);
+        Deck updatedDeck = deckRepository.save(existingDeck);
+        return deckMapper.toDto(updatedDeck);
     }
 
     @Override
+    @Transactional
     public void deleteDeck(Long id) {
-        Deck deck = getDeckById(id);
+        Deck deck = deckRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Deck not found with id: " + id));
         deckRepository.delete(deck);
     }
 
     @Override
-    public List<Deck> getDecksByUser(Long id) {
-        return deckRepository.findByUserId(id);
+    @Transactional(readOnly = true)
+    public List<DeckDto> getDecksByUser(Long userId) {
+        return deckRepository.findByUserId(userId).stream()
+                .map(deckMapper::toDto)
+                .collect(Collectors.toList());
     }
 }

@@ -1,8 +1,11 @@
 package com.setcollectormtg.setcollectormtg.controller;
 
-import com.setcollectormtg.setcollectormtg.model.Deck;
+import com.setcollectormtg.setcollectormtg.dto.DeckCreateDto;
+import com.setcollectormtg.setcollectormtg.dto.DeckDto;
 import com.setcollectormtg.setcollectormtg.service.DeckService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,28 +19,31 @@ public class DeckController {
     private final DeckService deckService;
 
     @GetMapping
-    public ResponseEntity<List<Deck>> getAllDecks() {
+    public ResponseEntity<List<DeckDto>> getAllDecks() {
         return ResponseEntity.ok(deckService.getAllDecks());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Deck> getDeckById(@PathVariable Long id) {
+    public ResponseEntity<DeckDto> getDeckById(@PathVariable Long id) {
         return ResponseEntity.ok(deckService.getDeckById(id));
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Deck>> getDecksByUser(@PathVariable Long userId) {
+    public ResponseEntity<List<DeckDto>> getDecksByUser(@PathVariable Long userId) {
         return ResponseEntity.ok(deckService.getDecksByUser(userId));
     }
 
     @PostMapping
-    public ResponseEntity<Deck> createDeck(@RequestBody Deck deck) {
-        return ResponseEntity.ok(deckService.createDeck(deck));
+    public ResponseEntity<DeckDto> createDeck(@Valid @RequestBody DeckCreateDto deckCreateDto) {
+        DeckDto createdDeck = deckService.createDeck(deckCreateDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdDeck);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Deck> updateDeck(@PathVariable Long id, @RequestBody Deck deck) {
-        return ResponseEntity.ok(deckService.updateDeck(id, deck));
+    public ResponseEntity<DeckDto> updateDeck(
+            @PathVariable Long id,
+            @Valid @RequestBody DeckDto deckDto) {
+        return ResponseEntity.ok(deckService.updateDeck(id, deckDto));
     }
 
     @DeleteMapping("/{id}")
