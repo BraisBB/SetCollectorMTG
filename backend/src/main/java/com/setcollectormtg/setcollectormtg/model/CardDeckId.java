@@ -1,12 +1,16 @@
 package com.setcollectormtg.setcollectormtg.model;
 
 import jakarta.persistence.Embeddable;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.Objects;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Embeddable
 public class CardDeckId implements Serializable {
 
