@@ -1,72 +1,75 @@
 package com.setcollectormtg.setcollectormtg.service;
 
+import com.setcollectormtg.setcollectormtg.dto.UserCollectionDto;
+import com.setcollectormtg.setcollectormtg.exception.ResourceNotFoundException;
+import com.setcollectormtg.setcollectormtg.mapper.UserCollectionMapper;
 import com.setcollectormtg.setcollectormtg.model.User;
 import com.setcollectormtg.setcollectormtg.model.UserCollection;
-import com.setcollectormtg.setcollectormtg.model.UserCollectionCard;
 import com.setcollectormtg.setcollectormtg.repository.UserCollectionRepository;
 import com.setcollectormtg.setcollectormtg.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class UserCollectionServiceImpl implements UserCollectionService {
 
-    private final UserCollectionRepository collectionRepository;
+    private final UserCollectionRepository userCollectionRepository;
     private final UserRepository userRepository;
+    private final UserCollectionMapper userCollectionMapper;
 
     @Override
+    @Transactional
     public UserCollection createCollection(UserCollection collection) {
-        // Verificar que el usuario existe
-        User user = userRepository.findById(collection.getUser().getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        // Verificar que el usuario no tenga ya una colección
-        if (collectionRepository.existsByUser_UserId(user.getUserId())) {
-            throw new RuntimeException("User already has a collection");
+        if (userCollectionRepository.existsByUser_UserId(collection.getUser().getUserId())) {
+            throw new IllegalStateException("User already has a collection");
         }
-
-        collection.setUser(user);
-        collection.setNCopies(0); // Inicializar con 0 cartas
-        return collectionRepository.save(collection);
+        return userCollectionRepository.save(collection);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserCollection getCollectionById(Long id) {
-        return collectionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Collection not found"));
+        return userCollectionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Collection not found with id: " + id));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserCollection getCollectionByUserId(Long userId) {
-        return collectionRepository.findByUser_UserId(userId)
-                .orElseThrow(() -> new RuntimeException("Collection not found for user"));
+        return userCollectionRepository.findByUser_UserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Collection not found for user id: " + userId));
     }
 
     @Override
-    public UserCollection updateCollection(Long id, UserCollection collectionDetails) {
-        UserCollection collection = getCollectionById(id);
+    @Transactional
+    public UserCollection updateCollection(Long id, UserCollection collection) {
+        UserCollection existingCollection = getCollectionById(id);
 
-        // Actualizar el número de cartas si se proporciona
-        if (collectionDetails.getNCopies() != null) {
-            collection.setNCopies(collectionDetails.getNCopies());
-        }
+        // Actualizar solo campos permitidos
+        existingCollection.setNCopies(collection.getNCopies());
 
-        // No permitir cambiar el usuario asociado
-        return collectionRepository.save(collection);
+        return userCollectionRepository.save(existingCollection);
     }
 
     @Override
+    @Transactional
     public void deleteCollection(Long id) {
         UserCollection collection = getCollectionById(id);
-        collectionRepository.delete(collection);
+
+        // Verificar si hay cartas en la colección antes de borrar
+        if (!collection.getUserCollectionCards().isEmpty()) {
+            throw new IllegalStateException("Cannot delete collection with id " + id +
+                    " because it contains cards. Remove cards first.");
+        }
+
+        userCollectionRepository.delete(collection);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Integer getTotalCardsInCollection(Long collectionId) {
-        UserCollection collection = getCollectionById(collectionId);
-        return collection.getUserCollectionCards().stream()
-                .mapToInt(UserCollectionCard::getNCopies)
-                .sum();
+        return getCollectionById(collectionId).getNCopies();
     }
 }
