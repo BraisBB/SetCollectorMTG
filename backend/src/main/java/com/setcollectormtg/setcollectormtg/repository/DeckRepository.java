@@ -10,6 +10,6 @@ import java.util.List;
 
 @Repository
 public interface DeckRepository extends JpaRepository<Deck, Long> {
-    @Query("SELECT d FROM Deck d WHERE d.user.userId = :userId")
-    List<Deck> findByUserId(@Param("userId") Long userId);
+    boolean existsByDeckNameAndUser_UserId(String deckName, Long userId);
+    List<Deck> findByUser_UserId(Long userId);
 }

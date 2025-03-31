@@ -11,4 +11,5 @@ public interface DeckService {
     DeckDto updateDeck(Long id, DeckDto deckDto);
     void deleteDeck(Long id);
     List<DeckDto> getDecksByUser(Long userId);
+    int getCardCountInDeck(Long deckId);
 }
