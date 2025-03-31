@@ -1,5 +1,6 @@
 package com.setcollectormtg.setcollectormtg.controller;
 
+import com.setcollectormtg.setcollectormtg.dto.SetMtgCreateDto;
 import com.setcollectormtg.setcollectormtg.dto.SetMtgDto;
 import com.setcollectormtg.setcollectormtg.service.SetMtgService;
 import lombok.RequiredArgsConstructor;
@@ -32,13 +33,13 @@ public class SetMtgController {
     }
 
     @PostMapping
-    public ResponseEntity<SetMtgDto> createSet(@RequestBody SetMtgDto setMtgDto) {
-        return new ResponseEntity<>(setMtgService.createSet(setMtgDto), HttpStatus.CREATED);
+    public ResponseEntity<SetMtgDto> createSet(@RequestBody SetMtgCreateDto setMtgCreateDto) {
+        return new ResponseEntity<>(setMtgService.createSet(setMtgCreateDto), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<SetMtgDto> updateSet(@PathVariable Long id, @RequestBody SetMtgDto setMtgDto) {
-        return ResponseEntity.ok(setMtgService.updateSet(id, setMtgDto));
+    public ResponseEntity<SetMtgDto> updateSet(@PathVariable Long id, @RequestBody SetMtgCreateDto setMtgCreateDto) {
+        return ResponseEntity.ok(setMtgService.updateSet(id, setMtgCreateDto));
     }
 
     @DeleteMapping("/{id}")

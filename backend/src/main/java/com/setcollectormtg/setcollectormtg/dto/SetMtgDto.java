@@ -19,20 +19,5 @@ public class SetMtgDto {
     private LocalDate releaseDate;
     private List<CardDto> cards;
 
-    public static SetMtgDto fromEntity(SetMtg set) {
-        SetMtgDto dto = new SetMtgDto();
-        dto.setSetId(set.getSetId());
-        dto.setName(set.getName());
-        dto.setSetCode(set.getSetCode());
-        dto.setTotalCards(set.getTotalCards());
-        dto.setReleaseDate(set.getReleaseDate());
 
-        if(set.getCards() != null) {
-            dto.setCards(set.getCards().stream()
-                    .map(CardDto::fromEntity)
-                    .collect(Collectors.toList()));
-        }
-
-        return dto;
-    }
 }
