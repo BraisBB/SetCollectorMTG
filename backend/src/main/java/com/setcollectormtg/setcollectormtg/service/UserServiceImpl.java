@@ -88,7 +88,7 @@ public class UserServiceImpl implements UserService {
     private void createDefaultCollectionForUser(User user) {
         UserCollection defaultCollection = new UserCollection();
         defaultCollection.setUser(user);
-        defaultCollection.setNCopies(0); // Inicialmente vacía
+        defaultCollection.setTotalCards(0); // Inicialmente vacía
 
         userCollectionService.createCollection(defaultCollection);
     }

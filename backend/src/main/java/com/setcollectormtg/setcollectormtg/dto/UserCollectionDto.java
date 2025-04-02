@@ -6,5 +6,5 @@ import lombok.Data;
 public class UserCollectionDto {
     private Long collectionId;
     private Long userId;
-    private Integer nCopies;
+    private Integer totalCards;
 }

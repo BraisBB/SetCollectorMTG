@@ -29,8 +29,8 @@ public class UserCollection {
     @Column(name = "collection_id")
     private Long collectionId;
 
-    @Column(name = "n_cards", nullable = false)
-    private Integer nCopies;
+    @Column(name = "total_cards", nullable = false)
+    private Integer totalCards;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)

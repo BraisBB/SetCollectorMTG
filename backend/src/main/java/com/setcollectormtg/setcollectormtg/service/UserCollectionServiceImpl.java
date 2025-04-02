@@ -28,8 +28,8 @@ public class UserCollectionServiceImpl implements UserCollectionService {
         }
 
         // Configuración básica de la colección
-        if (collection.getNCopies() == null) {
-            collection.setNCopies(0);
+        if (collection.getTotalCards() == null) {
+            collection.setTotalCards(0);
         }
 
         return userCollectionRepository.save(collection);
@@ -55,7 +55,7 @@ public class UserCollectionServiceImpl implements UserCollectionService {
         UserCollection existingCollection = getCollectionById(id);
 
         // Actualizar solo campos permitidos
-        existingCollection.setNCopies(collection.getNCopies());
+        existingCollection.setTotalCards(collection.getTotalCards());
 
         return userCollectionRepository.save(existingCollection);
     }
@@ -77,6 +77,6 @@ public class UserCollectionServiceImpl implements UserCollectionService {
     @Override
     @Transactional(readOnly = true)
     public Integer getTotalCardsInCollection(Long collectionId) {
-        return getCollectionById(collectionId).getNCopies();
+        return getCollectionById(collectionId).getTotalCards();
     }
 }

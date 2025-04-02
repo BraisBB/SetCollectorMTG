@@ -90,7 +90,7 @@ public class UserCollectionCardServiceImpl implements UserCollectionCardService 
     }
 
     private void updateCollectionTotalCards(UserCollection collection, int quantityDifference) {
-        collection.setNCopies(collection.getNCopies() + quantityDifference);
+        collection.setTotalCards(collection.getTotalCards() + quantityDifference);
         userCollectionRepository.save(collection);
     }
 }
