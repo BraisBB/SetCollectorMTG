@@ -32,7 +32,7 @@ public class UserCollection {
     @Column(name = "n_cards", nullable = false)
     private Integer nCopies;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 

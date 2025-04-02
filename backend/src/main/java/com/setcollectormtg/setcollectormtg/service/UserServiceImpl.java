@@ -5,7 +5,9 @@ import com.setcollectormtg.setcollectormtg.dto.UserDto;
 import com.setcollectormtg.setcollectormtg.exception.ResourceNotFoundException;
 import com.setcollectormtg.setcollectormtg.mapper.UserMapper;
 import com.setcollectormtg.setcollectormtg.model.User;
+import com.setcollectormtg.setcollectormtg.model.UserCollection;
 import com.setcollectormtg.setcollectormtg.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,8 +20,10 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final  UserCollectionServiceImpl userCollectionService;
 
     @Override
+    @Transactional
     public UserDto createUser(UserCreateDto userCreateDto) {
         if (userRepository.existsByUsername(userCreateDto.getUsername())) {
             throw new RuntimeException("Username already exists");
@@ -29,11 +33,17 @@ public class UserServiceImpl implements UserService {
         }
 
         User user = userMapper.toEntity(userCreateDto);
-        // Guardamos la contraseña en texto plano (solo para pruebas)
-        user.setPassword(userCreateDto.getPassword());
+        user.setPassword(userCreateDto.getPassword()); // En producción usa BCrypt
 
-        return userMapper.toDto(userRepository.save(user));
+        // Guardamos el usuario primero
+        User savedUser = userRepository.save(user);
+
+        // Creamos y asignamos automáticamente la colección
+        createDefaultCollectionForUser(savedUser);
+
+        return userMapper.toDto(savedUser);
     }
+
 
     @Override
     public List<UserDto> getAllUsers() {
@@ -74,5 +84,12 @@ public class UserServiceImpl implements UserService {
             throw new ResourceNotFoundException("User not found");
         }
         userRepository.deleteById(id);
+    }
+    private void createDefaultCollectionForUser(User user) {
+        UserCollection defaultCollection = new UserCollection();
+        defaultCollection.setUser(user);
+        defaultCollection.setNCopies(0); // Inicialmente vacía
+
+        userCollectionService.createCollection(defaultCollection);
     }
 }

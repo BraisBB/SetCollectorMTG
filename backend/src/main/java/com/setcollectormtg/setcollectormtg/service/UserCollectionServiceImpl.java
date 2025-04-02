@@ -22,9 +22,16 @@ public class UserCollectionServiceImpl implements UserCollectionService {
     @Override
     @Transactional
     public UserCollection createCollection(UserCollection collection) {
+        // Verificamos si ya existe una colección para este usuario
         if (userCollectionRepository.existsByUser_UserId(collection.getUser().getUserId())) {
             throw new IllegalStateException("User already has a collection");
         }
+
+        // Configuración básica de la colección
+        if (collection.getNCopies() == null) {
+            collection.setNCopies(0);
+        }
+
         return userCollectionRepository.save(collection);
     }
 
