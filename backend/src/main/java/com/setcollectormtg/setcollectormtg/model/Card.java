@@ -1,22 +1,11 @@
 package com.setcollectormtg.setcollectormtg.model;
 
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.*;
+import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -39,10 +28,10 @@ public class Card {
     @Column(name = "oracle_text", columnDefinition = "TEXT")
     private String oracleText;
 
-    @Column(name = "mana_value", nullable = false)
-    private Integer manaValue;
+    @Column(name = "mana_value")
+    private Double manaValue; // Cambiado a Double para manejar costes como {X}
 
-    @Column(name = "mana_cost", nullable = false)
+    @Column(name = "mana_cost")
     private String manaCost;
 
     @Column(name = "card_type", nullable = false)
@@ -51,11 +40,21 @@ public class Card {
     @Column(name = "image_url")
     private String imageUrl;
 
-    @ManyToOne
-    @JoinColumn(name = "set_id", nullable = true)//cambiar a false
+    @Column(name = "scryfall_id")
+    private String scryfallId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "set_id", nullable = false)
     private SetMtg setMtg;
 
-    @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
-    private List<UserCollectionCard> userCollectionCards;
+    private List<UserCollectionCard> userCollectionCards = new ArrayList<>();
+
+    // Método helper para convertir tipos
+    public void setManaValueFromNode(JsonNode node) {
+        if (node != null && !node.isNull()) {
+            this.manaValue = node.asDouble();
+        }
+    }
 }

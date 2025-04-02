@@ -1,20 +1,10 @@
 package com.setcollectormtg.setcollectormtg.model;
 
-
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -28,18 +18,27 @@ public class SetMtg {
     @Column(name = "set_id")
     private Long setId;
 
+    @Column(nullable = false, unique = true)
+    private String setCode;
+
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
-    private String setCode;
-
-    @Column(name = "total_cards", nullable = false)
+    @Column(name = "total_cards")
     private Integer totalCards;
 
-    @Column(name = "release_date", nullable = false)
+    @Column(name = "release_date")
     private LocalDate releaseDate;
 
-    @OneToMany(mappedBy = "setMtg", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Card> cards;
+    @Column(name = "icon_svg_uri")
+    private String iconSvgUri;
+
+    @OneToMany(mappedBy = "setMtg", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Card> cards = new ArrayList<>();
+
+    // Método helper para la relación bidireccional
+    public void addCard(Card card) {
+        cards.add(card);
+        card.setSetMtg(this);
+    }
 }
