@@ -14,10 +14,20 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/api/**")
-                        .allowedOrigins("http://localhost:5173") // URL del frontend
-                        .allowedMethods("GET", "POST", "PUT", "DELETE")
+                        .allowedOrigins(
+                                "http://localhost:5173",  // Frontend principal
+                                "http://localhost:3000",   // Alternativa React
+                                "http://127.0.0.1:5173"    // Para evitar problemas de localhost
+                        )
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                         .allowedHeaders("*")
-                        .allowCredentials(true);
+                        .exposedHeaders(
+                                "Authorization",
+                                "Content-Type",
+                                "Content-Disposition"
+                        )
+                        .allowCredentials(true)
+                        .maxAge(3600);
             }
         };
     }
