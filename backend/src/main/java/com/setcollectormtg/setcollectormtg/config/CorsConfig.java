@@ -12,8 +12,9 @@ public class CorsConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
+                // "/**" ya cubre todas las rutas desde la raíz, perfecto.
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:5173", "http://localhost:3000")
+                        .allowedOrigins("http://localhost:5173", "http://localhost:3000") // Tus orígenes de frontend
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);

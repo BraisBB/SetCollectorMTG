@@ -1,5 +1,7 @@
 package com.setcollectormtg.setcollectormtg.config;
 
+// Asegúrate de tener las importaciones necesarias
+// import org.springframework.beans.factory.annotation.Value; // Ya no es necesaria
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -10,41 +12,47 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
-import static org.springframework.security.config.Customizer.withDefaults;
-
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+    // Ya no necesitamos inyectar contextPath
+    // @Value("${server.servlet.context-path:/}")
+    // private String contextPath;
+
+    private final KeycloakRoleConverter keycloakRoleConverter;
+
+    public SecurityConfig(KeycloakRoleConverter keycloakRoleConverter) {
+        this.keycloakRoleConverter = keycloakRoleConverter;
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        // Las rutas ahora son relativas a la raíz "/"
+
         http
-                // Configuración CORS
-                .cors(withDefaults())
-
-                // Deshabilitar CSRF
+                // CORS manejado globalmente en CorsConfig
                 .csrf(AbstractHttpConfigurer::disable)
-
-                // Configuración de sesión
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                // Configuración de autorización
+                // Configuración de autorización - ¡RUTAS ACTUALIZADAS SIN /api!
                 .authorizeHttpRequests(auth -> auth
+                        // Permite Swagger y OpenAPI directamente en la raíz
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/api/public/**").permitAll()
-                        .requestMatchers("/api/users/**").hasRole("USER")
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
+                        // Permite H2 Console directamente en la raíz
+                        .requestMatchers("/h2-console/**").permitAll() // ¡SOLO DESARROLLO!
+                        // Permite rutas públicas directamente en /public/**
+                        .requestMatchers("/public/**").permitAll()
+                        // Requiere rol USER para /users/**
+                        .requestMatchers("/users/**").hasRole("USER")
+                        // Requiere rol ADMIN para /admin/**
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        // Cualquier otra petición ("/**") debe estar autenticada
+                        .anyRequest().authenticated() // Se aplica a todo lo demás
                 )
-
-                // Configuración de headers para H2 Console
                 .headers(headers -> headers
-                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
+                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin) // Para H2 Console
                 )
-
-                // Configuración OAuth2 Resource Server con JWT
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter())
@@ -53,10 +61,11 @@ public class SecurityConfig {
 
         return http.build();
     }
+
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(new KeycloakRoleConverter());
+        converter.setJwtGrantedAuthoritiesConverter(keycloakRoleConverter);
         return converter;
     }
 }
