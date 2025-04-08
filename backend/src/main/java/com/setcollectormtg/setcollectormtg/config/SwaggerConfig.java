@@ -8,15 +8,25 @@ import io.swagger.v3.oas.models.security.OAuthFlows;
 import io.swagger.v3.oas.models.security.Scopes;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class SwaggerConfig {
 
+    @Value("${keycloak.auth-server-url}")
+    private String authServerUrl;
+
+    @Value("${keycloak.realm}")
+    private String realm;
+
     @Bean
     public OpenAPI customOpenAPI() {
         final String securitySchemeName = "keycloak";
+        String authUrl = authServerUrl + "/realms/" + realm + "/protocol/openid-connect/auth";
+        String tokenUrl = authServerUrl + "/realms/" + realm + "/protocol/openid-connect/token";
+
         return new OpenAPI()
                 .info(new Info()
                         .title("SetCollectorMTG API")
@@ -30,10 +40,11 @@ public class SwaggerConfig {
                                         .type(SecurityScheme.Type.OAUTH2)
                                         .flows(new OAuthFlows()
                                                 .authorizationCode(new OAuthFlow()
-                                                        .authorizationUrl("${keycloak.auth-server-url}/realms/${keycloak.realm}/protocol/openid-connect/auth")
-                                                        .tokenUrl("${keycloak.auth-server-url}/realms/${keycloak.realm}/protocol/openid-connect/tokens")
+                                                        .authorizationUrl(authUrl)
+                                                        .tokenUrl(tokenUrl)
                                                         .scopes(new Scopes()
-                                                                .addString("openid", "OpenID Connect")
-                                                                .addString("profile", "User profile"))))));
+                                                                .addString("openid", "OpenID scope")
+                                                                .addString("profile", "Profile scope")
+                                                                .addString("email", "Email scope"))))));
     }
 }

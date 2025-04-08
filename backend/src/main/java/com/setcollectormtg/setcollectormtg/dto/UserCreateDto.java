@@ -15,13 +15,18 @@ public class UserCreateDto {
     @Email(message = "Email should be valid")
     private String email;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must be at least 6 characters")
-    private String password;
+    // --- CONTRASEÑA ELIMINADA ---
+    // @NotBlank(message = "Password is required")
+    // @Size(min = 6, message = "Password must be at least 6 characters")
+    // private String password;
 
     @NotBlank(message = "First name is required")
     private String firstName;
 
     @NotBlank(message = "Last name is required")
     private String lastName;
+
+    // --- KEYCLOAK ID AÑADIDO (si mantienes createUser) ---
+    @NotBlank(message = "Keycloak ID is required for manual creation")
+    private String keycloakId; // Necesario ya que es not-null/unique en la entidad User
 }

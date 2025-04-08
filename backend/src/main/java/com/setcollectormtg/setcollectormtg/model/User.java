@@ -36,8 +36,9 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
-    private String password;
+    @Column(nullable = false, unique = true)
+    private String keycloakId;  // External ID from Keycloak
+
     @Column(name = "first_name", nullable = false)
     private String firstName;
 
@@ -55,3 +56,4 @@ public class User {
     private UserCollection userCollection;
 
 }
+
