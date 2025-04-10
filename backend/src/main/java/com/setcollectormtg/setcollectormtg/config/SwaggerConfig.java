@@ -1,5 +1,6 @@
 package com.setcollectormtg.setcollectormtg.config;
 
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -21,30 +22,33 @@ public class SwaggerConfig {
     @Value("${keycloak.realm}")
     private String realm;
 
+    @Value("${keycloak.resource}")
+    private String clientId;
+
     @Bean
     public OpenAPI customOpenAPI() {
-        final String securitySchemeName = "keycloak";
-        String authUrl = authServerUrl + "/realms/" + realm + "/protocol/openid-connect/auth";
-        String tokenUrl = authServerUrl + "/realms/" + realm + "/protocol/openid-connect/token";
-
         return new OpenAPI()
                 .info(new Info()
-                        .title("SetCollectorMTG API")
+                        .title("API de Set Collector MTG")
                         .version("1.0")
-                        .description("API para gestión de colecciones de cartas Magic: The Gathering"))
-                .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
+                        .description("API para gestionar colecciones de cartas Magic: The Gathering"))
+                .addSecurityItem(new SecurityRequirement().addList("keycloak_oauth"))
                 .components(new Components()
-                        .addSecuritySchemes(securitySchemeName,
+                        .addSecuritySchemes("keycloak_oauth",
                                 new SecurityScheme()
-                                        .name(securitySchemeName)
                                         .type(SecurityScheme.Type.OAUTH2)
                                         .flows(new OAuthFlows()
+                                                .password(new OAuthFlow()
+                                                        .tokenUrl(authServerUrl + "/realms/" + realm + "/protocol/openid-connect/token")
+                                                        .refreshUrl(authServerUrl + "/realms/" + realm + "/protocol/openid-connect/token")
+                                                        .scopes(new Scopes()))
+                                                .clientCredentials(new OAuthFlow()
+                                                        .tokenUrl(authServerUrl + "/realms/" + realm + "/protocol/openid-connect/token")
+                                                        .scopes(new Scopes()))
                                                 .authorizationCode(new OAuthFlow()
-                                                        .authorizationUrl(authUrl)
-                                                        .tokenUrl(tokenUrl)
-                                                        .scopes(new Scopes()
-                                                                .addString("openid", "OpenID scope")
-                                                                .addString("profile", "Profile scope")
-                                                                .addString("email", "Email scope"))))));
+                                                        .authorizationUrl(authServerUrl + "/realms/" + realm + "/protocol/openid-connect/auth")
+                                                        .tokenUrl(authServerUrl + "/realms/" + realm + "/protocol/openid-connect/token")
+                                                        .refreshUrl(authServerUrl + "/realms/" + realm + "/protocol/openid-connect/token")
+                                                        .scopes(new Scopes())))));
     }
 }

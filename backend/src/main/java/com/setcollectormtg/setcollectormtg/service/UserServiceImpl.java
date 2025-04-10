@@ -14,6 +14,7 @@ import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
+import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional; // Muy importante
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -43,16 +45,12 @@ public class UserServiceImpl implements UserService {
         this.keycloakAdmin = keycloakAdmin;
         this.realm = realm;
     }
-
     @Override
-    @Transactional // Aunque Keycloak no es transaccional con JPA, ayuda si hay lógica local adicional
+    @Transactional
     public UserDto createUser(UserCreateDto userCreateDto) {
         log.info("API request to create user: {}", userCreateDto.getUsername());
 
-        // --- VALIDACIONES LOCALES (Opcional, Keycloak también valida) ---
-        // Estas validaciones ahora podrían ser problemáticas si permites que Keycloak sea la fuente de verdad
-        // Quizás quieras quitarlas o ajustar la lógica si Keycloak debe permitir duplicados que tu BD no.
-        // Por ahora, las mantenemos como ejemplo.
+        // --- VALIDACIONES LOCALES ---
         if (userRepository.existsByUsername(userCreateDto.getUsername())) {
             log.warn("Username {} already exists locally.", userCreateDto.getUsername());
             throw new RuntimeException("Username already exists");
@@ -68,13 +66,13 @@ public class UserServiceImpl implements UserService {
         keycloakUser.setEmail(userCreateDto.getEmail());
         keycloakUser.setFirstName(userCreateDto.getFirstName());
         keycloakUser.setLastName(userCreateDto.getLastName());
-        keycloakUser.setEnabled(true); // Habilitado por defecto
-        keycloakUser.setEmailVerified(false); // Puedes cambiar esto o configurar acciones en Keycloak
+        keycloakUser.setEnabled(true);
+        keycloakUser.setEmailVerified(false);
 
         CredentialRepresentation credential = new CredentialRepresentation();
         credential.setType(CredentialRepresentation.PASSWORD);
         credential.setValue(userCreateDto.getPassword());
-        credential.setTemporary(false); // Contraseña permanente
+        credential.setTemporary(false);
         keycloakUser.setCredentials(Collections.singletonList(credential));
 
         RealmResource realmResource = keycloakAdmin.realm(realm);
@@ -94,14 +92,23 @@ public class UserServiceImpl implements UserService {
                 keycloakUserId = locationHeader.substring(locationHeader.lastIndexOf('/') + 1);
                 log.info("User successfully created in Keycloak with ID: {}", keycloakUserId);
 
-                // --- PASO 3: Crear usuario en la BD local ---
+                // --- PASO 3: Asignar roles al usuario ---
+                // Por defecto asignamos el rol "USER" a todos los usuarios nuevos
+                assignRolesToUser(realmResource, keycloakUserId, List.of("USER"));
+
+                // Alternativa: Si se envía un rol específico en el DTO
+                // Si quieres permitir especificar roles en la creación, añade un campo 'roles' en UserCreateDto
+                // if (userCreateDto.getRoles() != null && !userCreateDto.getRoles().isEmpty()) {
+                //     assignRolesToUser(realmResource, keycloakUserId, userCreateDto.getRoles());
+                // }
+
+                // --- PASO 4: Crear usuario en la BD local ---
                 User appUser = new User();
-                appUser.setKeycloakId(keycloakUserId); // <-- Vinculación Clave
+                appUser.setKeycloakId(keycloakUserId);
                 appUser.setUsername(userCreateDto.getUsername());
                 appUser.setEmail(userCreateDto.getEmail());
                 appUser.setFirstName(userCreateDto.getFirstName());
                 appUser.setLastName(userCreateDto.getLastName());
-                // joinDate es @CreationTimestamp
 
                 // Crear colección por defecto
                 UserCollection defaultCollection = new UserCollection();
@@ -121,36 +128,31 @@ public class UserServiceImpl implements UserService {
                 }
                 log.error("Failed to create user in Keycloak. Status: {}, Info: {}, Body: {}",
                         response.getStatus(), response.getStatusInfo(), errorBody);
-                // Lanza una excepción basada en el error de Keycloak
                 throw new RuntimeException("Keycloak user creation failed. Status: " + response.getStatus() + " - " + errorBody);
             }
 
         } catch (Exception e) {
             log.error("Exception during user creation process for username {}: {}", userCreateDto.getUsername(), e.getMessage(), e);
 
-            // --- PASO 4: Intentar Rollback en Keycloak si aplica ---
+            // --- PASO 5: Intentar Rollback en Keycloak si aplica ---
             if (keycloakUserId != null && response != null && response.getStatus() == 201) {
-                // Se creó en Keycloak (status 201) pero falló después (probablemente al guardar en BD local)
                 log.warn("Local DB save likely failed after Keycloak user creation. Attempting Keycloak user rollback for ID: {}", keycloakUserId);
                 try {
                     usersResource.delete(keycloakUserId);
                     log.info("Rollback successful: Keycloak user {} deleted.", keycloakUserId);
                 } catch (Exception deleteEx) {
-                    // ¡¡ERROR CRÍTICO!! El usuario existe en Keycloak pero no localmente. Requiere intervención manual.
                     log.error("FATAL: Rollback failed! Keycloak user {} exists but local record failed or delete failed. Manual intervention required.", keycloakUserId, deleteEx);
-                    // Considera lanzar una excepción específica para este estado inconsistente
                 }
             }
-            // Relanzar la excepción original o una nueva excepción más específica
             throw new RuntimeException("Error during user creation process", e);
 
         } finally {
-            // Cerrar la respuesta de Keycloak para liberar recursos
             if (response != null) {
                 response.close();
             }
         }
     }
+
 
 
     @Override
@@ -257,11 +259,12 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserDto updateUser(Long id, UserDto userDto) {
-        // Tu lógica existente... (Asegúrate de que NO intenta actualizar contraseña o keycloakId)
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
-        // Validaciones de unicidad (username/email) si cambian
+        // Ya no necesitamos la verificación de autorización aquí,
+        // la anotación @PreAuthorize en el controlador ya la realizó.
+
         if (userDto.getUsername() != null && !user.getUsername().equals(userDto.getUsername())) {
             if (userRepository.existsByUsernameAndKeycloakIdNot(userDto.getUsername(), user.getKeycloakId())) {
                 throw new RuntimeException("Username already exists for a different user.");
@@ -273,13 +276,10 @@ public class UserServiceImpl implements UserService {
             }
         }
 
-        // Actualiza campos desde DTO usando el mapper
         userMapper.updateUserFromDto(userDto, user);
 
-        // Asegúrate de que los campos NOT NULL no queden nulos después del mapeo si el DTO los permite nulos
-        if (user.getFirstName() == null) user.setFirstName("UpdatedFirst"); // O manejar en el mapper/DTO
-        if (user.getLastName() == null) user.setLastName("UpdatedLast");   // O manejar en el mapper/DTO
-
+        if (user.getFirstName() == null) user.setFirstName("UpdatedFirst");
+        if (user.getLastName() == null) user.setLastName("UpdatedLast");
 
         return userMapper.toDto(userRepository.save(user));
     }
@@ -295,5 +295,150 @@ public class UserServiceImpl implements UserService {
         // Considera si deberías llamar a Keycloak Admin API aquí para borrar también el usuario de Keycloak
         // usersResource.delete(user.getKeycloakId()); // <-- Requeriría inyectar UsersResource o Keycloak admin
         userRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public void assignRolesToUser(Long id, List<String> roles) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+
+        String keycloakUserId = user.getKeycloakId();
+        if (keycloakUserId == null) {
+            throw new IllegalStateException("User doesn't have a Keycloak ID");
+        }
+
+        RealmResource realmResource = keycloakAdmin.realm(realm);
+        assignRolesToUser(realmResource, keycloakUserId, roles);
+    }
+
+
+    private void assignRolesToUser(RealmResource realmResource, String userId, List<String> roleNames) {
+        try {
+            // 1. Obtener el ID del cliente (tu aplicación Spring)
+            String clientId = null;
+            // Puedes inyectar esto como una propiedad @Value("${keycloak.resource}") en la clase
+            // o buscar dinámicamente como se muestra a continuación:
+            clientId = realmResource.clients().findByClientId("setcollector-app").get(0).getId();
+
+            // 2. Obtener los roles del cliente
+            List<RoleRepresentation> rolesToAssign = new ArrayList<>();
+
+            for (String roleName : roleNames) {
+                // Intenta buscar primero como rol de reino (realm role)
+                try {
+                    RoleRepresentation role = realmResource.roles().get(roleName).toRepresentation();
+                    if (role != null) {
+                        rolesToAssign.add(role);
+                        log.debug("Found realm role: {}", roleName);
+                        continue;
+                    }
+                } catch (Exception e) {
+                    log.debug("Role {} not found as realm role, trying client role", roleName);
+                }
+
+                // Si no es rol de reino, busca como rol de cliente
+                try {
+                    RoleRepresentation role = realmResource.clients().get(clientId)
+                            .roles().get(roleName).toRepresentation();
+                    if (role != null) {
+                        rolesToAssign.add(role);
+                        log.debug("Found client role: {}", roleName);
+                    }
+                } catch (Exception e) {
+                    log.warn("Role {} not found as client role either", roleName);
+                }
+            }
+
+            // 3. Asignar los roles al usuario
+            if (!rolesToAssign.isEmpty()) {
+                realmResource.users().get(userId).roles().realmLevel().add(rolesToAssign);
+                log.info("Assigned roles {} to user {}", roleNames, userId);
+            } else {
+                log.warn("No roles found to assign to user {}", userId);
+            }
+        } catch (Exception e) {
+            log.error("Error assigning roles to user {}: {}", userId, e.getMessage(), e);
+            // No lanzamos excepción para no interrumpir el flujo principal
+        }
+    }
+
+    @Override
+    @Transactional
+    public void removeRoleFromUser(Long id, String roleName) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+
+        String keycloakUserId = user.getKeycloakId();
+        if (keycloakUserId == null) {
+            throw new IllegalStateException("User doesn't have a Keycloak ID");
+        }
+
+        try {
+            RealmResource realmResource = keycloakAdmin.realm(realm);
+
+            // Intentar como rol de reino primero
+            try {
+                RoleRepresentation role = realmResource.roles().get(roleName).toRepresentation();
+                if (role != null) {
+                    realmResource.users().get(keycloakUserId).roles().realmLevel()
+                            .remove(Collections.singletonList(role));
+                    log.info("Removed realm role {} from user {}", roleName, keycloakUserId);
+                    return;
+                }
+            } catch (Exception e) {
+                log.debug("Role {} not found as realm role, trying client role", roleName);
+            }
+
+            // Si no es rol de reino, buscar como rol de cliente
+            String clientId = realmResource.clients().findByClientId("setcollector-app").get(0).getId();
+
+            RoleRepresentation role = realmResource.clients().get(clientId)
+                    .roles().get(roleName).toRepresentation();
+
+            if (role != null) {
+                realmResource.users().get(keycloakUserId).roles().clientLevel(clientId)
+                        .remove(Collections.singletonList(role));
+                log.info("Removed client role {} from user {}", roleName, keycloakUserId);
+            }
+        } catch (Exception e) {
+            log.error("Error removing role {} from user {}: {}", roleName, keycloakUserId, e.getMessage(), e);
+            throw new RuntimeException("Failed to remove role from user", e);
+        }
+    }
+
+    @Override
+    public List<String> getUserRoles(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+
+        String keycloakUserId = user.getKeycloakId();
+        if (keycloakUserId == null) {
+            throw new IllegalStateException("User doesn't have a Keycloak ID");
+        }
+
+        try {
+            RealmResource realmResource = keycloakAdmin.realm(realm);
+
+            // Obtener roles de reino
+            List<String> roles = realmResource.users().get(keycloakUserId).roles().realmLevel().listAll()
+                    .stream()
+                    .map(RoleRepresentation::getName)
+                    .collect(Collectors.toList());
+
+            // Obtener roles de cliente
+            String clientId = realmResource.clients().findByClientId("setcollector-app").get(0).getId();
+
+            List<String> clientRoles = realmResource.users().get(keycloakUserId).roles().clientLevel(clientId).listAll()
+                    .stream()
+                    .map(RoleRepresentation::getName)
+                    .collect(Collectors.toList());
+
+            roles.addAll(clientRoles);
+            return roles;
+        } catch (Exception e) {
+            log.error("Error getting roles for user {}: {}", keycloakUserId, e.getMessage(), e);
+            throw new RuntimeException("Failed to get user roles", e);
+        }
     }
 }

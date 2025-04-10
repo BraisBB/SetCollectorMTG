@@ -7,22 +7,15 @@ import org.springframework.security.oauth2.jwt.Jwt; // Necesario para el paráme
 import java.util.List;
 
 public interface UserService {
+    UserDto createUser(UserCreateDto userCreateDto);
+    User synchronizeUser(Jwt jwt);
+    List<UserDto> getAllUsers();
+    UserDto getUserById(Long id);
+    UserDto updateUser(Long id, UserDto userDto);
+    void deleteUser(Long id);
 
-    UserDto createUser(UserCreateDto userCreateDto); // Método existente
-
-    List<UserDto> getAllUsers(); // Método existente
-
-    UserDto getUserById(Long id); // Método existente
-
-    UserDto updateUser(Long id, UserDto userDto); // Método existente
-
-    void deleteUser(Long id); // Método existente
-
-    /**
-     * Sincroniza usuario basado en JWT de Keycloak.
-     * Crea el usuario si no existe, actualiza datos si existen cambios.
-     * @param jwt El token JWT del usuario autenticado.
-     * @return La entidad User local sincronizada.
-     */
-    User synchronizeUser(Jwt jwt); // <-- NUEVO MÉTODO
+    // Nuevos métodos para gestión de roles
+    void assignRolesToUser(Long id, List<String> roles);
+    void removeRoleFromUser(Long id, String roleName);
+    List<String> getUserRoles(Long id);
 }
