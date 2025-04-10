@@ -21,7 +21,6 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    @RolesAllowed("ADMIN") // Solo admin puede crear usuarios
     public ResponseEntity<UserDto> createUser(@RequestBody UserCreateDto userCreateDto) {
         return new ResponseEntity<>(userService.createUser(userCreateDto), HttpStatus.CREATED);
     }

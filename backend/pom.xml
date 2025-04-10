@@ -21,7 +21,7 @@
 		<!-- Versiones de dependencias -->
 		<org.mapstruct.version>1.6.3</org.mapstruct.version>
 		<lombok.version>1.18.32</lombok.version>
-		<springdoc.version>2.5.0</springdoc.version>
+		<springdoc.version>2.8.6</springdoc.version>
 		<keycloak.version>24.0.4</keycloak.version>
 	</properties>
 
