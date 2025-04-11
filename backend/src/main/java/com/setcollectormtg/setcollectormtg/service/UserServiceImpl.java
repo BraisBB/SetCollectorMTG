@@ -1,6 +1,5 @@
 package com.setcollectormtg.setcollectormtg.service;
 
-// --- Asegúrate de tener TODAS estas importaciones ---
 import com.setcollectormtg.setcollectormtg.dto.UserCreateDto;
 import com.setcollectormtg.setcollectormtg.dto.UserDto;
 import com.setcollectormtg.setcollectormtg.exception.ResourceNotFoundException;
@@ -8,11 +7,16 @@ import com.setcollectormtg.setcollectormtg.mapper.UserMapper;
 import com.setcollectormtg.setcollectormtg.model.User;
 import com.setcollectormtg.setcollectormtg.model.UserCollection;
 import com.setcollectormtg.setcollectormtg.repository.UserRepository;
-import jakarta.ws.rs.core.Response; // De jakarta.ws.rs-api
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.RealmResource;
-import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -20,11 +24,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional; // Muy importante
-
-import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -49,8 +53,6 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserDto createUser(UserCreateDto userCreateDto) {
         log.info("API request to create user: {}", userCreateDto.getUsername());
-
-        // --- VALIDACIONES LOCALES ---
         if (userRepository.existsByUsername(userCreateDto.getUsername())) {
             log.warn("Username {} already exists locally.", userCreateDto.getUsername());
             throw new RuntimeException("Username already exists");
@@ -60,49 +62,40 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Email already in use");
         }
 
-        // --- PASO 1: Crear usuario en Keycloak ---
-        UserRepresentation keycloakUser = new UserRepresentation();
-        keycloakUser.setUsername(userCreateDto.getUsername());
-        keycloakUser.setEmail(userCreateDto.getEmail());
-        keycloakUser.setFirstName(userCreateDto.getFirstName());
-        keycloakUser.setLastName(userCreateDto.getLastName());
-        keycloakUser.setEnabled(true);
-        keycloakUser.setEmailVerified(false);
+        // Crear un mapa con solo los campos necesarios
+        UserRepresentation userRepresentation = new UserRepresentation();
+        userRepresentation.setUsername(userCreateDto.getUsername());
+        userRepresentation.setEmail(userCreateDto.getEmail());
+        userRepresentation.setFirstName(userCreateDto.getFirstName());
+        userRepresentation.setLastName(userCreateDto.getLastName());
+        userRepresentation.setEnabled(true);
+        userRepresentation.setEmailVerified(false);
 
         CredentialRepresentation credential = new CredentialRepresentation();
         credential.setType(CredentialRepresentation.PASSWORD);
         credential.setValue(userCreateDto.getPassword());
         credential.setTemporary(false);
-        keycloakUser.setCredentials(Collections.singletonList(credential));
+        userRepresentation.setCredentials(Collections.singletonList(credential));
 
-        RealmResource realmResource = keycloakAdmin.realm(realm);
-        UsersResource usersResource = realmResource.users();
+        RealmResource realmResource = keycloakAdmin.realms().realm(realm);
         Response response = null;
         String keycloakUserId = null;
 
         try {
             log.debug("Attempting to create user in Keycloak realm '{}'", realm);
-            response = usersResource.create(keycloakUser);
-            log.debug("Keycloak response status: {}", response.getStatus());
+            log.debug("UserRepresentation being sent to Keycloak: {}", userRepresentation);
+            response = realmResource.users().create(userRepresentation);
 
-            // --- PASO 2: Procesar respuesta de Keycloak ---
+            log.debug("Keycloak response status: {}", response.getStatus());
             if (response.getStatus() == 201) { // 201 Created = Éxito
-                // Extraer el ID de Keycloak de la cabecera Location
                 String locationHeader = response.getLocation().getPath();
                 keycloakUserId = locationHeader.substring(locationHeader.lastIndexOf('/') + 1);
                 log.info("User successfully created in Keycloak with ID: {}", keycloakUserId);
 
-                // --- PASO 3: Asignar roles al usuario ---
-                // Por defecto asignamos el rol "USER" a todos los usuarios nuevos
+                // Asignar roles al usuario
                 assignRolesToUser(realmResource, keycloakUserId, List.of("USER"));
 
-                // Alternativa: Si se envía un rol específico en el DTO
-                // Si quieres permitir especificar roles en la creación, añade un campo 'roles' en UserCreateDto
-                // if (userCreateDto.getRoles() != null && !userCreateDto.getRoles().isEmpty()) {
-                //     assignRolesToUser(realmResource, keycloakUserId, userCreateDto.getRoles());
-                // }
-
-                // --- PASO 4: Crear usuario en la BD local ---
+                // Crear usuario local
                 User appUser = new User();
                 appUser.setKeycloakId(keycloakUserId);
                 appUser.setUsername(userCreateDto.getUsername());
@@ -110,7 +103,6 @@ public class UserServiceImpl implements UserService {
                 appUser.setFirstName(userCreateDto.getFirstName());
                 appUser.setLastName(userCreateDto.getLastName());
 
-                // Crear colección por defecto
                 UserCollection defaultCollection = new UserCollection();
                 defaultCollection.setUser(appUser);
                 defaultCollection.setTotalCards(0);
@@ -119,9 +111,7 @@ public class UserServiceImpl implements UserService {
                 User savedUser = userRepository.save(appUser);
                 log.info("Local user record created successfully for Keycloak ID: {}", keycloakUserId);
                 return userMapper.toDto(savedUser);
-
             } else {
-                // Error al crear en Keycloak
                 String errorBody = "";
                 if (response.hasEntity()) {
                     errorBody = response.readEntity(String.class);
@@ -130,31 +120,24 @@ public class UserServiceImpl implements UserService {
                         response.getStatus(), response.getStatusInfo(), errorBody);
                 throw new RuntimeException("Keycloak user creation failed. Status: " + response.getStatus() + " - " + errorBody);
             }
-
         } catch (Exception e) {
             log.error("Exception during user creation process for username {}: {}", userCreateDto.getUsername(), e.getMessage(), e);
-
-            // --- PASO 5: Intentar Rollback en Keycloak si aplica ---
             if (keycloakUserId != null && response != null && response.getStatus() == 201) {
                 log.warn("Local DB save likely failed after Keycloak user creation. Attempting Keycloak user rollback for ID: {}", keycloakUserId);
                 try {
-                    usersResource.delete(keycloakUserId);
+                    realmResource.users().delete(keycloakUserId);
                     log.info("Rollback successful: Keycloak user {} deleted.", keycloakUserId);
                 } catch (Exception deleteEx) {
                     log.error("FATAL: Rollback failed! Keycloak user {} exists but local record failed or delete failed. Manual intervention required.", keycloakUserId, deleteEx);
                 }
             }
             throw new RuntimeException("Error during user creation process", e);
-
         } finally {
             if (response != null) {
                 response.close();
             }
         }
     }
-
-
-
     @Override
     @Transactional
     public User synchronizeUser(Jwt jwt) {
