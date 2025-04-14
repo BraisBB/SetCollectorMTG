@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -12,4 +14,5 @@ import java.util.List;
 public interface DeckRepository extends JpaRepository<Deck, Long> {
     boolean existsByDeckNameAndUser_UserId(String deckName, Long userId);
     List<Deck> findByUser_UserId(Long userId);
+    Page<Deck> findByUser_UserId(Long userId, Pageable pageable);
 }

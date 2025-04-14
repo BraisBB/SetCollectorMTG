@@ -36,11 +36,13 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/h2-console/**",
-                                "/users"  // POST será manejado por anotación
+                                "/users", // POST será manejado por anotación
+                                "/cards/**", // Permitir acceso público a los endpoints de tarjetas
+                                "/sets/**" // Permitir acceso público a los endpoints de sets
                         ).permitAll()
 
                         // Configuración básica para endpoints protegidos
-                        .requestMatchers("/users/**").authenticated()
+                        .requestMatchers("/users/**", "/collections/**", "/decks/**").authenticated()
 
                         // Permite acceso a todos los métodos autenticados (las anotaciones manejarán los roles)
                         .anyRequest().authenticated()

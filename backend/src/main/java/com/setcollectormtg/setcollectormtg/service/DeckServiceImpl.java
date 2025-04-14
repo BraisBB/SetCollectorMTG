@@ -10,6 +10,8 @@ import com.setcollectormtg.setcollectormtg.repository.CardDeckRepository;
 import com.setcollectormtg.setcollectormtg.repository.DeckRepository;
 import com.setcollectormtg.setcollectormtg.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -112,5 +114,11 @@ public class DeckServiceImpl implements DeckService {
     @Transactional(readOnly = true)
     public int getCardCountInDeck(Long deckId) {
         return cardDeckRepository.countByDeck_DeckId(deckId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<DeckDto> getDecksByUserPaged(Long userId, Pageable pageable) {
+        return deckRepository.findByUser_UserId(userId, pageable).map(deckMapper::toDto);
     }
 }

@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -74,5 +76,11 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN') or @userSecurity.isOwner(authentication, #id)")
     public ResponseEntity<List<String>> getUserRoles(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUserRoles(id));
+    }
+
+    @GetMapping("/paged")
+    @RolesAllowed("ADMIN")
+    public ResponseEntity<Page<UserDto>> getAllUsersPaged(Pageable pageable) {
+        return ResponseEntity.ok(userService.getAllUsersPaged(pageable));
     }
 }

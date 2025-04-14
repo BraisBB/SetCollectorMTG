@@ -5,6 +5,8 @@ import com.setcollectormtg.setcollectormtg.dto.UserDto;
 import com.setcollectormtg.setcollectormtg.model.User; // Necesario para el tipo de retorno
 import org.springframework.security.oauth2.jwt.Jwt; // Necesario para el parámetro
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface UserService {
     UserDto createUser(UserCreateDto userCreateDto);
@@ -18,4 +20,6 @@ public interface UserService {
     void assignRolesToUser(Long id, List<String> roles);
     void removeRoleFromUser(Long id, String roleName);
     List<String> getUserRoles(Long id);
+
+    Page<UserDto> getAllUsersPaged(Pageable pageable);
 }

@@ -5,6 +5,8 @@ import com.setcollectormtg.setcollectormtg.dto.DeckDto;
 import com.setcollectormtg.setcollectormtg.service.DeckService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,6 +37,12 @@ public class DeckController {
     @PreAuthorize("hasRole('USER') and @userSecurity.isOwner(authentication, #userId) or hasRole('ADMIN')")
     public ResponseEntity<List<DeckDto>> getDecksByUser(@PathVariable Long userId) {
         return ResponseEntity.ok(deckService.getDecksByUser(userId));
+    }
+
+    @GetMapping("/user/{userId}/paged")
+    @PreAuthorize("@userSecurity.isOwner(authentication, #userId)")
+    public ResponseEntity<Page<DeckDto>> getDecksByUserPaged(@PathVariable Long userId, Pageable pageable) {
+        return ResponseEntity.ok(deckService.getDecksByUserPaged(userId, pageable));
     }
 
     @PostMapping
