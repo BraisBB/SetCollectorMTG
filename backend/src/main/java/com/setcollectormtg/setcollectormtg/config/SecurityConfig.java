@@ -58,9 +58,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(keycloakRoleConverter);
-        return converter;
-    }
+public JwtAuthenticationConverter jwtAuthenticationConverter() {
+    JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+    converter.setJwtGrantedAuthoritiesConverter(new KeycloakRoleConverter());
+    return converter;
+}
 }

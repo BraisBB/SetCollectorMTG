@@ -1,13 +1,11 @@
 package com.setcollectormtg.setcollectormtg.dto;
 
-import com.setcollectormtg.setcollectormtg.model.SetMtg;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
+
 
 @Data
 @NoArgsConstructor

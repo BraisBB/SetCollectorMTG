@@ -5,6 +5,7 @@ import com.setcollectormtg.setcollectormtg.service.UserCollectionCardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,6 +16,7 @@ public class UserCollectionCardController {
     private final UserCollectionCardService userCollectionCardService;
 
     @PostMapping("/{cardId}")
+    @PreAuthorize("hasRole('USER') and @userSecurity.isOwner(authentication, #collectionId)")
     public ResponseEntity<UserCollectionCardDto> addCardToCollection(
             @PathVariable Long collectionId,
             @PathVariable Long cardId,
@@ -25,6 +27,7 @@ public class UserCollectionCardController {
     }
 
     @PutMapping("/{cardId}")
+    @PreAuthorize("hasRole('USER') and @userSecurity.isOwner(authentication, #collectionId)")
     public ResponseEntity<UserCollectionCardDto> updateCardQuantity(
             @PathVariable Long collectionId,
             @PathVariable Long cardId,
@@ -34,6 +37,7 @@ public class UserCollectionCardController {
     }
 
     @DeleteMapping("/{cardId}")
+    @PreAuthorize("hasRole('USER') and @userSecurity.isOwner(authentication, #collectionId)")
     public ResponseEntity<Void> removeCardFromCollection(
             @PathVariable Long collectionId,
             @PathVariable Long cardId) {
@@ -42,6 +46,7 @@ public class UserCollectionCardController {
     }
 
     @GetMapping("/{cardId}")
+    @PreAuthorize("hasRole('USER') and @userSecurity.isOwner(authentication, #collectionId)")
     public ResponseEntity<UserCollectionCardDto> getCardCollectionInfo(
             @PathVariable Long collectionId,
             @PathVariable Long cardId) {
@@ -50,6 +55,7 @@ public class UserCollectionCardController {
     }
 
     @GetMapping("/{cardId}/quantity")
+    @PreAuthorize("hasRole('USER') and @userSecurity.isOwner(authentication, #collectionId)")
     public ResponseEntity<Integer> getCardQuantity(
             @PathVariable Long collectionId,
             @PathVariable Long cardId) {

@@ -1,6 +1,6 @@
 package com.setcollectormtg.setcollectormtg.dto;
 
-import com.setcollectormtg.setcollectormtg.model.Card;
+
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

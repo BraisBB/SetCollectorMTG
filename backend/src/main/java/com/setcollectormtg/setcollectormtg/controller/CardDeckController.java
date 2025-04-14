@@ -5,6 +5,7 @@ import com.setcollectormtg.setcollectormtg.service.CardDeckService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,6 +16,7 @@ public class CardDeckController {
     private final CardDeckService cardDeckService;
 
     @PostMapping("/{cardId}")
+    @PreAuthorize("hasRole('USER') and @userSecurity.isOwner(authentication, #deckId)")
     public ResponseEntity<CardDeckDto> addCardToDeck(
             @PathVariable Long deckId,
             @PathVariable Long cardId,
@@ -25,6 +27,7 @@ public class CardDeckController {
     }
 
     @PutMapping("/{cardId}")
+    @PreAuthorize("hasRole('USER') and @userSecurity.isOwner(authentication, #deckId)")
     public ResponseEntity<CardDeckDto> updateCardQuantity(
             @PathVariable Long deckId,
             @PathVariable Long cardId,
@@ -34,6 +37,7 @@ public class CardDeckController {
     }
 
     @DeleteMapping("/{cardId}")
+    @PreAuthorize("hasRole('USER') and @userSecurity.isOwner(authentication, #deckId) or hasRole('ADMIN')")
     public ResponseEntity<Void> removeCardFromDeck(
             @PathVariable Long deckId,
             @PathVariable Long cardId) {
@@ -42,6 +46,7 @@ public class CardDeckController {
     }
 
     @GetMapping("/{cardId}")
+    @PreAuthorize("hasRole('USER') and @userSecurity.isOwner(authentication, #deckId) or hasRole('ADMIN')")
     public ResponseEntity<CardDeckDto> getCardDeckInfo(
             @PathVariable Long deckId,
             @PathVariable Long cardId) {
@@ -50,6 +55,7 @@ public class CardDeckController {
     }
 
     @GetMapping("/{cardId}/quantity")
+    @PreAuthorize("hasRole('USER') and @userSecurity.isOwner(authentication, #deckId) or hasRole('ADMIN')")
     public ResponseEntity<Integer> getCardQuantity(
             @PathVariable Long deckId,
             @PathVariable Long cardId) {

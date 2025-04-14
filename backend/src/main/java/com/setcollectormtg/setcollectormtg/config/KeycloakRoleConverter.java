@@ -34,7 +34,7 @@ public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedA
                 .map(ra -> (List<String>) ra.get("roles"))
                 .orElse(Collections.emptyList())
                 .stream()
-                .map(role -> ROLE_PREFIX + role.toUpperCase())
+                .map(role -> "ROLE_" + role.toUpperCase())
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
     }

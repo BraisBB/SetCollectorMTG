@@ -2,8 +2,10 @@ package com.setcollectormtg.setcollectormtg.service;
 
 import com.setcollectormtg.setcollectormtg.dto.SetMtgCreateDto;
 import com.setcollectormtg.setcollectormtg.dto.SetMtgDto;
+import com.setcollectormtg.setcollectormtg.dto.CardDto;
 import com.setcollectormtg.setcollectormtg.exception.ResourceNotFoundException;
 import com.setcollectormtg.setcollectormtg.mapper.SetMtgMapper;
+import com.setcollectormtg.setcollectormtg.mapper.CardMapper;
 import com.setcollectormtg.setcollectormtg.model.SetMtg;
 import com.setcollectormtg.setcollectormtg.repository.SetMtgRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ public class SetMtgServiceImpl implements SetMtgService {
 
     private final SetMtgRepository setMtgRepository;
     private final SetMtgMapper setMtgMapper;
+    private final CardMapper cardMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -80,5 +83,16 @@ public class SetMtgServiceImpl implements SetMtgService {
         }
 
         setMtgRepository.delete(setMtg);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CardDto> getCardsBySet(Long setId) {
+        SetMtg setMtg = setMtgRepository.findById(setId)
+                .orElseThrow(() -> new ResourceNotFoundException("Set not found with id: " + setId));
+
+        return setMtg.getCards().stream()
+                .map(cardMapper::toDto)
+                .toList();
     }
 }
