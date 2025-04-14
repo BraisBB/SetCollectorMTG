@@ -7,15 +7,11 @@ import com.setcollectormtg.setcollectormtg.mapper.UserMapper;
 import com.setcollectormtg.setcollectormtg.model.User;
 import com.setcollectormtg.setcollectormtg.model.UserCollection;
 import com.setcollectormtg.setcollectormtg.repository.UserRepository;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.MediaType;
+
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.Keycloak;
-import org.keycloak.admin.client.KeycloakBuilder;
+
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
@@ -27,9 +23,9 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional; // Muy importante
 import java.util.Collections;
-import java.util.HashMap;
+
 import java.util.List;
-import java.util.Map;
+
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.stream.Collectors;

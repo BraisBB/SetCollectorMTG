@@ -1,12 +1,12 @@
 package com.setcollectormtg.setcollectormtg.service;
 
-import com.setcollectormtg.setcollectormtg.dto.UserCollectionDto;
+
 import com.setcollectormtg.setcollectormtg.exception.ResourceNotFoundException;
-import com.setcollectormtg.setcollectormtg.mapper.UserCollectionMapper;
-import com.setcollectormtg.setcollectormtg.model.User;
+
+
 import com.setcollectormtg.setcollectormtg.model.UserCollection;
 import com.setcollectormtg.setcollectormtg.repository.UserCollectionRepository;
-import com.setcollectormtg.setcollectormtg.repository.UserRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,8 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserCollectionServiceImpl implements UserCollectionService {
 
     private final UserCollectionRepository userCollectionRepository;
-    private final UserRepository userRepository;
-    private final UserCollectionMapper userCollectionMapper;
+
 
     @Override
     @Transactional
