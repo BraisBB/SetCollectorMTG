@@ -1,7 +1,7 @@
 package com.setcollectormtg.setcollectormtg.service;
 
 import com.setcollectormtg.setcollectormtg.dto.CardDeckDto;
-import com.setcollectormtg.setcollectormtg.model.CardDeck;
+
 
 public interface CardDeckService {
     CardDeckDto addCardToDeck(Long deckId, Long cardId, Integer quantity);

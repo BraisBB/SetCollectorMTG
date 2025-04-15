@@ -4,7 +4,7 @@ import com.setcollectormtg.setcollectormtg.dto.CardDeckDto;
 import com.setcollectormtg.setcollectormtg.model.CardDeck;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.Named;
+
 
 @Mapper(componentModel = "spring")
 public interface CardDeckMapper {

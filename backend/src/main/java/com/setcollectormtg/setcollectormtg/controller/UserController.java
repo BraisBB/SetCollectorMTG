@@ -4,11 +4,11 @@ import com.setcollectormtg.setcollectormtg.dto.UserCreateDto;
 import com.setcollectormtg.setcollectormtg.dto.UserDto;
 import com.setcollectormtg.setcollectormtg.service.UserService;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +23,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<UserDto> createUser(@RequestBody UserCreateDto userCreateDto) {
+    public ResponseEntity<UserDto> createUser(@Valid @RequestBody UserCreateDto userCreateDto) {
         return new ResponseEntity<>(userService.createUser(userCreateDto), HttpStatus.CREATED);
     }
 
@@ -40,9 +40,10 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("@userSecurity.canAccessUserResource(authentication, #id)")    public ResponseEntity<UserDto> updateUser(
+    @PreAuthorize("@userSecurity.canAccessUserResource(authentication, #id)")
+    public ResponseEntity<UserDto> updateUser(
             @PathVariable Long id,
-            @RequestBody UserDto userDto) {
+            @Valid @RequestBody UserDto userDto) {
         return ResponseEntity.ok(userService.updateUser(id, userDto));
     }
 
@@ -53,7 +54,6 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    // Endpoints para gestión de roles
     @PostMapping("/{id}/roles")
     @RolesAllowed("ADMIN")
     public ResponseEntity<Void> assignRolesToUser(

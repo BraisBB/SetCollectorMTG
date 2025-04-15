@@ -1,5 +1,7 @@
 package com.setcollectormtg.setcollectormtg.dto;
 
+import com.setcollectormtg.setcollectormtg.validation.CapitalizedString;
+import com.setcollectormtg.setcollectormtg.validation.StrongPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -18,13 +20,15 @@ public class UserCreateDto {
     private String email;
 
     @NotBlank(message = "La contraseña es obligatoria")
-    @Size(min = 6, message = "La contraseña debe tener al menos 6 caracteres")
+    @StrongPassword
     private String password;
 
     @NotBlank(message = "El nombre es obligatorio")
+    @CapitalizedString(message = "El nombre debe comenzar con mayúscula")
     private String firstName;
 
     @NotBlank(message = "El apellido es obligatorio")
+    @CapitalizedString(message = "El apellido debe comenzar con mayúscula")
     private String lastName;
 
     private List<String> roles;
