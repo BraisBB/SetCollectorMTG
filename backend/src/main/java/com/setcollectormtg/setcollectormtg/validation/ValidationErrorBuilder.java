@@ -21,7 +21,7 @@ public class ValidationErrorBuilder {
             error.append("La contraseña debe contener al menos una letra mayúscula. ");
         }
 
-        if (!password.matches(".*[a-z].*")) {
+        if (!password.matches(".*[a-z]..*")) {
             error.append("La contraseña debe contener al menos una letra minúscula. ");
         }
 
@@ -44,7 +44,7 @@ public class ValidationErrorBuilder {
         if (!Character.isUpperCase(value.charAt(0))) {
             return String.format("El campo %s debe comenzar con mayúscula", fieldName);
         }
-        
-        return null;
+
+        return null; // Si pasa la validación, no hay error
     }
 }
