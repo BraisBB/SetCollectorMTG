@@ -31,19 +31,19 @@ public class CardController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')") // Solo usuarios con rol ADMIN
+    @PreAuthorize("hasAuthority('ADMIN')") // Solo usuarios con rol ADMIN
     public ResponseEntity<CardDto> createCard(@RequestBody CardCreateDto cardCreateDto) {
         return new ResponseEntity<>(cardService.createCard(cardCreateDto), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')") // Solo usuarios con rol ADMIN
+    @PreAuthorize("hasAuthority('ADMIN')") // Solo usuarios con rol ADMIN
     public ResponseEntity<CardDto> updateCard(@PathVariable Long id, @RequestBody CardDto cardDto) {
         return ResponseEntity.ok(cardService.updateCard(id, cardDto));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')") // Solo usuarios con rol ADMIN
+    @PreAuthorize("hasAuthority('ADMIN')") // Solo usuarios con rol ADMIN
     public ResponseEntity<Void> deleteCard(@PathVariable Long id) {
         cardService.deleteCard(id);
         return ResponseEntity.noContent().build();

@@ -19,7 +19,7 @@ public class UserCollectionController {
     private final UserCollectionMapper userCollectionMapper; // Añadido el mapper
 
     @PostMapping
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<UserCollectionDto> createCollection(@RequestBody UserCollectionDto collectionDto) {
         UserCollection collection = userCollectionService.createCollection(
                 userCollectionMapper.toEntity(collectionDto));
@@ -27,21 +27,21 @@ public class UserCollectionController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('USER') and @userSecurity.isOwner(authentication, #id)")
+    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #id)")
     public ResponseEntity<UserCollectionDto> getCollectionById(@PathVariable Long id) {
         return ResponseEntity.ok(
                 userCollectionMapper.toDto(userCollectionService.getCollectionById(id)));
     }
 
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasRole('USER') and @userSecurity.isOwner(authentication, #userId)")
+    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #userId)")
     public ResponseEntity<UserCollectionDto> getCollectionByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(
                 userCollectionMapper.toDto(userCollectionService.getCollectionByUserId(userId)));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('USER') and @userSecurity.isOwner(authentication, #id)")
+    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #id)")
     public ResponseEntity<UserCollectionDto> updateCollection(
             @PathVariable Long id, @RequestBody UserCollectionDto collectionDto) {
         return ResponseEntity.ok(
@@ -50,14 +50,14 @@ public class UserCollectionController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('USER') and @userSecurity.isOwner(authentication, #id)")
+    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #id)")
     public ResponseEntity<Void> deleteCollection(@PathVariable Long id) {
         userCollectionService.deleteCollection(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}/total-cards")
-    @PreAuthorize("hasRole('USER') and @userSecurity.isOwner(authentication, #id)")
+    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #id)")
     public ResponseEntity<Integer> getTotalCardsInCollection(@PathVariable Long id) {
         return ResponseEntity.ok(userCollectionService.getTotalCardsInCollection(id));
     }

@@ -25,31 +25,31 @@ public class SetMtgController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<SetMtgDto> getSetById(@PathVariable Long id) {
         return ResponseEntity.ok(setMtgService.getSetById(id));
     }
 
     @GetMapping("/code/{setCode}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<SetMtgDto> getSetByCode(@PathVariable String setCode) {
         return ResponseEntity.ok(setMtgService.getSetByCode(setCode));
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<SetMtgDto> createSet(@RequestBody SetMtgCreateDto setMtgCreateDto) {
         return new ResponseEntity<>(setMtgService.createSet(setMtgCreateDto), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<SetMtgDto> updateSet(@PathVariable Long id, @RequestBody SetMtgCreateDto setMtgCreateDto) {
         return ResponseEntity.ok(setMtgService.updateSet(id, setMtgCreateDto));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Void> deleteSet(@PathVariable Long id) {
         setMtgService.deleteSet(id);
         return ResponseEntity.noContent().build();

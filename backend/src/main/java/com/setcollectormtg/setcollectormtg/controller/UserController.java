@@ -3,7 +3,6 @@ package com.setcollectormtg.setcollectormtg.controller;
 import com.setcollectormtg.setcollectormtg.dto.UserCreateDto;
 import com.setcollectormtg.setcollectormtg.dto.UserDto;
 import com.setcollectormtg.setcollectormtg.service.UserService;
-import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,13 +27,13 @@ public class UserController {
     }
 
     @GetMapping
-    @RolesAllowed("ADMIN")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<List<UserDto>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or @userSecurity.isOwner(authentication, #id)")
+    @PreAuthorize("hasAuthority('ADMIN') or @userSecurity.isOwner(authentication, #id)")
     public ResponseEntity<UserDto> getUserById(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }
@@ -48,14 +47,14 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    @RolesAllowed("ADMIN")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/roles")
-    @RolesAllowed("ADMIN")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Void> assignRolesToUser(
             @PathVariable Long id,
             @RequestBody List<String> roles) {
@@ -64,7 +63,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}/roles/{roleName}")
-    @RolesAllowed("ADMIN")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Void> removeRoleFromUser(
             @PathVariable Long id,
             @PathVariable String roleName) {
@@ -73,13 +72,13 @@ public class UserController {
     }
 
     @GetMapping("/{id}/roles")
-    @PreAuthorize("hasRole('ADMIN') or @userSecurity.isOwner(authentication, #id)")
+    @PreAuthorize("hasAuthority('ADMIN') or @userSecurity.isOwner(authentication, #id)")
     public ResponseEntity<List<String>> getUserRoles(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUserRoles(id));
     }
 
     @GetMapping("/paged")
-    @RolesAllowed("ADMIN")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Page<UserDto>> getAllUsersPaged(Pageable pageable) {
         return ResponseEntity.ok(userService.getAllUsersPaged(pageable));
     }

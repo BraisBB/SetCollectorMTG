@@ -29,7 +29,7 @@ public class UserCollectionCardController {
     }
 
     @PostMapping("/{cardId}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<UserCollectionCardDto> addCardToCollection(
             Authentication authentication,
             @PathVariable Long cardId,
@@ -44,7 +44,7 @@ public class UserCollectionCardController {
     }
 
     @PutMapping("/{cardId}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<UserCollectionCardDto> updateCardQuantity(
             Authentication authentication,
             @PathVariable Long cardId,
@@ -58,7 +58,7 @@ public class UserCollectionCardController {
     }
 
     @DeleteMapping("/{cardId}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<Void> removeCardFromCollection(
             Authentication authentication,
             @PathVariable Long cardId) {
@@ -71,7 +71,7 @@ public class UserCollectionCardController {
     }
 
     @GetMapping("/{cardId}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<UserCollectionCardDto> getCardCollectionInfo(
             Authentication authentication,
             @PathVariable Long cardId) {
@@ -84,7 +84,7 @@ public class UserCollectionCardController {
     }
 
     @GetMapping("/{cardId}/quantity")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<Integer> getCardQuantity(
             Authentication authentication,
             @PathVariable Long cardId) {
