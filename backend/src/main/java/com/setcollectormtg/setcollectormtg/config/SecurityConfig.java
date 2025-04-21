@@ -37,7 +37,7 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/h2-console/**",
                                 "/users", // POST será manejado por anotación
-                                "/cards/**", // Permitir acceso público a los endpoints de tarjetas
+                                "/cards/**", // Permitir acceso público a los endpoints de cartas
                                 "/sets/**" // Permitir acceso público a los endpoints de sets
                         ).permitAll()
 

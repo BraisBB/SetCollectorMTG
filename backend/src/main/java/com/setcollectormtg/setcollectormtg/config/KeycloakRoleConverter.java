@@ -25,7 +25,7 @@ public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedA
         if (realmAccess != null && realmAccess.containsKey("roles")) {
             List<String> roles = (List<String>) realmAccess.get("roles");
             roles.forEach(roleName -> {
-                // Convertir los roles de Keycloak a mayúsculas sin prefijo
+               
                 String authorityRole = roleName.toUpperCase();
                 authorities.add(new SimpleGrantedAuthority(authorityRole));
                 System.out.println("Convertido rol del realm: " + roleName + " a: " + authorityRole);
@@ -39,7 +39,7 @@ public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedA
             if (clientAccess != null && clientAccess.containsKey("roles")) {
                 List<String> roles = (List<String>) clientAccess.get("roles");
                 roles.forEach(roleName -> {
-                    // Convertir los roles de Keycloak a mayúsculas sin prefijo
+                    
                     String authorityRole = roleName.toUpperCase();
                     authorities.add(new SimpleGrantedAuthority(authorityRole));
                     System.out.println("Convertido rol del cliente: " + roleName + " a: " + authorityRole);
