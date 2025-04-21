@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.Keycloak;
 
 import org.keycloak.admin.client.resource.RealmResource;
+import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -81,7 +82,6 @@ public class UserServiceImpl implements UserService {
 
         try {
             log.debug("Attempting to create user in Keycloak realm '{}'", realm);
-            log.debug("UserRepresentation being sent to Keycloak: {}", userRepresentation);
             response = realmResource.users().create(userRepresentation);
 
             log.debug("Keycloak response status: {}", response.getStatus());
@@ -90,8 +90,8 @@ public class UserServiceImpl implements UserService {
                 keycloakUserId = locationHeader.substring(locationHeader.lastIndexOf('/') + 1);
                 log.info("User successfully created in Keycloak with ID: {}", keycloakUserId);
 
-                // Asignar roles al usuario
-                assignRolesToUser(realmResource, keycloakUserId, List.of("USER"));
+                // Asignar rol USER por defecto
+                assignRolesToUser(realmResource, keycloakUserId, Collections.singletonList("USER"));
 
                 // Crear usuario local
                 User appUser = new User();
@@ -107,7 +107,7 @@ public class UserServiceImpl implements UserService {
                 appUser.setUserCollection(defaultCollection);
 
                 User savedUser = userRepository.save(appUser);
-                log.info("Local user record created successfully for Keycloak ID: {}", keycloakUserId);
+                log.info("Local user record created successfully with default USER role for Keycloak ID: {}", keycloakUserId);
                 return userMapper.toDto(savedUser);
             } else {
                 String errorBody = "";
@@ -139,7 +139,6 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User synchronizeUser(Jwt jwt) {
-        // Tu lógica de sincronización (la que tenías antes) va aquí...
         String keycloakId = jwt.getSubject();
         if (keycloakId == null) {
             log.error("JWT token is missing 'sub' claim (Keycloak ID).");
@@ -147,78 +146,33 @@ public class UserServiceImpl implements UserService {
         }
 
         Optional<User> existingUserOpt = userRepository.findByKeycloakId(keycloakId);
-        User userToSave;
-        boolean isNewUser = false;
-
+        
         if (existingUserOpt.isEmpty()) {
             log.info("Creating new local user for Keycloak ID: {}", keycloakId);
-            isNewUser = true;
-            userToSave = new User();
+            User userToSave = new User();
             userToSave.setKeycloakId(keycloakId);
-            // @CreationTimestamp se encarga de joinDate si está bien configurado,
-            // pero establecerlo aquí es seguro si la anotación no funcionara por alguna razón.
-            // userToSave.setJoinDate(LocalDate.now());
-
+            
+            String username = jwt.getClaimAsString("preferred_username");
+            String email = jwt.getClaimAsString("email");
+            String firstName = jwt.getClaimAsString("given_name");
+            String lastName = jwt.getClaimAsString("family_name");
+            
+            userToSave.setUsername(username != null ? username : "default_username_" + keycloakId);
+            userToSave.setEmail(email != null ? email : keycloakId + "@example.com");
+            userToSave.setFirstName(firstName != null ? firstName : "DefaultFirst");
+            userToSave.setLastName(lastName != null ? lastName : "DefaultLast");
+            
+            // Crear y asociar la colección por defecto
             UserCollection defaultCollection = new UserCollection();
             defaultCollection.setUser(userToSave);
             defaultCollection.setTotalCards(0);
             userToSave.setUserCollection(defaultCollection);
-
-        } else {
-            log.debug("Found existing local user for Keycloak ID: {}. Checking for updates.", keycloakId);
-            userToSave = existingUserOpt.get();
-        }
-
-        boolean updated = false;
-        String username = jwt.getClaimAsString("preferred_username");
-        String email = jwt.getClaimAsString("email");
-        String firstName = jwt.getClaimAsString("given_name");
-        String lastName = jwt.getClaimAsString("family_name");
-
-        if (username != null && !username.equals(userToSave.getUsername())) {
-            // Considera si quieres permitir que el username local difiera del de Keycloak
-            // o si quieres forzar la sincronización. Aquí forzamos sincronización.
-            if (userRepository.existsByUsernameAndKeycloakIdNot(username, keycloakId)) {
-                log.warn("Username '{}' already exists for a different Keycloak user. Skipping username update for Keycloak ID: {}", username, keycloakId);
-            } else {
-                userToSave.setUsername(username);
-                updated = true;
-            }
-        }
-        if (email != null && !email.equals(userToSave.getEmail())) {
-            if (userRepository.existsByEmailAndKeycloakIdNot(email, keycloakId)) {
-                log.warn("Email '{}' already exists for a different Keycloak user. Skipping email update for Keycloak ID: {}", email, keycloakId);
-            } else {
-                userToSave.setEmail(email);
-                updated = true;
-            }
-        }
-        if (firstName != null && !firstName.equals(userToSave.getFirstName())) {
-            userToSave.setFirstName(firstName);
-            updated = true;
-        }
-        if (lastName != null && !lastName.equals(userToSave.getLastName())) {
-            userToSave.setLastName(lastName);
-            updated = true;
-        }
-
-        if (isNewUser || updated) {
-            log.info("Saving {} user data for Keycloak ID: {}", isNewUser ? "new" : "updated", keycloakId);
-            // Verifica si falta algún campo NOT NULL antes de guardar si es nuevo
-            if (isNewUser) {
-                // Asegúrate de que los campos NOT NULL (username, email, firstName, lastName)
-                // tengan valores (obtenidos del JWT o valores por defecto si el JWT no los trae)
-                if (userToSave.getUsername() == null) userToSave.setUsername("default_username_" + keycloakId); // Placeholder
-                if (userToSave.getEmail() == null) userToSave.setEmail(keycloakId + "@example.com"); // Placeholder
-                if (userToSave.getFirstName() == null) userToSave.setFirstName("DefaultFirst"); // Placeholder
-                if (userToSave.getLastName() == null) userToSave.setLastName("DefaultLast"); // Placeholder
-                log.warn("User created with placeholder data for missing JWT claims. Keycloak ID: {}", keycloakId);
-            }
+            
+            // Guardar el usuario (esto también guardará la colección debido a CascadeType.ALL)
             return userRepository.save(userToSave);
-        } else {
-            log.debug("No data changes detected for user with Keycloak ID: {}", keycloakId);
-            return userToSave;
         }
+        
+        return existingUserOpt.get();
     }
 
     @Override
@@ -248,8 +202,6 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
-        // Ya no necesitamos la verificación de autorización aquí,
-        // la anotación @PreAuthorize en el controlador ya la realizó.
 
         if (userDto.getUsername() != null && !user.getUsername().equals(userDto.getUsername())) {
             if (userRepository.existsByUsernameAndKeycloakIdNot(userDto.getUsername(), user.getKeycloakId())) {
@@ -298,54 +250,54 @@ public class UserServiceImpl implements UserService {
         assignRolesToUser(realmResource, keycloakUserId, roles);
     }
 
+    private void createRoleIfNotExists(RealmResource realmResource, String roleName) {
+        try {
+            // Intentar obtener el rol
+            realmResource.roles().get(roleName).toRepresentation();
+        } catch (Exception e) {
+            // El rol no existe, crearlo
+            RoleRepresentation role = new RoleRepresentation();
+            role.setName(roleName);
+            role.setDescription("Role " + roleName);
+            realmResource.roles().create(role);
+            log.info("Created new role in realm: {}", roleName);
+        }
+    }
 
     private void assignRolesToUser(RealmResource realmResource, String userId, List<String> roleNames) {
         try {
-            // 1. Obtener el ID del cliente (tu aplicación Spring)
-            String clientId = null;
-            // Puedes inyectar esto como una propiedad @Value("${keycloak.resource}") en la clase
-            // o buscar dinámicamente como se muestra a continuación:
-            clientId = realmResource.clients().findByClientId("setcollector-app").get(0).getId();
-
-            // 2. Obtener los roles del cliente
+            // Obtener el usuario
+            UserResource userResource = realmResource.users().get(userId);
             List<RoleRepresentation> rolesToAssign = new ArrayList<>();
 
             for (String roleName : roleNames) {
-                // Intenta buscar primero como rol de reino (realm role)
+                // Asegurarse de que el rol existe
+                createRoleIfNotExists(realmResource, roleName);
+                
                 try {
-                    RoleRepresentation role = realmResource.roles().get(roleName).toRepresentation();
-                    if (role != null) {
-                        rolesToAssign.add(role);
+                    // Obtener el rol del realm
+                    RoleRepresentation realmRole = realmResource.roles().get(roleName).toRepresentation();
+                    if (realmRole != null) {
+                        rolesToAssign.add(realmRole);
                         log.debug("Found realm role: {}", roleName);
-                        continue;
                     }
                 } catch (Exception e) {
-                    log.debug("Role {} not found as realm role, trying client role", roleName);
-                }
-
-                // Si no es rol de reino, busca como rol de cliente
-                try {
-                    RoleRepresentation role = realmResource.clients().get(clientId)
-                            .roles().get(roleName).toRepresentation();
-                    if (role != null) {
-                        rolesToAssign.add(role);
-                        log.debug("Found client role: {}", roleName);
-                    }
-                } catch (Exception e) {
-                    log.warn("Role {} not found as client role either", roleName);
+                    log.error("Error getting role {} after creation: {}", roleName, e.getMessage());
+                    throw new RuntimeException("Could not assign role " + roleName);
                 }
             }
 
-            // 3. Asignar los roles al usuario
             if (!rolesToAssign.isEmpty()) {
-                realmResource.users().get(userId).roles().realmLevel().add(rolesToAssign);
-                log.info("Assigned roles {} to user {}", roleNames, userId);
+                // Asignar roles de realm
+                userResource.roles().realmLevel().add(rolesToAssign);
+                log.info("Assigned realm roles {} to user {}", roleNames, userId);
             } else {
-                log.warn("No roles found to assign to user {}", userId);
+                log.error("No roles were found to assign to user {}", userId);
+                throw new RuntimeException("No roles found to assign");
             }
         } catch (Exception e) {
             log.error("Error assigning roles to user {}: {}", userId, e.getMessage(), e);
-            // No lanzamos excepción para no interrumpir el flujo principal
+            throw new RuntimeException("Failed to assign roles to user", e);
         }
     }
 

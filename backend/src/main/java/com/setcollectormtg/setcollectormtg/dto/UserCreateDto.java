@@ -8,8 +8,6 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
-import java.util.List;
-
 @Data
 public class UserCreateDto {
     @NotBlank(message = "El nombre de usuario es obligatorio")
@@ -33,6 +31,4 @@ public class UserCreateDto {
     @NotBlank(message = "El apellido es obligatorio")
     @CapitalizedString(message = "El apellido debe comenzar con mayúscula")
     private String lastName;
-
-    private List<String> roles;
 }

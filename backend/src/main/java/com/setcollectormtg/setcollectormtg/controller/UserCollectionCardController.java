@@ -3,6 +3,7 @@ package com.setcollectormtg.setcollectormtg.controller;
 import com.setcollectormtg.setcollectormtg.dto.UserCollectionCardDto;
 import com.setcollectormtg.setcollectormtg.service.UserCollectionCardService;
 import com.setcollectormtg.setcollectormtg.service.UserCollectionService;
+import com.setcollectormtg.setcollectormtg.service.UserService;
 import com.setcollectormtg.setcollectormtg.repository.UserRepository;
 import com.setcollectormtg.setcollectormtg.model.UserCollection;
 import com.setcollectormtg.setcollectormtg.model.User;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,11 +23,13 @@ public class UserCollectionCardController {
 
     private final UserCollectionCardService userCollectionCardService;
     private final UserCollectionService userCollectionService;
-    private final UserRepository userRepository;
+    private final UserService userService;  
 
     private User getCurrentUser(Authentication authentication) {
-        return userRepository.findByUsername(authentication.getName())
-            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        // Primero sincronizar el usuario si es necesario
+        User syncedUser = userService.synchronizeUser(jwt);
+        return syncedUser;
     }
 
     @PostMapping("/{cardId}")
