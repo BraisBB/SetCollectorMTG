@@ -12,5 +12,5 @@ public class UserDto {
     private String firstName;
     private String lastName;
     private LocalDate joinDate;
-    // Correcto: no tiene contraseña ni keycloakId (generalmente no se expone)
+    // No tiene contraseña ni keycloakId 
 }

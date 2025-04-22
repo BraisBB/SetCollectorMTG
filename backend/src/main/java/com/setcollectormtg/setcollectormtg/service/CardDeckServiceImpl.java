@@ -27,7 +27,7 @@ public class CardDeckServiceImpl implements CardDeckService {
         Card card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Card not found with id: " + cardId));
 
-        GameType gameType = GameType.fromString(deck.getGameType());
+        GameType gameType = deck.getGameType();
         
         // Verificar si ya existe la carta en el mazo
         if (cardDeckRepository.existsByDeck_DeckIdAndCard_CardId(deckId, cardId)) {
@@ -61,7 +61,7 @@ public class CardDeckServiceImpl implements CardDeckService {
         CardDeck cardDeck = cardDeckRepository.findByDeck_DeckIdAndCard_CardId(deckId, cardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Card not found in deck"));
 
-        GameType gameType = GameType.fromString(cardDeck.getDeck().getGameType());
+        GameType gameType = cardDeck.getDeck().getGameType();
         
         // Validar el nuevo número de copias según el formato
         validateCardCopies(deckId, cardId, newQuantity, gameType);

@@ -4,22 +4,28 @@ import com.setcollectormtg.setcollectormtg.dto.DeckCreateDto;
 import com.setcollectormtg.setcollectormtg.dto.DeckDto;
 import com.setcollectormtg.setcollectormtg.model.Deck;
 import com.setcollectormtg.setcollectormtg.model.User;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Named;
+import org.springframework.stereotype.Component;
 
-@Mapper(componentModel = "spring")
-public interface DeckMapper {
+@Component
+public class DeckMapper {
 
-    @Mapping(source = "user", target = "userId", qualifiedByName = "mapUserToUserId")
-    DeckDto toDto(Deck deck);
+    public DeckDto toDto(Deck deck) {
+        DeckDto dto = new DeckDto();
+        dto.setDeckId(deck.getDeckId());
+        dto.setDeckName(deck.getDeckName());
+        dto.setGameType(deck.getGameType());
+        dto.setDeckColor(deck.getDeckColor());
+        dto.setTotalCards(deck.getTotalCards());
+        dto.setUserId(deck.getUser().getUserId());
+        return dto;
+    }
 
-    @Mapping(target = "deckId", ignore = true)
-    @Mapping(target = "cardDecks", ignore = true) // Corregido: ahora usa el nombre correcto
-    Deck toEntity(DeckCreateDto dto, User user);
-
-    @Named("mapUserToUserId")
-    default Long mapUserToUserId(User user) {
-        return user != null ? user.getUserId() : null;
+    public Deck toEntity(DeckCreateDto dto, User user) {
+        Deck deck = new Deck();
+        deck.setDeckName(dto.getDeckName());
+        deck.setGameType(dto.getGameType());
+        deck.setDeckColor(dto.getDeckColor());
+        deck.setUser(user);
+        return deck;
     }
 }

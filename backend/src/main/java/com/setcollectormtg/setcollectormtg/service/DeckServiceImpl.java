@@ -12,6 +12,9 @@ import com.setcollectormtg.setcollectormtg.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,15 +48,22 @@ public class DeckServiceImpl implements DeckService {
     @Override
     @Transactional
     public DeckDto createDeck(DeckCreateDto deckCreateDto) {
+        // Obtener el usuario autenticado
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        String keycloakId = jwt.getSubject();
+        
+        // Buscar el usuario por su keycloakId
+        User user = userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+
         // Verificar si ya existe un deck con el mismo nombre para este usuario
-        if (deckRepository.existsByDeckNameAndUser_UserId(deckCreateDto.getDeckName(), deckCreateDto.getUserId())) {
+        if (deckRepository.existsByDeckNameAndUser_UserId(deckCreateDto.getDeckName(), user.getUserId())) {
             throw new IllegalArgumentException("Deck with name '" + deckCreateDto.getDeckName() + "' already exists for this user");
         }
 
-        User user = userRepository.findById(deckCreateDto.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + deckCreateDto.getUserId()));
-
         Deck deck = deckMapper.toEntity(deckCreateDto, user);
+        deck.setTotalCards(0); // Inicializar contador de cartas
         Deck savedDeck = deckRepository.save(deck);
         return deckMapper.toDto(savedDeck);
     }

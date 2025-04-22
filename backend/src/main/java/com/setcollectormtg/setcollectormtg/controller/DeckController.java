@@ -28,13 +28,13 @@ public class DeckController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #id) or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #id)")
     public ResponseEntity<DeckDto> getDeckById(@PathVariable Long id) {
         return ResponseEntity.ok(deckService.getDeckById(id));
     }
 
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #userId) or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #userId)")
     public ResponseEntity<List<DeckDto>> getDecksByUser(@PathVariable Long userId) {
         return ResponseEntity.ok(deckService.getDecksByUser(userId));
     }
@@ -61,7 +61,7 @@ public class DeckController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #id) or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #id)")
     public ResponseEntity<Void> deleteDeck(@PathVariable Long id) {
         deckService.deleteDeck(id);
         return ResponseEntity.noContent().build();
