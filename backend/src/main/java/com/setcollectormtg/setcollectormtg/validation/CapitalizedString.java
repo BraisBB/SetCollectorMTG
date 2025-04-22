@@ -9,7 +9,7 @@ import java.lang.annotation.*;
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CapitalizedString {
-    String message() default "El texto debe comenzar con mayúscula";
+    String message() default "The text must start with a capital letter";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }

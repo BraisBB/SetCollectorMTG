@@ -10,18 +10,18 @@ import java.time.LocalDate;
 
 @Data
 public class SetMtgCreateDto {
-    @NotBlank(message = "El nombre del set es obligatorio")
-    @Size(min = 3, max = 100, message = "El nombre debe tener entre 3 y 100 caracteres")
+    @NotBlank(message = "Set name is required")
+    @Size(min = 3, max = 100, message = "Name must be between 3 and 100 characters")
     private String name;
 
-    @NotBlank(message = "El código del set es obligatorio")
-    @Size(min = 3, max = 10, message = "El código debe tener entre 3 y 10 caracteres")
+    @NotBlank(message = "Set code is required")
+    @Size(min = 3, max = 10, message = "Code must be between 3 and 10 characters")
     private String setCode;
 
-    @NotNull(message = "La fecha de lanzamiento es obligatoria")
+    @NotNull(message = "Release date is required")
     private LocalDate releaseDate;
 
-    @NotNull(message = "El total de cartas es obligatorio")
-    @PositiveOrZero(message = "El total de cartas debe ser 0 o mayor")
-    private Integer totalCards = 0; // Valor por defecto
+    @NotNull(message = "Total cards is required")
+    @PositiveOrZero(message = "Total cards must be 0 or greater")
+    private Integer totalCards = 0; // Default value
 }

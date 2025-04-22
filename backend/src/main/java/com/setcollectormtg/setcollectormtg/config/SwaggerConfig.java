@@ -28,9 +28,9 @@ public class SwaggerConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("API de Set Collector MTG")
+                        .title("API of Set Collector MTG")
                         .version("1.0")
-                        .description("API para gestionar colecciones de cartas Magic: The Gathering"))
+                        .description("API for managing Magic: The Gathering card collections"))
                 .addSecurityItem(new SecurityRequirement().addList("keycloak_oauth"))
                 .components(new Components()
                         .addSecuritySchemes("keycloak_oauth",

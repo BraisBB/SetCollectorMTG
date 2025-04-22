@@ -9,13 +9,13 @@ import lombok.Data;
 @Data
 public class DeckCreateDto {
     
-    @NotBlank(message = "El nombre del deck es obligatorio")
-    @Size(min = 3, max = 50, message = "El nombre debe tener entre 3 y 50 caracteres")
+    @NotBlank(message = "Deck name is required")
+    @Size(min = 3, max = 50, message = "Name must be between 3 and 50 characters")
     private String deckName;
 
-    @NotNull(message = "El tipo de juego es obligatorio")
+    @NotNull(message = "Game type is required")
     private GameType gameType;
 
-    @NotBlank(message = "El color del deck es obligatorio")
+    @NotBlank(message = "Deck color is required")
     private String deckColor;
 }

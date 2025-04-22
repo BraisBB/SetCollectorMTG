@@ -6,14 +6,14 @@ import lombok.Data;
 
 @Data
 public class UserCollectionCardDto {
-    @NotNull(message = "El ID de la colección es obligatorio")
+    @NotNull(message = "Collection ID is required")
     private Long collectionId;
     
-    @NotNull(message = "El ID de la carta es obligatorio")
+    @NotNull(message = "Card ID is required")
     private Long cardId;
     
-    @NotNull(message = "El número de copias es obligatorio")
-    @Positive(message = "El número de copias debe ser mayor que 0")
+    @NotNull(message = "Number of copies is required")
+    @Positive(message = "Number of copies must be greater than 0")
     private Integer nCopies;
     
     private String cardName;

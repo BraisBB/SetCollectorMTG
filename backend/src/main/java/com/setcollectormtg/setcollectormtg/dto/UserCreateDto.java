@@ -10,25 +10,25 @@ import lombok.Data;
 
 @Data
 public class UserCreateDto {
-    @NotBlank(message = "El nombre de usuario es obligatorio")
-    @Size(min = 3, max = 20, message = "El nombre de usuario debe tener entre 3 y 20 caracteres")
-    @Pattern(regexp = "^[\\w\\-.*$@!%&]+$", message = "El nombre de usuario no puede contener espacios ni caracteres especiales como < > ( ) { } [ ] ; : ' \" , /")
+    @NotBlank(message = "Username is required")
+    @Size(min = 3, max = 20, message = "Username must be between 3 and 20 characters")
+    @Pattern(regexp = "^[\\w\\-.*$@!%&]+$", message = "Username cannot contain spaces or special characters like < > ( ) { } [ ] ; : ' \" , /")
     private String username;
 
-    @NotBlank(message = "El email es obligatorio")
-    @Email(message = "El formato del email no es válido")
-    @Size(max = 50, message = "El email no puede exceder los 50 caracteres")
+    @NotBlank(message = "Email is required")
+    @Email(message = "Invalid email format")
+    @Size(max = 50, message = "Email cannot exceed 50 characters")
     private String email;
 
-    @NotBlank(message = "La contraseña es obligatoria")
+    @NotBlank(message = "Password is required")
     @StrongPassword
     private String password;
 
-    @NotBlank(message = "El nombre es obligatorio")
-    @CapitalizedString(message = "El nombre debe comenzar con mayúscula")
+    @NotBlank(message = "First name is required")
+    @CapitalizedString(message = "First name must start with a capital letter")
     private String firstName;
 
-    @NotBlank(message = "El apellido es obligatorio")
-    @CapitalizedString(message = "El apellido debe comenzar con mayúscula")
+    @NotBlank(message = "Last name is required")
+    @CapitalizedString(message = "Last name must start with a capital letter")
     private String lastName;
 }

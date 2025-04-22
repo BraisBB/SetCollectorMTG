@@ -18,50 +18,50 @@ public class StrongPasswordValidator implements ConstraintValidator<StrongPasswo
         context.disableDefaultConstraintViolation();
         boolean isValid = true;
 
-        // Validar longitud
+        // Validate length
         if (password.length() < 8 || password.length() > 16) {
             context.buildConstraintViolationWithTemplate(
-                "La contraseña debe tener entre 8 y 16 caracteres")
+                "Password must be between 8 and 16 characters")
                 .addConstraintViolation();
             isValid = false;
         }
 
-        // Validar espacios
+        // Validate spaces
         if (password.contains(" ")) {
             context.buildConstraintViolationWithTemplate(
-                "La contraseña no puede contener espacios")
+                "Password cannot contain spaces")
                 .addConstraintViolation();
             isValid = false;
         }
 
-        // Validar mayúscula
+        // Validate uppercase
         if (!password.matches(".*[A-Z].*")) {
             context.buildConstraintViolationWithTemplate(
-                "La contraseña debe contener al menos una letra mayúscula")
+                "Password must contain at least one uppercase letter")
                 .addConstraintViolation();
             isValid = false;
         }
 
-        // Validar minúscula
+        // Validate lowercase
         if (!password.matches(".*[a-z].*")) {
             context.buildConstraintViolationWithTemplate(
-                "La contraseña debe contener al menos una letra minúscula")
+                "Password must contain at least one lowercase letter")
                 .addConstraintViolation();
             isValid = false;
         }
 
-        // Validar número
+        // Validate number
         if (!password.matches(".*\\d.*")) {
             context.buildConstraintViolationWithTemplate(
-                "La contraseña debe contener al menos un número")
+                "Password must contain at least one number")
                 .addConstraintViolation();
             isValid = false;
         }
 
-        // Validar carácter especial
+        // Validate special character
         if (!password.matches(".*[!@?./#$%].*")) {
             context.buildConstraintViolationWithTemplate(
-                "La contraseña debe contener al menos un carácter especial (!@?./#$%)")
+                "Password must contain at least one special character (!@?./#$%)")
                 .addConstraintViolation();
             isValid = false;
         }

@@ -11,26 +11,26 @@ import lombok.NoArgsConstructor;
 public class CardDto {
     private Long cardId;
     
-    @NotBlank(message = "El nombre de la carta es obligatorio")
+    @NotBlank(message = "The card name is mandatory")
     private String name;
     
-    @NotBlank(message = "La rareza de la carta es obligatoria")
+    @NotBlank(message = "The card rarity is mandatory")
     private String rarity;
     
     private String oracleText;
     
-    @NotNull(message = "El valor de maná es obligatorio")
-    @PositiveOrZero(message = "El valor de maná debe ser 0 o mayor")
+    @NotNull(message = "The mana value is mandatory")
+    @PositiveOrZero(message = "The mana value must be 0 or greater")
     private Integer manaValue;
     
-    @NotBlank(message = "El coste de maná es obligatorio")
+    @NotBlank(message = "The mana cost is mandatory")
     private String manaCost;
     
-    @NotBlank(message = "El tipo de carta es obligatorio")
+    @NotBlank(message = "The card type is mandatory")
     private String cardType;
     
     private String imageUrl;
     
-    @NotNull(message = "El ID del set es obligatorio")
+    @NotNull(message = "The set ID is mandatory")
     private Long setId;
 }

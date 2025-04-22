@@ -12,12 +12,12 @@ public class CapitalizedStringValidator implements ConstraintValidator<Capitaliz
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
         if (value == null || value.isEmpty()) {
-            return true; // La validación @NotBlank se encargará de este caso
+            return true; // @NotBlank validation will handle this case
         }
 
-        // Obtenemos el nombre del campo del path de la violación
+        // Get the field name from the violation path
         String fieldName = context.getDefaultConstraintMessageTemplate()
-            .replaceAll("El campo (.*) debe comenzar con mayúscula", "$1");
+            .replaceAll("The field (.*) must start with a capital letter", "$1");
 
         String errorMessage = ValidationErrorBuilder.buildCapitalizedValidationError(value, fieldName);
         

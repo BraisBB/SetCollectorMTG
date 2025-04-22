@@ -10,25 +10,25 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class CardCreateDto {
-    @NotBlank
+    @NotBlank(message = "Card name is required")
     private String name;
 
-    @NotBlank
+    @NotBlank(message = "Rarity is required")
     private String rarity;
 
     private String oracleText;
 
-    @NotNull
+    @NotNull(message = "Mana value is required")
     private Integer manaValue;
 
-    @NotBlank
+    @NotBlank(message = "Mana cost is required")
     private String manaCost;
 
-    @NotBlank
+    @NotBlank(message = "Card type is required")
     private String cardType;
 
     private String imageUrl;
 
-    @NotNull
+    @NotNull(message = "Set ID is required")
     private Long setId;
 }

@@ -4,15 +4,16 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 
+
 @Data
 public class UserCollectionDto {
-    @NotNull(message = "El ID de la colección es obligatorio")
+    @NotNull(message = "Set ID is required")
     private Long collectionId;
-    
-    @NotNull(message = "El ID del usuario es obligatorio")
+
+    @NotNull(message = "User ID is required")
     private Long userId;
-    
-    @NotNull(message = "El total de cartas es obligatorio")
-    @PositiveOrZero(message = "El total de cartas debe ser 0 o mayor")
+
+    @NotNull(message = "Total cards are required")
+    @PositiveOrZero(message = "Total cards must be 0 or greater")
     private Integer totalCards;
 }

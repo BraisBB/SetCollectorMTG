@@ -5,24 +5,26 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 public class DeckDto {
-    // ID será null cuando se esté creando un nuevo deck
+    // ID will be null when creating a new deck
     private Long deckId;
 
-    @NotBlank(message = "El nombre del deck es obligatorio")
-    @Size(min = 3, max = 50, message = "El nombre debe tener entre 3 y 50 caracteres")
+    @NotBlank(message = "The deck name is mandatory")
+    @Size(min = 3, max = 50, message = "The name must be between 3 and 50 characters")
     private String deckName;
 
-    @NotNull(message = "El tipo de juego es obligatorio")
+    @NotNull(message = "The game type is mandatory")
     private GameType gameType;
 
-    @NotBlank(message = "El color del deck es obligatorio")
+    @NotBlank(message = "The deck color is mandatory")
     private String deckColor;
 
     private Integer totalCards;
 
-    @NotNull(message = "El ID de usuario es obligatorio")
-    private Long userId; // Solo el ID del usuario
+    @NotNull(message = "The user ID is mandatory")
+    private Long userId; // Only the user ID
 }

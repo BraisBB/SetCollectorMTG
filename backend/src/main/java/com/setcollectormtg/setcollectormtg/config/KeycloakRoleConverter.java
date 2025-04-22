@@ -17,8 +17,6 @@ public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedA
     public Collection<GrantedAuthority> convert(Jwt jwt) {
         Collection<GrantedAuthority> authorities = new ArrayList<>();
 
-        // Log para debugging
-        System.out.println("JWT Token claims: " + jwt.getClaims());
 
         // Roles del realm
         Map<String, Object> realmAccess = jwt.getClaim("realm_access");
@@ -28,7 +26,6 @@ public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedA
                
                 String authorityRole = roleName.toUpperCase();
                 authorities.add(new SimpleGrantedAuthority(authorityRole));
-                System.out.println("Convertido rol del realm: " + roleName + " a: " + authorityRole);
             });
         }
 
@@ -42,13 +39,9 @@ public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedA
                     
                     String authorityRole = roleName.toUpperCase();
                     authorities.add(new SimpleGrantedAuthority(authorityRole));
-                    System.out.println("Convertido rol del cliente: " + roleName + " a: " + authorityRole);
                 });
             }
-        }
-
-        // Log de las autoridades convertidas
-        System.out.println("Autoridades convertidas: " + authorities);
+        } 
 
         return authorities;
     }
