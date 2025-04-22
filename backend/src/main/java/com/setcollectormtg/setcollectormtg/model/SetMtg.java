@@ -30,9 +30,6 @@ public class SetMtg {
     @Column(name = "release_date")
     private LocalDate releaseDate;
 
-    @Column(name = "icon_svg_uri")
-    private String iconSvgUri;
-
     @OneToMany(mappedBy = "setMtg", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Card> cards = new ArrayList<>();
 

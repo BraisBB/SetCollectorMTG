@@ -15,11 +15,20 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 public interface CardMapper {
 
     @Mapping(target = "setMtg", ignore = true)
+    @Mapping(target = "cardId", ignore = true)
+    @Mapping(target = "scryfallId", ignore = true)
+    @Mapping(target = "userCollectionCards", ignore = true)
+    @Mapping(target = "manaValueFromNode", ignore = true)
+    @Mapping(target = "manaValue", source = "manaValue")
     Card toEntity(CardCreateDto cardCreateDto);
 
     @Mapping(target = "setId", source = "setMtg.setId")
     CardDto toDto(Card card);
 
     @Mapping(target = "setMtg", ignore = true)
+    @Mapping(target = "scryfallId", ignore = true)
+    @Mapping(target = "userCollectionCards", ignore = true)
+    @Mapping(target = "manaValueFromNode", ignore = true)
+    @Mapping(target = "manaValue", source = "manaValue")
     void updateCardFromDto(CardDto cardDto, @MappingTarget Card card);
 }
