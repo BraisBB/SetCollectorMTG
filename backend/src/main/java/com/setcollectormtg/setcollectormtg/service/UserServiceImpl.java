@@ -42,12 +42,13 @@ public class UserServiceImpl implements UserService {
 
     // Constructor para inyección (Asegúrate que todos los final se inicializan)
     public UserServiceImpl(UserRepository userRepository, UserMapper userMapper,
-                           Keycloak keycloakAdmin, @Value("${keycloak.realm}") String realm) {
+            Keycloak keycloakAdmin, @Value("${keycloak.realm}") String realm) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.keycloakAdmin = keycloakAdmin;
         this.realm = realm;
     }
+
     @Override
     @Transactional
     public UserDto createUser(UserCreateDto userCreateDto) {
@@ -107,7 +108,8 @@ public class UserServiceImpl implements UserService {
                 appUser.setUserCollection(defaultCollection);
 
                 User savedUser = userRepository.save(appUser);
-                log.info("Local user record created successfully with default USER role for Keycloak ID: {}", keycloakUserId);
+                log.info("Local user record created successfully with default USER role for Keycloak ID: {}",
+                        keycloakUserId);
                 return userMapper.toDto(savedUser);
             } else {
                 String errorBody = "";
@@ -116,17 +118,23 @@ public class UserServiceImpl implements UserService {
                 }
                 log.error("Failed to create user in Keycloak. Status: {}, Info: {}, Body: {}",
                         response.getStatus(), response.getStatusInfo(), errorBody);
-                throw new RuntimeException("Keycloak user creation failed. Status: " + response.getStatus() + " - " + errorBody);
+                throw new RuntimeException(
+                        "Keycloak user creation failed. Status: " + response.getStatus() + " - " + errorBody);
             }
         } catch (Exception e) {
-            log.error("Exception during user creation process for username {}: {}", userCreateDto.getUsername(), e.getMessage(), e);
+            log.error("Exception during user creation process for username {}: {}", userCreateDto.getUsername(),
+                    e.getMessage(), e);
             if (keycloakUserId != null && response != null && response.getStatus() == 201) {
-                log.warn("Local DB save likely failed after Keycloak user creation. Attempting Keycloak user rollback for ID: {}", keycloakUserId);
+                log.warn(
+                        "Local DB save likely failed after Keycloak user creation. Attempting Keycloak user rollback for ID: {}",
+                        keycloakUserId);
                 try {
                     realmResource.users().delete(keycloakUserId);
                     log.info("Rollback successful: Keycloak user {} deleted.", keycloakUserId);
                 } catch (Exception deleteEx) {
-                    log.error("FATAL: Rollback failed! Keycloak user {} exists but local record failed or delete failed. Manual intervention required.", keycloakUserId, deleteEx);
+                    log.error(
+                            "FATAL: Rollback failed! Keycloak user {} exists but local record failed or delete failed. Manual intervention required.",
+                            keycloakUserId, deleteEx);
                 }
             }
             throw new RuntimeException("Error during user creation process", e);
@@ -136,6 +144,7 @@ public class UserServiceImpl implements UserService {
             }
         }
     }
+
     @Override
     @Transactional
     public User synchronizeUser(Jwt jwt) {
@@ -146,32 +155,33 @@ public class UserServiceImpl implements UserService {
         }
 
         Optional<User> existingUserOpt = userRepository.findByKeycloakId(keycloakId);
-        
+
         if (existingUserOpt.isEmpty()) {
             log.info("Creating new local user for Keycloak ID: {}", keycloakId);
             User userToSave = new User();
             userToSave.setKeycloakId(keycloakId);
-            
+
             String username = jwt.getClaimAsString("preferred_username");
             String email = jwt.getClaimAsString("email");
             String firstName = jwt.getClaimAsString("given_name");
             String lastName = jwt.getClaimAsString("family_name");
-            
+
             userToSave.setUsername(username != null ? username : "default_username_" + keycloakId);
             userToSave.setEmail(email != null ? email : keycloakId + "@example.com");
             userToSave.setFirstName(firstName != null ? firstName : "DefaultFirst");
             userToSave.setLastName(lastName != null ? lastName : "DefaultLast");
-            
+
             // Crear y asociar la colección por defecto
             UserCollection defaultCollection = new UserCollection();
             defaultCollection.setUser(userToSave);
             defaultCollection.setTotalCards(0);
             userToSave.setUserCollection(defaultCollection);
-            
-            // Guardar el usuario (esto también guardará la colección debido a CascadeType.ALL)
+
+            // Guardar el usuario (esto también guardará la colección debido a
+            // CascadeType.ALL)
             return userRepository.save(userToSave);
         }
-        
+
         return existingUserOpt.get();
     }
 
@@ -202,7 +212,6 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
-
         if (userDto.getUsername() != null && !user.getUsername().equals(userDto.getUsername())) {
             if (userRepository.existsByUsernameAndKeycloakIdNot(userDto.getUsername(), user.getKeycloakId())) {
                 throw new RuntimeException("Username already exists for a different user.");
@@ -216,8 +225,10 @@ public class UserServiceImpl implements UserService {
 
         userMapper.updateUserFromDto(userDto, user);
 
-        if (user.getFirstName() == null) user.setFirstName("UpdatedFirst");
-        if (user.getLastName() == null) user.setLastName("UpdatedLast");
+        if (user.getFirstName() == null)
+            user.setFirstName("UpdatedFirst");
+        if (user.getLastName() == null)
+            user.setLastName("UpdatedLast");
 
         return userMapper.toDto(userRepository.save(user));
     }
@@ -225,13 +236,24 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void deleteUser(Long id) {
-        // Tu lógica existente... (Solo borra localmente)
-        User user = userRepository.findById(id) // Carga el usuario para loggear info útil si es necesario
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+        
+        String keycloakUserId = user.getKeycloakId();
+        if (keycloakUserId != null) {
+            try {
+                log.info("Attempting to delete user from Keycloak with ID: {}", keycloakUserId);
+                RealmResource realmResource = keycloakAdmin.realm(realm);
+                realmResource.users().delete(keycloakUserId);
+                log.info("Successfully deleted user from Keycloak with ID: {}", keycloakUserId);
+            } catch (Exception e) {
+                log.error("Error deleting user from Keycloak with ID {}: {}", keycloakUserId, e.getMessage());
+                throw new RuntimeException("Failed to delete user from Keycloak", e);
+            }
+        }
+
         log.warn("Deleting local user record for id: {}, Keycloak ID: {}, Username: {}",
-                id, user.getKeycloakId(), user.getUsername());
-        // Considera si deberías llamar a Keycloak Admin API aquí para borrar también el usuario de Keycloak
-        // usersResource.delete(user.getKeycloakId()); // <-- Requeriría inyectar UsersResource o Keycloak admin
+                id, keycloakUserId, user.getUsername());
         userRepository.deleteById(id);
     }
 
@@ -273,7 +295,7 @@ public class UserServiceImpl implements UserService {
             for (String roleName : roleNames) {
                 // Asegurarse de que el rol existe
                 createRoleIfNotExists(realmResource, roleName);
-                
+
                 try {
                     // Obtener el rol del realm
                     RoleRepresentation realmRole = realmResource.roles().get(roleName).toRepresentation();

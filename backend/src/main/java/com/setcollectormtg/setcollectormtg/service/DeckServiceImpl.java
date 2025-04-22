@@ -40,7 +40,7 @@ public class DeckServiceImpl implements DeckService {
     @Override
     @Transactional(readOnly = true)
     public DeckDto getDeckById(Long id) {
-       return deckRepository.findById(id)
+        return deckRepository.findById(id)
                 .map(deckMapper::toDto)
                 .orElseThrow(() -> new ResourceNotFoundException("Deck not found with id: " + id));
     }
@@ -52,14 +52,15 @@ public class DeckServiceImpl implements DeckService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
         String keycloakId = jwt.getSubject();
-        
+
         // Buscar el usuario por su keycloakId
         User user = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
         // Verificar si ya existe un deck con el mismo nombre para este usuario
         if (deckRepository.existsByDeckNameAndUser_UserId(deckCreateDto.getDeckName(), user.getUserId())) {
-            throw new IllegalArgumentException("Deck with name '" + deckCreateDto.getDeckName() + "' already exists for this user");
+            throw new IllegalArgumentException(
+                    "Deck with name '" + deckCreateDto.getDeckName() + "' already exists for this user");
         }
 
         Deck deck = deckMapper.toEntity(deckCreateDto, user);
@@ -77,7 +78,8 @@ public class DeckServiceImpl implements DeckService {
         // Verificar si el nuevo nombre ya existe para otro deck del mismo usuario
         if (!existingDeck.getDeckName().equals(deckDto.getDeckName()) &&
                 deckRepository.existsByDeckNameAndUser_UserId(deckDto.getDeckName(), deckDto.getUserId())) {
-            throw new IllegalArgumentException("Deck with name '" + deckDto.getDeckName() + "' already exists for this user");
+            throw new IllegalArgumentException(
+                    "Deck with name '" + deckDto.getDeckName() + "' already exists for this user");
         }
 
         // Actualizar campos básicos

@@ -51,7 +51,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse error = ErrorResponse.builder()
                 .code("VALIDATION_ERROR")
-                .message("Error de validación")
+                .message("Validation error")
                 .errors(errors)
                 .timestamp(LocalDateTime.now())
                 .path(request.getDescription(false))
@@ -75,7 +75,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse error = ErrorResponse.builder()
                 .code("CONSTRAINT_VIOLATION")
-                .message("Error de validación de restricciones")
+                .message("Constraint validation error")
                 .errors(errors)
                 .timestamp(LocalDateTime.now())
                 .path(request.getDescription(false))
@@ -92,7 +92,7 @@ public class GlobalExceptionHandler {
         
         ErrorResponse error = ErrorResponse.builder()
                 .code("ACCESS_DENIED")
-                .message("No tiene permisos para realizar esta acción")
+                .message("You don't have permission to perform this action")
                 .timestamp(LocalDateTime.now())
                 .path(request.getDescription(false))
                 .status(HttpStatus.FORBIDDEN.value())
@@ -106,12 +106,11 @@ public class GlobalExceptionHandler {
             DataIntegrityViolationException ex,
             WebRequest request) {
         
-        String message = "Error de integridad de datos";
+        String message = "Data integrity error";
         String details = ex.getMostSpecificCause().getMessage();
         
-        // Detectar violaciones específicas de restricciones únicas
         if (details.contains("unique constraint") || details.contains("Duplicate entry")) {
-            message = "Ya existe un registro con estos datos";
+            message = "A record with this data already exists";
         }
 
         ErrorResponse error = ErrorResponse.builder()
@@ -131,7 +130,7 @@ public class GlobalExceptionHandler {
             MethodArgumentTypeMismatchException ex,
             WebRequest request) {
         
-        String message = String.format("El parámetro '%s' con valor '%s' no pudo ser convertido a tipo %s", 
+        String message = String.format("Parameter '%s' with value '%s' could not be converted to type %s", 
             ex.getName(), ex.getValue(), ex.getRequiredType().getSimpleName());
 
         ErrorResponse error = ErrorResponse.builder()
@@ -166,11 +165,11 @@ public class GlobalExceptionHandler {
             Exception ex,
             WebRequest request) {
         
-        log.error("Error inesperado", ex);
+        log.error("Unexpected error", ex);
         
         ErrorResponse error = ErrorResponse.builder()
                 .code("INTERNAL_ERROR")
-                .message("Ha ocurrido un error interno")
+                .message("An internal error has occurred")
                 .details(ex.getMessage())
                 .timestamp(LocalDateTime.now())
                 .path(request.getDescription(false))
