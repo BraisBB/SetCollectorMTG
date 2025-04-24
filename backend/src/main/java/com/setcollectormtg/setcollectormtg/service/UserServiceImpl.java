@@ -49,6 +49,14 @@ public class UserServiceImpl implements UserService {
         this.realm = realm;
     }
 
+    /**
+     * Crea un usuario tanto en Keycloak como en la base de datos local, asignando el rol USER por defecto.
+     * Realiza rollback en Keycloak si falla la creación local.
+     * Lanza excepción si el usuario o email ya existen localmente o si ocurre un error en Keycloak.
+     *
+     * @param userCreateDto DTO con los datos del usuario a crear
+     * @return DTO del usuario creado
+     */
     @Override
     @Transactional
     public UserDto createUser(UserCreateDto userCreateDto) {
@@ -145,6 +153,12 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    /**
+     * Sincroniza un usuario local a partir de un JWT de Keycloak. Si no existe localmente, lo crea con los datos del token.
+     *
+     * @param jwt Token JWT de Keycloak
+     * @return Usuario sincronizado o creado
+     */
     @Override
     @Transactional
     public User synchronizeUser(Jwt jwt) {
@@ -185,6 +199,11 @@ public class UserServiceImpl implements UserService {
         return existingUserOpt.get();
     }
 
+    /**
+     * Obtiene todos los usuarios registrados en la base de datos local.
+     *
+     * @return Lista de usuarios en formato DTO
+     */
     @Override
     public List<UserDto> getAllUsers() {
         // Tu lógica existente...
@@ -193,11 +212,23 @@ public class UserServiceImpl implements UserService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Obtiene todos los usuarios paginados.
+     *
+     * @param pageable Parámetros de paginación
+     * @return Página de usuarios en formato DTO
+     */
     @Override
     public Page<UserDto> getAllUsersPaged(Pageable pageable) {
         return userRepository.findAll(pageable).map(userMapper::toDto);
     }
 
+    /**
+     * Obtiene un usuario por su ID local.
+     *
+     * @param id ID del usuario
+     * @return DTO del usuario
+     */
     @Override
     public UserDto getUserById(Long id) {
         // Tu lógica existente...
@@ -206,6 +237,13 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
     }
 
+    /**
+     * Actualiza los datos de un usuario local, validando que el username y email no estén repetidos en otros usuarios.
+     *
+     * @param id      ID del usuario a actualizar
+     * @param userDto DTO con los nuevos datos
+     * @return DTO actualizado del usuario
+     */
     @Override
     @Transactional
     public UserDto updateUser(Long id, UserDto userDto) {
@@ -233,6 +271,12 @@ public class UserServiceImpl implements UserService {
         return userMapper.toDto(userRepository.save(user));
     }
 
+    /**
+     * Elimina un usuario tanto de Keycloak como de la base de datos local.
+     * Lanza excepción si ocurre un error en Keycloak.
+     *
+     * @param id ID del usuario a eliminar
+     */
     @Override
     @Transactional
     public void deleteUser(Long id) {
@@ -257,6 +301,12 @@ public class UserServiceImpl implements UserService {
         userRepository.deleteById(id);
     }
 
+    /**
+     * Asigna una lista de roles a un usuario en Keycloak, creando los roles si no existen.
+     *
+     * @param id    ID del usuario local
+     * @param roles Lista de nombres de roles a asignar
+     */
     @Override
     @Transactional
     public void assignRolesToUser(Long id, List<String> roles) {
@@ -272,57 +322,12 @@ public class UserServiceImpl implements UserService {
         assignRolesToUser(realmResource, keycloakUserId, roles);
     }
 
-    private void createRoleIfNotExists(RealmResource realmResource, String roleName) {
-        try {
-            // Intentar obtener el rol
-            realmResource.roles().get(roleName).toRepresentation();
-        } catch (Exception e) {
-            // El rol no existe, crearlo
-            RoleRepresentation role = new RoleRepresentation();
-            role.setName(roleName);
-            role.setDescription("Role " + roleName);
-            realmResource.roles().create(role);
-            log.info("Created new role in realm: {}", roleName);
-        }
-    }
-
-    private void assignRolesToUser(RealmResource realmResource, String userId, List<String> roleNames) {
-        try {
-            // Obtener el usuario
-            UserResource userResource = realmResource.users().get(userId);
-            List<RoleRepresentation> rolesToAssign = new ArrayList<>();
-
-            for (String roleName : roleNames) {
-                // Asegurarse de que el rol existe
-                createRoleIfNotExists(realmResource, roleName);
-
-                try {
-                    // Obtener el rol del realm
-                    RoleRepresentation realmRole = realmResource.roles().get(roleName).toRepresentation();
-                    if (realmRole != null) {
-                        rolesToAssign.add(realmRole);
-                        log.debug("Found realm role: {}", roleName);
-                    }
-                } catch (Exception e) {
-                    log.error("Error getting role {} after creation: {}", roleName, e.getMessage());
-                    throw new RuntimeException("Could not assign role " + roleName);
-                }
-            }
-
-            if (!rolesToAssign.isEmpty()) {
-                // Asignar roles de realm
-                userResource.roles().realmLevel().add(rolesToAssign);
-                log.info("Assigned realm roles {} to user {}", roleNames, userId);
-            } else {
-                log.error("No roles were found to assign to user {}", userId);
-                throw new RuntimeException("No roles found to assign");
-            }
-        } catch (Exception e) {
-            log.error("Error assigning roles to user {}: {}", userId, e.getMessage(), e);
-            throw new RuntimeException("Failed to assign roles to user", e);
-        }
-    }
-
+    /**
+     * Elimina un rol (de realm o cliente) de un usuario en Keycloak.
+     *
+     * @param id       ID del usuario local
+     * @param roleName Nombre del rol a eliminar
+     */
     @Override
     @Transactional
     public void removeRoleFromUser(Long id, String roleName) {
@@ -367,6 +372,12 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    /**
+     * Obtiene todos los roles (de realm y cliente) asignados a un usuario en Keycloak.
+     *
+     * @param id ID del usuario local
+     * @return Lista de nombres de roles
+     */
     @Override
     public List<String> getUserRoles(Long id) {
         User user = userRepository.findById(id)
@@ -399,6 +410,70 @@ public class UserServiceImpl implements UserService {
         } catch (Exception e) {
             log.error("Error getting roles for user {}: {}", keycloakUserId, e.getMessage(), e);
             throw new RuntimeException("Failed to get user roles", e);
+        }
+    }
+
+    /**
+     * Crea un rol en Keycloak si no existe.
+     *
+     * @param realmResource Recurso del realm de Keycloak
+     * @param roleName      Nombre del rol
+     */
+    private void createRoleIfNotExists(RealmResource realmResource, String roleName) {
+        try {
+            // Intentar obtener el rol
+            realmResource.roles().get(roleName).toRepresentation();
+        } catch (Exception e) {
+            // El rol no existe, crearlo
+            RoleRepresentation role = new RoleRepresentation();
+            role.setName(roleName);
+            role.setDescription("Role " + roleName);
+            realmResource.roles().create(role);
+            log.info("Created new role in realm: {}", roleName);
+        }
+    }
+
+    /**
+     * Asigna una lista de roles de realm a un usuario en Keycloak.
+     *
+     * @param realmResource Recurso del realm de Keycloak
+     * @param userId        ID de usuario en Keycloak
+     * @param roleNames     Lista de nombres de roles
+     */
+    private void assignRolesToUser(RealmResource realmResource, String userId, List<String> roleNames) {
+        try {
+            // Obtener el usuario
+            UserResource userResource = realmResource.users().get(userId);
+            List<RoleRepresentation> rolesToAssign = new ArrayList<>();
+
+            for (String roleName : roleNames) {
+                // Asegurarse de que el rol existe
+                createRoleIfNotExists(realmResource, roleName);
+
+                try {
+                    // Obtener el rol del realm
+                    RoleRepresentation realmRole = realmResource.roles().get(roleName).toRepresentation();
+                    if (realmRole != null) {
+                        rolesToAssign.add(realmRole);
+                        log.debug("Found realm role: {}", roleName);
+                    }
+                } catch (Exception e) {
+                    log.error("Error getting role {} after creation: {}", roleName, e.getMessage());
+                    throw new RuntimeException("Could not assign role " + roleName);
+                }
+            }
+
+            if (!rolesToAssign.isEmpty()) {
+                // Asignar roles de realm
+                userResource.roles().realmLevel().add(rolesToAssign);
+                log.info("Assigned realm roles {} to user {}", roleNames, userId);
+            } else {
+                log.error("No roles were found to assign to user {}", userId);
+                throw new RuntimeException("No roles found to assign");
+            }
+        } catch (Exception e) {
+            log.error("Error assigning roles to user {}: {}", userId, e.getMessage(), e);
+            throw new RuntimeException("Failed to assign roles to user", e);
         }
     }
 }

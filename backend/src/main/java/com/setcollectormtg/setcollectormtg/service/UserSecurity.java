@@ -13,6 +13,14 @@ public class UserSecurity {
 
     private final UserRepository userRepository;
 
+    /**
+     * Verifica si el usuario autenticado es el propietario del recurso identificado por userId.
+     * Devuelve true solo si el usuario autenticado corresponde al userId proporcionado.
+     *
+     * @param authentication Información de autenticación de Spring Security
+     * @param userId         ID del usuario propietario del recurso
+     * @return true si el usuario autenticado es el propietario, false en caso contrario
+     */
     public boolean isOwner(Authentication authentication, Long userId) {
         if (authentication == null || !authentication.isAuthenticated()) {
             return false;
@@ -22,6 +30,14 @@ public class UserSecurity {
                 .orElse(false);
     }
 
+    /**
+     * Determina si el usuario autenticado puede acceder a un recurso de usuario.
+     * Permite acceso si el usuario es ADMIN o es el propietario del recurso.
+     *
+     * @param authentication Información de autenticación de Spring Security
+     * @param userId         ID del usuario propietario del recurso
+     * @return true si el usuario es ADMIN o propietario, false en caso contrario
+     */
     public boolean canAccessUserResource(Authentication authentication, Long userId) {
         if (authentication == null || !authentication.isAuthenticated()) {
             return false;

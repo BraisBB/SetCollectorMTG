@@ -23,6 +23,11 @@ public class SetMtgServiceImpl implements SetMtgService {
     private final SetMtgMapper setMtgMapper;
     private final CardMapper cardMapper;
 
+    /**
+     * Obtiene todos los sets registrados en la base de datos.
+     *
+     * @return Lista de sets en formato DTO
+     */
     @Override
     @Transactional(readOnly = true)
     public List<SetMtgDto> getAllSets() {
@@ -31,6 +36,13 @@ public class SetMtgServiceImpl implements SetMtgService {
                 .toList();
     }
 
+    /**
+     * Obtiene un set por su ID.
+     * Lanza excepción si no existe.
+     *
+     * @param id ID del set
+     * @return DTO del set encontrado
+     */
     @Override
     @Transactional(readOnly = true)
     public SetMtgDto getSetById(Long id) {
@@ -39,6 +51,13 @@ public class SetMtgServiceImpl implements SetMtgService {
                 .orElseThrow(() -> new ResourceNotFoundException("Set not found with id: " + id));
     }
 
+    /**
+     * Obtiene un set por su código único.
+     * Lanza excepción si no existe.
+     *
+     * @param setCode Código del set
+     * @return DTO del set encontrado
+     */
     @Override
     @Transactional(readOnly = true)
     public SetMtgDto getSetByCode(String setCode) {
@@ -47,6 +66,13 @@ public class SetMtgServiceImpl implements SetMtgService {
                 .orElseThrow(() -> new ResourceNotFoundException("Set not found with code: " + setCode));
     }
 
+    /**
+     * Crea un nuevo set, validando que el código no exista previamente.
+     * Lanza excepción si el código ya está en uso.
+     *
+     * @param setMtgCreateDto DTO con los datos del set a crear
+     * @return DTO del set creado
+     */
     @Override
     public SetMtgDto createSet(SetMtgCreateDto setMtgCreateDto) {
         if (setMtgRepository.existsBySetCode(setMtgCreateDto.getSetCode())) {
@@ -58,6 +84,14 @@ public class SetMtgServiceImpl implements SetMtgService {
         return setMtgMapper.toDto(savedSet);
     }
 
+    /**
+     * Actualiza los datos de un set, validando que el nuevo código no esté repetido.
+     * Lanza excepción si el código ya está en uso por otro set.
+     *
+     * @param id         ID del set a actualizar
+     * @param setDetails DTO con los nuevos datos del set
+     * @return DTO actualizado del set
+     */
     @Override
     public SetMtgDto updateSet(Long id, SetMtgCreateDto setDetails) {
         SetMtg setMtg = setMtgRepository.findById(id)
@@ -73,6 +107,12 @@ public class SetMtgServiceImpl implements SetMtgService {
         return setMtgMapper.toDto(updatedSet);
     }
 
+    /**
+     * Elimina un set si no contiene cartas asociadas.
+     * Lanza excepción si el set tiene cartas.
+     *
+     * @param id ID del set a eliminar
+     */
     @Override
     public void deleteSet(Long id) {
         SetMtg setMtg = setMtgRepository.findById(id)
@@ -85,6 +125,13 @@ public class SetMtgServiceImpl implements SetMtgService {
         setMtgRepository.delete(setMtg);
     }
 
+    /**
+     * Obtiene todas las cartas asociadas a un set por su ID.
+     * Lanza excepción si el set no existe.
+     *
+     * @param setId ID del set
+     * @return Lista de cartas en formato DTO
+     */
     @Override
     @Transactional(readOnly = true)
     public List<CardDto> getCardsBySet(Long setId) {

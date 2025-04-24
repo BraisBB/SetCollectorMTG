@@ -4,28 +4,21 @@ import com.setcollectormtg.setcollectormtg.dto.DeckCreateDto;
 import com.setcollectormtg.setcollectormtg.dto.DeckDto;
 import com.setcollectormtg.setcollectormtg.model.Deck;
 import com.setcollectormtg.setcollectormtg.model.User;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
-@Component
-public class DeckMapper {
+@Mapper(
+    componentModel = "spring",
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
+)
+public interface DeckMapper {
 
-    public DeckDto toDto(Deck deck) {
-        DeckDto dto = new DeckDto();
-        dto.setDeckId(deck.getDeckId());
-        dto.setDeckName(deck.getDeckName());
-        dto.setGameType(deck.getGameType());
-        dto.setDeckColor(deck.getDeckColor());
-        dto.setTotalCards(deck.getTotalCards());
-        dto.setUserId(deck.getUser().getUserId());
-        return dto;
-    }
+    @Mapping(source = "user.userId", target = "userId")
+    DeckDto toDto(Deck deck);
 
-    public Deck toEntity(DeckCreateDto dto, User user) {
-        Deck deck = new Deck();
-        deck.setDeckName(dto.getDeckName());
-        deck.setGameType(dto.getGameType());
-        deck.setDeckColor(dto.getDeckColor());
-        deck.setUser(user);
-        return deck;
-    }
+    @Mapping(target = "deckId", ignore = true)
+    @Mapping(target = "totalCards", ignore = true)
+    @Mapping(source = "user", target = "user")
+    Deck toEntity(DeckCreateDto dto, User user);
 }

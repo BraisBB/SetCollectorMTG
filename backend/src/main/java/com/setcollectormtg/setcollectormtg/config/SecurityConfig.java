@@ -1,5 +1,13 @@
 package com.setcollectormtg.setcollectormtg.config;
 
+/**
+ * Configuración principal de seguridad para la aplicación Set Collector MTG.
+ *
+ * Define las reglas de acceso a los endpoints, la integración con OAuth2/Keycloak,
+ * la política de sesiones y la conversión de roles JWT para Spring Security.
+ * Permite acceso público a la documentación Swagger, consola H2 y endpoints de cartas y sets.
+ * Protege los endpoints de usuarios, colecciones y mazos, delegando la gestión de roles a anotaciones.
+ */
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -17,12 +25,31 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableMethodSecurity(jsr250Enabled = true, prePostEnabled = true)
 public class SecurityConfig {
 
+    /**
+     * Convierte los roles de Keycloak presentes en el JWT a autoridades de Spring Security.
+     */
     private final KeycloakRoleConverter keycloakRoleConverter;
 
+    /**
+     * Inyección del conversor de roles de Keycloak.
+     * @param keycloakRoleConverter conversor de roles personalizado
+     */
     public SecurityConfig(KeycloakRoleConverter keycloakRoleConverter) {
         this.keycloakRoleConverter = keycloakRoleConverter;
     }
 
+    /**
+     * Configura la cadena de filtros de seguridad de Spring Security.
+     *
+     * - Deshabilita CSRF (por ser API stateless)
+     * - Define endpoints públicos y protegidos
+     * - Configura la política de sesión como STATELESS
+     * - Integra OAuth2 Resource Server con JWT y conversión de roles
+     *
+     * @param http objeto de configuración de seguridad HTTP
+     * @return SecurityFilterChain configurado
+     * @throws Exception en caso de error de configuración
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -59,10 +86,15 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Configura el conversor de JWT para extraer los roles de Keycloak y mapearlos a autoridades de Spring Security.
+     *
+     * @return JwtAuthenticationConverter personalizado
+     */
     @Bean
-public JwtAuthenticationConverter jwtAuthenticationConverter() {
-    JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-    converter.setJwtGrantedAuthoritiesConverter(new KeycloakRoleConverter());
-    return converter;
-}
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(new KeycloakRoleConverter());
+        return converter;
+    }
 }

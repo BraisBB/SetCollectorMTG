@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserCollectionController {
 
     private final UserCollectionService userCollectionService;
-    private final UserCollectionMapper userCollectionMapper; // Añadido el mapper
+    private final UserCollectionMapper userCollectionMapper; 
 
     @PostMapping
     @PreAuthorize("hasAuthority('USER')")

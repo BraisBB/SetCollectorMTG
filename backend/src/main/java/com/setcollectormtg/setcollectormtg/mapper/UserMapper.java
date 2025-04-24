@@ -17,7 +17,6 @@ public interface UserMapper {
     @Mapping(target = "joinDate", ignore = true)
     @Mapping(target = "decks", ignore = true)
     @Mapping(target = "userCollection", ignore = true)
-
     User toEntity(UserCreateDto userCreateDto);
 
     @Mapping(target = "joinDate", ignore = true)

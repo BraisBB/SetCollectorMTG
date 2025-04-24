@@ -6,7 +6,15 @@ import org.keycloak.admin.client.KeycloakBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
+/**
+ * Configuración para exponer un bean Keycloak que permite interactuar con la Admin API de Keycloak.
+ *
+ * Utiliza un cliente confidencial (service account) configurado en Keycloak para autenticarse
+ * mediante client credentials y así poder gestionar usuarios, roles y otros recursos administrativos
+ * desde la aplicación backend.
+ *
+ * Las propiedades de conexión y credenciales se obtienen desde application.properties.
+ */
 @Configuration
 public class KeycloakAdminConfig {
 
@@ -23,6 +31,11 @@ public class KeycloakAdminConfig {
     @Value("${keycloak.admin-client.client-secret}")
     private String clientSecret;
 
+    /**
+     * Crea y expone un bean Keycloak autenticado como cliente confidencial para la Admin API.
+     *
+     * @return instancia de Keycloak autenticada para operaciones administrativas
+     */
     @Bean
     public Keycloak keycloakAdmin() {
         // Este bean se usará para interactuar con la Admin API de Keycloak

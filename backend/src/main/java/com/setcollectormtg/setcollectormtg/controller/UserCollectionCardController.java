@@ -33,7 +33,6 @@ public class UserCollectionCardController {
 
     private User getCurrentUser(Authentication authentication) {
         Jwt jwt = (Jwt) authentication.getPrincipal();
-        // Primero sincronizar el usuario si es necesario
         User syncedUser = userService.synchronizeUser(jwt);
         return syncedUser;
     }

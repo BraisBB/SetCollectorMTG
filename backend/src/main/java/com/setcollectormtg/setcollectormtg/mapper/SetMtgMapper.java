@@ -14,7 +14,7 @@ public interface SetMtgMapper {
     @Mapping(target = "cards", ignore = true)
     SetMtg toEntity(SetMtgCreateDto setMtgCreateDto);
 
-    @Mapping(target = "cards", ignore = true) // Opcional: si no quieres incluir las cards en el DTO
+    @Mapping(target = "cards", ignore = true) 
     SetMtgDto toDto(SetMtg setMtg);
 
     @Mapping(target = "setId", ignore = true)

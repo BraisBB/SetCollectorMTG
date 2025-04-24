@@ -23,6 +23,13 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /**
+     * Maneja excepciones de tipo ResourceNotFoundException y retorna una respuesta 404 con detalles del error.
+     *
+     * @param ex      Excepción lanzada cuando un recurso no es encontrado
+     * @param request Información de la petición web
+     * @return ResponseEntity con el error y estado 404
+     */
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(
             ResourceNotFoundException ex, 
@@ -39,6 +46,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
+    /**
+     * Maneja excepciones de validación de argumentos en controladores (anotaciones @Valid).
+     * Retorna una respuesta 400 con los errores de validación por campo.
+     *
+     * @param ex      Excepción de validación de argumentos
+     * @param request Información de la petición web
+     * @return ResponseEntity con los errores de validación y estado 400
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(
             MethodArgumentNotValidException ex,

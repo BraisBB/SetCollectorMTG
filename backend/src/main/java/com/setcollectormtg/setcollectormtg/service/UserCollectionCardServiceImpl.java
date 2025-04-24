@@ -18,6 +18,14 @@ public class UserCollectionCardServiceImpl implements UserCollectionCardService 
     private final CardRepository cardRepository;
     private final UserCollectionCardMapper mapper;
 
+    /**
+     * Agrega una carta a la colección de un usuario. Lanza excepción si la carta ya existe en la colección.
+     *
+     * @param collectionId ID de la colección de usuario
+     * @param cardId       ID de la carta
+     * @param quantity     Cantidad de copias a agregar
+     * @return DTO de la carta agregada a la colección
+     */
     @Override
     @Transactional
     public UserCollectionCardDto addCardToCollection(Long collectionId, Long cardId, Integer quantity) {
@@ -42,6 +50,15 @@ public class UserCollectionCardServiceImpl implements UserCollectionCardService 
         return mapper.toDto(userCollectionCardRepository.save(userCollectionCard));
     }
 
+    /**
+     * Actualiza la cantidad de copias de una carta en la colección de un usuario.
+     * Lanza excepción si la cantidad es inválida o la carta no existe en la colección.
+     *
+     * @param collectionId ID de la colección de usuario
+     * @param cardId       ID de la carta
+     * @param newQuantity  Nueva cantidad de copias
+     * @return DTO actualizado de la carta en la colección
+     */
     @Override
     @Transactional
     public UserCollectionCardDto updateCardQuantity(Long collectionId, Long cardId, Integer newQuantity) {
@@ -60,6 +77,13 @@ public class UserCollectionCardServiceImpl implements UserCollectionCardService 
         return mapper.toDto(userCollectionCardRepository.save(userCollectionCard));
     }
 
+    /**
+     * Elimina una carta de la colección de un usuario y actualiza el contador total de cartas.
+     * Lanza excepción si la carta no existe en la colección.
+     *
+     * @param collectionId ID de la colección de usuario
+     * @param cardId       ID de la carta
+     */
     @Override
     @Transactional
     public void removeCardFromCollection(Long collectionId, Long cardId) {
@@ -71,6 +95,13 @@ public class UserCollectionCardServiceImpl implements UserCollectionCardService 
         userCollectionCardRepository.delete(userCollectionCard);
     }
 
+    /**
+     * Obtiene la información detallada de una carta en la colección de un usuario.
+     *
+     * @param collectionId ID de la colección de usuario
+     * @param cardId       ID de la carta
+     * @return DTO de la carta en la colección
+     */
     @Override
     @Transactional(readOnly = true)
     public UserCollectionCardDto getCardCollectionInfo(Long collectionId, Long cardId) {
@@ -80,6 +111,13 @@ public class UserCollectionCardServiceImpl implements UserCollectionCardService 
                 .orElseThrow(() -> new ResourceNotFoundException("Card not found in collection"));
     }
 
+    /**
+     * Obtiene la cantidad de copias de una carta en la colección de un usuario.
+     *
+     * @param collectionId ID de la colección de usuario
+     * @param cardId       ID de la carta
+     * @return Número de copias de la carta en la colección
+     */
     @Override
     @Transactional(readOnly = true)
     public Integer getCardCountInCollection(Long collectionId, Long cardId) {
@@ -89,6 +127,12 @@ public class UserCollectionCardServiceImpl implements UserCollectionCardService 
                 .orElse(0);
     }
 
+    /**
+     * Actualiza el contador total de cartas en la colección de usuario.
+     *
+     * @param collection         Colección de usuario
+     * @param quantityDifference Diferencia de cantidad a sumar/restar
+     */
     private void updateCollectionTotalCards(UserCollection collection, int quantityDifference) {
         collection.setTotalCards(collection.getTotalCards() + quantityDifference);
         userCollectionRepository.save(collection);

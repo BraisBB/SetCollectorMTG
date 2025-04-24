@@ -21,6 +21,7 @@
 		<!-- Versiones de dependencias -->
 		<org.mapstruct.version>1.6.3</org.mapstruct.version>
 		<lombok.version>1.18.32</lombok.version>
+		<maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
 		<springdoc.version>2.8.6</springdoc.version>
 		<keycloak.version>26.0.4</keycloak.version>
 	</properties>
@@ -97,6 +98,13 @@
 			<version>${lombok.version}</version>
 			<optional>true</optional>
 		</dependency>
+		<!-- MapStruct processor para IDEs -->
+		<dependency>
+			<groupId>org.mapstruct</groupId>
+			<artifactId>mapstruct-processor</artifactId>
+			<version>${org.mapstruct.version}</version>
+			<scope>provided</scope>
+		</dependency>
 
 		<!-- Documentación API -->
 		<dependency>
@@ -163,6 +171,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
+				<version>${maven-compiler-plugin.version}</version>
 				<configuration>
 					<source>${java.version}</source>
 					<target>${java.version}</target>

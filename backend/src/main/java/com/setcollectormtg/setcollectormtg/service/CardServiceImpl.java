@@ -23,6 +23,11 @@ public class CardServiceImpl implements CardService {
     private final SetMtgRepository setMtgRepository;
     private final CardMapper cardMapper;
 
+    /**
+     * Obtiene todas las cartas registradas en la base de datos.
+     *
+     * @return Lista de cartas en formato DTO
+     */
     @Override
     @Transactional(readOnly = true)
     public List<CardDto> getAllCards() {
@@ -31,6 +36,13 @@ public class CardServiceImpl implements CardService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Obtiene una carta por su ID.
+     * Lanza excepción si no existe.
+     *
+     * @param id ID de la carta
+     * @return DTO de la carta encontrada
+     */
     @Override
     @Transactional(readOnly = true)
     public CardDto getCardById(Long id) {
@@ -39,6 +51,13 @@ public class CardServiceImpl implements CardService {
                 .orElseThrow(() -> new ResourceNotFoundException("Card not found with id: " + id));
     }
 
+    /**
+     * Crea una nueva carta asociada a un set existente.
+     * Lanza excepción si el set no existe.
+     *
+     * @param cardCreateDto DTO con los datos de la carta a crear
+     * @return DTO de la carta creada
+     */
     @Override
     @Transactional
     public CardDto createCard(CardCreateDto cardCreateDto) {
@@ -52,6 +71,14 @@ public class CardServiceImpl implements CardService {
         return cardMapper.toDto(savedCard);
     }
 
+    /**
+     * Actualiza los datos de una carta, validando que el set asociado exista si se modifica.
+     * Lanza excepción si la carta o el set no existen.
+     *
+     * @param id      ID de la carta a actualizar
+     * @param cardDto DTO con los nuevos datos de la carta
+     * @return DTO actualizado de la carta
+     */
     @Override
     @Transactional
     public CardDto updateCard(Long id, CardDto cardDto) {
@@ -72,6 +99,12 @@ public class CardServiceImpl implements CardService {
         return cardMapper.toDto(updatedCard);
     }
 
+    /**
+     * Elimina una carta por su ID.
+     * Lanza excepción si la carta no existe.
+     *
+     * @param id ID de la carta a eliminar
+     */
     @Override
     @Transactional
     public void deleteCard(Long id) {

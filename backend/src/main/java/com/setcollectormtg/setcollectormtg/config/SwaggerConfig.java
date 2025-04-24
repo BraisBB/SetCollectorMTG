@@ -12,6 +12,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Configuración de Swagger/OpenAPI para la documentación interactiva de la API.
+ *
+ * Define el esquema de seguridad OAuth2 para integración con Keycloak y expone
+ * la información básica de la API Set Collector MTG.
+ * Permite probar endpoints protegidos usando autenticación OAuth2 desde Swagger UI.
+ */
 @Configuration
 public class SwaggerConfig {
 

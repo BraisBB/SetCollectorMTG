@@ -45,6 +45,13 @@ public class DeckServiceImpl implements DeckService {
                 .orElseThrow(() -> new ResourceNotFoundException("Deck not found with id: " + id));
     }
 
+    /**
+     * Crea un nuevo mazo para el usuario autenticado, validando que no exista otro mazo con el mismo nombre para ese usuario.
+     * Lanza excepción si el nombre ya está en uso.
+     *
+     * @param deckCreateDto DTO con los datos del mazo a crear
+     * @return DTO del mazo creado
+     */
     @Override
     @Transactional
     public DeckDto createDeck(DeckCreateDto deckCreateDto) {
@@ -69,6 +76,14 @@ public class DeckServiceImpl implements DeckService {
         return deckMapper.toDto(savedDeck);
     }
 
+    /**
+     * Actualiza los datos de un mazo, validando que el nuevo nombre no esté repetido para el usuario.
+     * Lanza excepción si el nombre ya está en uso por otro mazo del mismo usuario.
+     *
+     * @param id      ID del mazo a actualizar
+     * @param deckDto DTO con los nuevos datos del mazo
+     * @return DTO actualizado del mazo
+     */
     @Override
     @Transactional
     public DeckDto updateDeck(Long id, DeckDto deckDto) {
@@ -99,6 +114,11 @@ public class DeckServiceImpl implements DeckService {
         return deckMapper.toDto(updatedDeck);
     }
 
+    /**
+     * Elimina un mazo si no contiene cartas asociadas. Lanza excepción si el mazo tiene cartas.
+     *
+     * @param id ID del mazo a eliminar
+     */
     @Override
     @Transactional
     public void deleteDeck(Long id) {

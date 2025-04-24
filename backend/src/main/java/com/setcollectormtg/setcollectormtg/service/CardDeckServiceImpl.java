@@ -18,6 +18,15 @@ public class CardDeckServiceImpl implements CardDeckService {
     private final CardRepository cardRepository;
     private final CardDeckMapper cardDeckMapper;
 
+    /**
+     * Agrega una carta a un mazo, validando reglas de formato (límite de copias y total de cartas).
+     * Lanza excepción si la carta ya existe en el mazo o si se exceden los límites del formato.
+     *
+     * @param deckId   ID del mazo
+     * @param cardId   ID de la carta
+     * @param quantity Número de copias a agregar
+     * @return DTO de la carta agregada al mazo
+     */
     @Override
     @Transactional
     public CardDeckDto addCardToDeck(Long deckId, Long cardId, Integer quantity) {
@@ -51,6 +60,15 @@ public class CardDeckServiceImpl implements CardDeckService {
         return cardDeckMapper.toDto(cardDeckRepository.save(cardDeck));
     }
 
+    /**
+     * Actualiza la cantidad de copias de una carta en un mazo, validando reglas de formato.
+     * Lanza excepción si la cantidad es inválida o si se exceden los límites del formato.
+     *
+     * @param deckId     ID del mazo
+     * @param cardId     ID de la carta
+     * @param newQuantity Nueva cantidad de copias
+     * @return DTO actualizado de la carta en el mazo
+     */
     @Override
     @Transactional
     public CardDeckDto updateCardQuantity(Long deckId, Long cardId, Integer newQuantity) {
@@ -76,6 +94,13 @@ public class CardDeckServiceImpl implements CardDeckService {
         return cardDeckMapper.toDto(cardDeckRepository.save(cardDeck));
     }
 
+    /**
+     * Elimina una carta de un mazo y actualiza el contador total de cartas.
+     * Lanza excepción si la carta no existe en el mazo.
+     *
+     * @param deckId ID del mazo
+     * @param cardId ID de la carta
+     */
     @Override
     @Transactional
     public void removeCardFromDeck(Long deckId, Long cardId) {
@@ -109,6 +134,15 @@ public class CardDeckServiceImpl implements CardDeckService {
         deckRepository.save(deck);
     }
 
+    /**
+     * Valida que la cantidad de copias de una carta no exceda el máximo permitido por el formato.
+     * Lanza excepción si se excede el límite.
+     *
+     * @param deckId   ID del mazo
+     * @param cardId   ID de la carta
+     * @param quantity Cantidad de copias
+     * @param gameType Formato del juego
+     */
     private void validateCardCopies(Long deckId, Long cardId, Integer quantity, GameType gameType) {
         if (quantity > gameType.getMaxCopies()) {
             throw new IllegalStateException(
@@ -118,6 +152,14 @@ public class CardDeckServiceImpl implements CardDeckService {
         }
     }
 
+    /**
+     * Valida que el total de cartas en el mazo no exceda el máximo permitido por el formato.
+     * Lanza excepción si se excede el límite.
+     *
+     * @param deck           Mazo
+     * @param quantityToAdd  Cantidad a agregar
+     * @param gameType       Formato del juego
+     */
     private void validateTotalCards(Deck deck, int quantityToAdd, GameType gameType) {
         int newTotal = deck.getTotalCards() + quantityToAdd;
         if (newTotal > gameType.getRequiredCards()) {
