@@ -1,15 +1,15 @@
 package com.setcollectormtg.setcollectormtg.service;
 
-import com.setcollectormtg.setcollectormtg.model.UserCollection;
+import com.setcollectormtg.setcollectormtg.dto.UserCollectionDto;
 
 public interface UserCollectionService {
-    UserCollection createCollection(UserCollection collection);
+    UserCollectionDto createCollection(UserCollectionDto collectionDto);
 
-    UserCollection getCollectionById(Long id);
+    UserCollectionDto getCollectionById(Long id);
 
-    UserCollection getCollectionByUserId(Long userId);
+    UserCollectionDto getCollectionByUserId(Long userId);
 
-    UserCollection updateCollection(Long id, UserCollection collection);
+    UserCollectionDto updateCollection(Long id, UserCollectionDto collectionDto);
 
     void deleteCollection(Long id);
 

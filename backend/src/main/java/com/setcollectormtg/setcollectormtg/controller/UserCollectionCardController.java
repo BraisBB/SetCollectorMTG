@@ -1,10 +1,10 @@
 package com.setcollectormtg.setcollectormtg.controller;
 
 import com.setcollectormtg.setcollectormtg.dto.UserCollectionCardDto;
+import com.setcollectormtg.setcollectormtg.dto.UserCollectionDto;
 import com.setcollectormtg.setcollectormtg.service.UserCollectionCardService;
 import com.setcollectormtg.setcollectormtg.service.UserCollectionService;
 import com.setcollectormtg.setcollectormtg.service.UserService;
-import com.setcollectormtg.setcollectormtg.model.UserCollection;
 import com.setcollectormtg.setcollectormtg.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -45,7 +45,7 @@ public class UserCollectionCardController {
             @RequestParam(defaultValue = "1") Integer quantity) {
         
         User user = getCurrentUser(authentication);
-        UserCollection userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
+        UserCollectionDto userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
         
         return new ResponseEntity<>(
             userCollectionCardService.addCardToCollection(userCollection.getCollectionId(), cardId, quantity),
@@ -60,7 +60,7 @@ public class UserCollectionCardController {
             @RequestParam Integer quantity) {
         
         User user = getCurrentUser(authentication);
-        UserCollection userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
+        UserCollectionDto userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
         
         return ResponseEntity.ok(
             userCollectionCardService.updateCardQuantity(userCollection.getCollectionId(), cardId, quantity));
@@ -73,7 +73,7 @@ public class UserCollectionCardController {
             @PathVariable Long cardId) {
         
         User user = getCurrentUser(authentication);
-        UserCollection userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
+        UserCollectionDto userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
         
         userCollectionCardService.removeCardFromCollection(userCollection.getCollectionId(), cardId);
         return ResponseEntity.noContent().build();
@@ -86,7 +86,7 @@ public class UserCollectionCardController {
             @PathVariable Long cardId) {
         
         User user = getCurrentUser(authentication);
-        UserCollection userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
+        UserCollectionDto userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
         
         return ResponseEntity.ok(
             userCollectionCardService.getCardCollectionInfo(userCollection.getCollectionId(), cardId));
@@ -99,7 +99,7 @@ public class UserCollectionCardController {
             @PathVariable Long cardId) {
         
         User user = getCurrentUser(authentication);
-        UserCollection userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
+        UserCollectionDto userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
         
         return ResponseEntity.ok(
             userCollectionCardService.getCardCountInCollection(userCollection.getCollectionId(), cardId));

@@ -4,8 +4,9 @@ package com.setcollectormtg.setcollectormtg.service;
 import com.setcollectormtg.setcollectormtg.exception.ResourceNotFoundException;
 
 
-import com.setcollectormtg.setcollectormtg.model.UserCollection;
 import com.setcollectormtg.setcollectormtg.repository.UserCollectionRepository;
+import com.setcollectormtg.setcollectormtg.dto.UserCollectionDto;
+import com.setcollectormtg.setcollectormtg.mapper.UserCollectionMapper;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,30 +17,28 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserCollectionServiceImpl implements UserCollectionService {
 
     private final UserCollectionRepository userCollectionRepository;
-
+    private final UserCollectionMapper userCollectionMapper;
 
     /**
      * Crea una nueva colección para un usuario, validando que no exista previamente.
      * Inicializa el contador de cartas si es necesario.
      * Lanza excepción si el usuario ya tiene una colección.
      *
-     * @param collection Entidad UserCollection a crear
-     * @return Colección creada y persistida
+     * @param collectionDto DTO de la colección a crear
+     * @return Colección creada y persistida como DTO
      */
     @Override
     @Transactional
-    public UserCollection createCollection(UserCollection collection) {
-        // Verificamos si ya existe una colección para este usuario
+    public UserCollectionDto createCollection(UserCollectionDto collectionDto) {
+        var collection = userCollectionMapper.toEntity(collectionDto);
         if (userCollectionRepository.existsByUser_UserId(collection.getUser().getUserId())) {
             throw new IllegalStateException("User already has a collection");
         }
-
-        // Configuración básica de la colección
         if (collection.getTotalCards() == null) {
             collection.setTotalCards(0);
         }
-
-        return userCollectionRepository.save(collection);
+        var saved = userCollectionRepository.save(collection);
+        return userCollectionMapper.toDto(saved);
     }
 
     /**
@@ -47,13 +46,14 @@ public class UserCollectionServiceImpl implements UserCollectionService {
      * Lanza excepción si no existe.
      *
      * @param id ID de la colección
-     * @return Colección encontrada
+     * @return Colección encontrada como DTO
      */
     @Override
     @Transactional(readOnly = true)
-    public UserCollection getCollectionById(Long id) {
-        return userCollectionRepository.findById(id)
+    public UserCollectionDto getCollectionById(Long id) {
+        var collection = userCollectionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Collection not found with id: " + id));
+        return userCollectionMapper.toDto(collection);
     }
 
     /**
@@ -61,31 +61,31 @@ public class UserCollectionServiceImpl implements UserCollectionService {
      * Lanza excepción si no existe.
      *
      * @param userId ID del usuario
-     * @return Colección del usuario
+     * @return Colección del usuario como DTO
      */
     @Override
     @Transactional(readOnly = true)
-    public UserCollection getCollectionByUserId(Long userId) {
-        return userCollectionRepository.findByUser_UserId(userId)
+    public UserCollectionDto getCollectionByUserId(Long userId) {
+        var collection = userCollectionRepository.findByUser_UserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Collection not found for user id: " + userId));
+        return userCollectionMapper.toDto(collection);
     }
 
     /**
      * Actualiza los datos de una colección existente (solo campos permitidos).
      *
      * @param id         ID de la colección a actualizar
-     * @param collection Entidad con los nuevos datos
-     * @return Colección actualizada
+     * @param collectionDto DTO con los nuevos datos
+     * @return Colección actualizada como DTO
      */
     @Override
     @Transactional
-    public UserCollection updateCollection(Long id, UserCollection collection) {
-        UserCollection existingCollection = getCollectionById(id);
-
-        // Actualizar solo campos permitidos
-        existingCollection.setTotalCards(collection.getTotalCards());
-
-        return userCollectionRepository.save(existingCollection);
+    public UserCollectionDto updateCollection(Long id, UserCollectionDto collectionDto) {
+        var existingCollection = userCollectionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Collection not found with id: " + id));
+        existingCollection.setTotalCards(collectionDto.getTotalCards());
+        var saved = userCollectionRepository.save(existingCollection);
+        return userCollectionMapper.toDto(saved);
     }
 
     /**
@@ -97,14 +97,12 @@ public class UserCollectionServiceImpl implements UserCollectionService {
     @Override
     @Transactional
     public void deleteCollection(Long id) {
-        UserCollection collection = getCollectionById(id);
-
-        // Verificar si hay cartas en la colección antes de borrar
+        var collection = userCollectionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Collection not found with id: " + id));
         if (!collection.getUserCollectionCards().isEmpty()) {
             throw new IllegalStateException("Cannot delete collection with id " + id +
                     " because it contains cards. Remove cards first.");
         }
-
         userCollectionRepository.delete(collection);
     }
 
@@ -117,6 +115,8 @@ public class UserCollectionServiceImpl implements UserCollectionService {
     @Override
     @Transactional(readOnly = true)
     public Integer getTotalCardsInCollection(Long collectionId) {
-        return getCollectionById(collectionId).getTotalCards();
+        var collection = userCollectionRepository.findById(collectionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Collection not found with id: " + collectionId));
+        return collection.getTotalCards();
     }
 }

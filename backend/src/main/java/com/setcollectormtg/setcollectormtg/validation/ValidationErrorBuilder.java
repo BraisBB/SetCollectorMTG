@@ -21,7 +21,7 @@ public class ValidationErrorBuilder {
             error.append("Password must contain at least one uppercase letter. ");
         }
 
-        if (!password.matches(".*[a-z]..*")) {
+        if (!password.matches(".*[a-z].*")) {
             error.append("Password must contain at least one lowercase letter. ");
         }
 

@@ -1,8 +1,6 @@
 package com.setcollectormtg.setcollectormtg.controller;
 
 import com.setcollectormtg.setcollectormtg.dto.UserCollectionDto;
-import com.setcollectormtg.setcollectormtg.mapper.UserCollectionMapper;
-import com.setcollectormtg.setcollectormtg.model.UserCollection;
 import com.setcollectormtg.setcollectormtg.service.UserCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,37 +14,31 @@ import org.springframework.web.bind.annotation.*;
 public class UserCollectionController {
 
     private final UserCollectionService userCollectionService;
-    private final UserCollectionMapper userCollectionMapper; 
 
     @PostMapping
     @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<UserCollectionDto> createCollection(@RequestBody UserCollectionDto collectionDto) {
-        UserCollection collection = userCollectionService.createCollection(
-                userCollectionMapper.toEntity(collectionDto));
-        return new ResponseEntity<>(userCollectionMapper.toDto(collection), HttpStatus.CREATED);
+        UserCollectionDto created = userCollectionService.createCollection(collectionDto);
+        return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #id)")
     public ResponseEntity<UserCollectionDto> getCollectionById(@PathVariable Long id) {
-        return ResponseEntity.ok(
-                userCollectionMapper.toDto(userCollectionService.getCollectionById(id)));
+        return ResponseEntity.ok(userCollectionService.getCollectionById(id));
     }
 
     @GetMapping("/user/{userId}")
     @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #userId)")
     public ResponseEntity<UserCollectionDto> getCollectionByUserId(@PathVariable Long userId) {
-        return ResponseEntity.ok(
-                userCollectionMapper.toDto(userCollectionService.getCollectionByUserId(userId)));
+        return ResponseEntity.ok(userCollectionService.getCollectionByUserId(userId));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #id)")
     public ResponseEntity<UserCollectionDto> updateCollection(
             @PathVariable Long id, @RequestBody UserCollectionDto collectionDto) {
-        return ResponseEntity.ok(
-                userCollectionMapper.toDto(
-                        userCollectionService.updateCollection(id, userCollectionMapper.toEntity(collectionDto))));
+        return ResponseEntity.ok(userCollectionService.updateCollection(id, collectionDto));
     }
 
     @DeleteMapping("/{id}")

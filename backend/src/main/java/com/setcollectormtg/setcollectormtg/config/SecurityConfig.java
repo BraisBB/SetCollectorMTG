@@ -1,13 +1,5 @@
 package com.setcollectormtg.setcollectormtg.config;
 
-/**
- * Configuración principal de seguridad para la aplicación Set Collector MTG.
- *
- * Define las reglas de acceso a los endpoints, la integración con OAuth2/Keycloak,
- * la política de sesiones y la conversión de roles JWT para Spring Security.
- * Permite acceso público a la documentación Swagger, consola H2 y endpoints de cartas y sets.
- * Protege los endpoints de usuarios, colecciones y mazos, delegando la gestión de roles a anotaciones.
- */
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -19,7 +11,14 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
-
+/**
+ * Configuración principal de seguridad para la aplicación Set Collector MTG.
+ *
+ * Define las reglas de acceso a los endpoints, la integración con OAuth2/Keycloak,
+ * la política de sesiones y la conversión de roles JWT para Spring Security.
+ * Permite acceso público a la documentación Swagger, consola H2 y endpoints de cartas y sets.
+ * Protege los endpoints de usuarios, colecciones y mazos, delegando la gestión de roles a anotaciones.
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(jsr250Enabled = true, prePostEnabled = true)
