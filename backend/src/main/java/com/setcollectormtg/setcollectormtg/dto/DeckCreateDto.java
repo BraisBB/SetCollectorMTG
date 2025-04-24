@@ -1,6 +1,6 @@
 package com.setcollectormtg.setcollectormtg.dto;
 
-import com.setcollectormtg.setcollectormtg.model.GameType;
+import com.setcollectormtg.setcollectormtg.enums.GameType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;

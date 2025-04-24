@@ -1,6 +1,7 @@
 package com.setcollectormtg.setcollectormtg.service;
 
 import com.setcollectormtg.setcollectormtg.dto.CardDeckDto;
+import com.setcollectormtg.setcollectormtg.enums.GameType;
 import com.setcollectormtg.setcollectormtg.exception.ResourceNotFoundException;
 import com.setcollectormtg.setcollectormtg.mapper.CardDeckMapper;
 import com.setcollectormtg.setcollectormtg.model.*;

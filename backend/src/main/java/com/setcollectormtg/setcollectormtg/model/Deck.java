@@ -1,5 +1,6 @@
 package com.setcollectormtg.setcollectormtg.model;
 
+import com.setcollectormtg.setcollectormtg.enums.GameType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

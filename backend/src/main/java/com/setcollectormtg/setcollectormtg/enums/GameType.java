@@ -1,4 +1,4 @@
-package com.setcollectormtg.setcollectormtg.model;
+package com.setcollectormtg.setcollectormtg.enums;
 
 import lombok.Getter;
 import lombok.AllArgsConstructor;

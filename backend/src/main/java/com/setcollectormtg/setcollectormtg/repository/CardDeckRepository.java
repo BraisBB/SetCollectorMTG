@@ -13,12 +13,12 @@ import java.util.Optional;
 @Repository
 public interface CardDeckRepository extends JpaRepository<CardDeck, CardDeckId> {
 
-    // Métodos existentes que mantienes
+
     boolean existsByDeck_DeckId(Long deckId);
     int countByDeck_DeckId(Long deckId);
     void deleteByDeck_DeckId(Long deckId);
 
-    // Nuevos métodos necesarios para las operaciones CRUD
+    // Métodos necesarios para las operaciones CRUD
     Optional<CardDeck> findByDeck_DeckIdAndCard_CardId(Long deckId, Long cardId);
 
     boolean existsByDeck_DeckIdAndCard_CardId(Long deckId, Long cardId);
@@ -31,7 +31,7 @@ public interface CardDeckRepository extends JpaRepository<CardDeck, CardDeckId> 
     @Transactional
     void deleteByDeck_DeckIdAndCard_CardId(Long deckId, Long cardId);
 
-    // Método adicional útil para estadísticas
+    // Método para estadísticas
     @Query("SELECT SUM(cd.nCopies) FROM CardDeck cd WHERE cd.deck.deckId = :deckId")
     Optional<Integer> sumCopiesByDeckId(Long deckId);
 }
