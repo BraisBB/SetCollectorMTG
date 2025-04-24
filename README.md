@@ -11,13 +11,13 @@
 ### Inicia un contenedor de Keycloak en el puerto 8181 con las credenciales especificadas (ya se especifica la version 21.1.1 para la imagen):
     podman run -d -p 8181:8080 -e KEYCLOAK_ADMIN=ADMIN -e KEYCLOAK_ADMIN_PASSWORD=admin --name keycloak quay.io/keycloak/keycloak:21.1.1 start-dev
 
-### Copia tu archivo realm-export.json al contenedor:
-    podman cp C:\ruta\a\tu\realm-export.json keycloak:/tmp/realm-export.json
+### Copia tu archivo realm-export.json al contenedor (poner la ruta donde esta el achivo realm-export.json "borrar comillas y cambiar la ruta"):
+    podman cp "C:\ruta\a\tu\realm-export.json" keycloak:/tmp/realm-export.json
 
 ### Importa el archivo realm en Keycloak:
     podman exec -i keycloak /opt/keycloak/bin/kc.sh import --file /tmp/realm-export.json
 
-- Una vez arrancando el contenedor en Podman. Abriremos una terminal desde el archivo del backend. E realizaremos los siguientes comandos por orden:
+- Una vez arrancando el contenedor en Podman. Abriremos una terminal desde el archivo del backend (asegurarse de estar en la carpeta backend). Y realizaremos los siguientes comandos por orden:
 
     #### mvn clean install
     #### mvn spring-boot:run
