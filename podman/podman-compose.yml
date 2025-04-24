@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0.42
+    container_name: setcollector-mysql
+    environment:
+      MYSQL_DATABASE: setcollector
+      MYSQL_USER: setcollector
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - setcollector-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    build:
+      context: ..
+      dockerfile: podman/keycloak/Dockerfile
+    container_name: setcollector-keycloak
+    ports:
+      - "8181:8080"
+    environment:
+      KEYCLOAK_ADMIN: ADMIN
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_IMPORT_REALM: setcollector-realm
+    networks:
+      - setcollector-network
+
+networks:
+  setcollector-network:
+    name: setcollector-network
+
+volumes:
+  mysql_data:
+    name: setcollector-mysql-data 

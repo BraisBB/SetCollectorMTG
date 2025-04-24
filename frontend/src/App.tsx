@@ -1,30 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { getHello } from './services/api';
-import Header from "./components/Header";
-import Footer from "./components/Footer";
+import React from "react";
+import Home from './pages/Home';
 
 const App: React.FC = () => {
-  const [mensaje, setMensaje] = useState("");
-
-  useEffect(() => {
-    const fetchData = async () => {
-        try {
-            const data = await getHello();
-            setMensaje(data);
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    };
-
-    fetchData();
-}, []);
-
   return (
-    <div>
-      <Header />
-      <h1>Frontend con React</h1>
-      <p>Respuesta del backend: {mensaje}</p>
-      <Footer />
+    <div className="min-h-screen bg-gray-100">
+      <Home />
     </div>
   );
 };
