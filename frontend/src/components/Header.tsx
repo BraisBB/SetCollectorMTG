@@ -1,27 +1,27 @@
-import React from 'react';
-import './Header.css'; // Importa los estilos CSS globales
+import logo from '../assets/logo.png';
+import './Header.css';
 
-const Header: React.FC = () => {
-    return (
-        <header className="header">
-            <div className="logo">
-                <h1>SetCollectorMTG</h1>
-            </div>
-            <nav className="nav">
-                <ul className="navList">
-                    <li className="navItem">
-                        <a href="/" className="navLink">Inicio</a>
-                    </li>
-                    <li className="navItem">
-                        <a href="/about" className="navLink">Acerca de</a>
-                    </li>
-                    <li className="navItem">
-                        <a href="/contact" className="navLink">Contacto</a>
-                    </li>
-                </ul>
-            </nav>
-        </header>
-    );
+const Header = () => {
+  return (
+    <header>
+      <div className="container">
+        <div className="header-left">
+          <div className="logo-container">
+            <img src={logo} alt="SetCollectorMTG Logo" />
+            <h1 className="site-title">SetCollectorMTG</h1>
+          </div>
+        </div>
+        
+        <nav>
+          <div className="nav-links">
+            <a href="/">Home</a>
+            <a href="/about">About Us</a>
+            <a href="/login">Login</a>
+          </div>
+        </nav>
+      </div>
+    </header>
+  );
 };
 
-export default Header;
+export default Header; 

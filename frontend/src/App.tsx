@@ -1,9 +1,9 @@
 import React from "react";
-import Home from './pages/Home';
+import Home from './pages/Home.tsx';
 
 const App: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div>
       <Home />
     </div>
   );

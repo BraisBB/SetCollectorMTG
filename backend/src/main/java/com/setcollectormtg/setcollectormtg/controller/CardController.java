@@ -3,10 +3,10 @@ package com.setcollectormtg.setcollectormtg.controller;
 import com.setcollectormtg.setcollectormtg.dto.CardCreateDto;
 import com.setcollectormtg.setcollectormtg.dto.CardDto;
 import com.setcollectormtg.setcollectormtg.service.CardService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize; 
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,32 +18,97 @@ public class CardController {
 
     private final CardService cardService;
 
-    
+    /**
+     * Obtiene todas las cartas o las filtra por parámetros si están presentes.
+     *
+     * @param name Nombre o parte del nombre (opcional)
+     * @param cardType Tipo de carta (opcional)
+     * @param color Color de la carta (W, U, B, R, G o colorless) (opcional)
+     * @param manaCostMin Coste mínimo de maná (opcional)
+     * @param manaCostMax Coste máximo de maná (opcional)
+     * @return Lista de todas las cartas o filtradas
+     */
     @GetMapping
-    public ResponseEntity<List<CardDto>> getAllCards() {
+    public ResponseEntity<List<CardDto>> getAllCards(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String color,
+            @RequestParam(required = false) String setCode,
+            @RequestParam(required = false) String rarity,
+            @RequestParam(required = false) Integer manaCostMin,
+            @RequestParam(required = false) Integer manaCostMax) {
+        
+        // Si hay algún filtro aplicado, utilizamos la búsqueda con filtros
+        if (name != null || type != null || color != null || setCode != null || rarity != null || manaCostMin != null || manaCostMax != null) {
+            return ResponseEntity.ok(cardService.getCardsByFilters(name, type, color, manaCostMin, manaCostMax));
+        }
+        
+        // Si no hay filtros, devolver todas las cartas
         return ResponseEntity.ok(cardService.getAllCards());
     }
 
-    
+    /**
+     * Obtiene una carta por su ID.
+     *
+     * @param id ID de la carta
+     * @return Carta encontrada
+     */
     @GetMapping("/{id}")
     public ResponseEntity<CardDto> getCardById(@PathVariable Long id) {
         return ResponseEntity.ok(cardService.getCardById(id));
     }
 
+    /**
+     * Busca cartas aplicando filtros.
+     * 
+     * @param name Nombre o parte del nombre (opcional)
+     * @param cardType Tipo de carta (opcional)
+     * @param color Color de la carta (W, U, B, R, G o colorless) (opcional)
+     * @param manaCostMin Coste mínimo de maná (opcional)
+     * @param manaCostMax Coste máximo de maná (opcional)
+     * @return Lista de cartas que cumplen los criterios
+     */
+    @GetMapping("/search")
+    public ResponseEntity<List<CardDto>> searchCards(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String cardType,
+            @RequestParam(required = false) String color,
+            @RequestParam(required = false) Integer manaCostMin,
+            @RequestParam(required = false) Integer manaCostMax) {
+        
+        return ResponseEntity.ok(cardService.getCardsByFilters(name, cardType, color, manaCostMin, manaCostMax));
+    }
+
+    /**
+     * Crea una nueva carta.
+     *
+     * @param cardCreateDto DTO con los datos de la carta a crear
+     * @return Carta creada
+     */
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')") 
-    public ResponseEntity<CardDto> createCard(@RequestBody CardCreateDto cardCreateDto) {
+    public ResponseEntity<CardDto> createCard(@Valid @RequestBody CardCreateDto cardCreateDto) {
         return new ResponseEntity<>(cardService.createCard(cardCreateDto), HttpStatus.CREATED);
     }
 
+    /**
+     * Actualiza una carta existente.
+     *
+     * @param id      ID de la carta a actualizar
+     * @param cardDto DTO con los nuevos datos
+     * @return Carta actualizada
+     */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')") 
-    public ResponseEntity<CardDto> updateCard(@PathVariable Long id, @RequestBody CardDto cardDto) {
+    public ResponseEntity<CardDto> updateCard(@PathVariable Long id, @Valid @RequestBody CardDto cardDto) {
         return ResponseEntity.ok(cardService.updateCard(id, cardDto));
     }
 
+    /**
+     * Elimina una carta.
+     *
+     * @param id ID de la carta a eliminar
+     * @return Respuesta sin contenido
+     */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')") 
     public ResponseEntity<Void> deleteCard(@PathVariable Long id) {
         cardService.deleteCard(id);
         return ResponseEntity.noContent().build();

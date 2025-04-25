@@ -112,4 +112,65 @@ public class CardServiceImpl implements CardService {
                 .orElseThrow(() -> new ResourceNotFoundException("Card not found with id: " + id));
         cardRepository.delete(card);
     }
+    
+    /**
+     * Busca cartas por nombre (parcial, ignorando mayúsculas/minúsculas).
+     *
+     * @param name Nombre o parte del nombre de la carta
+     * @return Lista de cartas que coinciden con el criterio
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<CardDto> getCardsByName(String name) {
+        return cardRepository.findByNameContainingIgnoreCase(name).stream()
+                .map(cardMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Busca cartas por tipo (parcial, ignorando mayúsculas/minúsculas).
+     *
+     * @param cardType Tipo o parte del tipo de la carta
+     * @return Lista de cartas que coinciden con el criterio
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<CardDto> getCardsByType(String cardType) {
+        return cardRepository.findByCardTypeContainingIgnoreCase(cardType).stream()
+                .map(cardMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Busca cartas por color usando el símbolo de color en el coste de maná.
+     *
+     * @param colorSymbol Símbolo de color (W, U, B, R, G)
+     * @return Lista de cartas que contienen el símbolo de color
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<CardDto> getCardsByColor(String colorSymbol) {
+        return cardRepository.findByColorSymbol(colorSymbol).stream()
+                .map(cardMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Busca cartas aplicando múltiples filtros de forma combinada.
+     * Los parámetros nulos se ignoran.
+     *
+     * @param name Nombre o parte del nombre de la carta (opcional)
+     * @param cardType Tipo o parte del tipo de la carta (opcional)
+     * @param colorSymbol Símbolo de color (opcional)
+     * @param manaCostMin Coste mínimo de maná (opcional)
+     * @param manaCostMax Coste máximo de maná (opcional)
+     * @return Lista de cartas que cumplen todos los criterios proporcionados
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<CardDto> getCardsByFilters(String name, String cardType, String colorSymbol, Integer manaCostMin, Integer manaCostMax) {
+        return cardRepository.findByFilters(name, cardType, colorSymbol, manaCostMin, manaCostMax).stream()
+                .map(cardMapper::toDto)
+                .collect(Collectors.toList());
+    }
 }

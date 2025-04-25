@@ -1,7 +1,19 @@
+/* Global styles */
 * {
   margin: 0;
   padding: 0;
-}
-body {
   box-sizing: border-box;
 }
+
+body {
+  font-family: 'Arial', sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background-color: #f9f9f9;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+} 

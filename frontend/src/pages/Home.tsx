@@ -1,105 +1,143 @@
 import { useState, useEffect } from 'react';
-import api, { SetMtg, Card } from '../services/api';
-import SetItem from '../components/SetItem';
-import CardItem from '../components/CardItem';
+import Header from '../components/Header';
+import SearchBar from '../components/SearchBar';
+import CardGrid from '../components/CardGrid';
+import { SearchParams } from '../components/SearchBar';
+import { Card } from '../components/CardGrid';
+import './Home.css';
+import axios from 'axios';
+
+// URL base del backend
+const API_BASE_URL = 'http://localhost:8080';
+
+// Interfaz para los datos de la carta recibidos del backend
+interface CardResponse {
+  cardId: number;
+  name: string;
+  imageUrl?: string;
+  cardType: string;
+  rarity: string;
+  setId: number;
+  manaCost?: string;
+}
 
 const Home = () => {
-  const [sets, setSets] = useState<SetMtg[]>([]);
-  const [selectedSet, setSelectedSet] = useState<SetMtg | null>(null);
-  const [cards, setCards] = useState<Card[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [searchResults, setSearchResults] = useState<Card[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchSets = async () => {
-      try {
-        const data = await api.getAllSets();
-        setSets(data);
-        setLoading(false);
-      } catch (err) {
-        setError('Error al cargar los sets');
-        setLoading(false);
-      }
-    };
-
-    fetchSets();
-  }, []);
-
-  const handleSetClick = async (set: SetMtg) => {
+  const handleSearch = async (searchParams: SearchParams) => {
+    setLoading(true);
+    setHasSearched(true);
+    setError(null);
+    
     try {
-      setSelectedSet(set);
-      const data = await api.getCardsBySet(set.setId);
-      setCards(data);
+      // Construir los parámetros de consulta para la búsqueda
+      const params = new URLSearchParams();
+      
+      if (searchParams.name) {
+        params.append('name', searchParams.name);
+      }
+      
+      if (searchParams.color) {
+        params.append('color', searchParams.color);
+      }
+      
+      if (searchParams.type) {
+        params.append('type', searchParams.type);
+      }
+      
+      if (searchParams.rarity) {
+        params.append('rarity', searchParams.rarity);
+      }
+      
+      if (searchParams.set) {
+        params.append('setCode', searchParams.set);
+      }
+      
+      if (searchParams.manaCost) {
+        if (searchParams.manaCost === '8+') {
+          params.append('manaCostMin', '8');
+        } else {
+          params.append('manaCostMin', searchParams.manaCost);
+          params.append('manaCostMax', searchParams.manaCost);
+        }
+      }
+      
+      // Hacer la llamada al backend
+      const response = await axios.get<CardResponse[]>(`${API_BASE_URL}/cards`, { params });
+      
+      // Transformar los datos recibidos al formato esperado por CardGrid
+      const cards: Card[] = response.data.map((card: CardResponse) => ({
+        id: card.cardId.toString(),
+        name: card.name,
+        imageUrl: card.imageUrl || 'https://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=0&type=card', // Imagen por defecto
+        type: card.cardType,
+        rarity: card.rarity,
+        set: card.setId.toString(), // Idealmente deberíamos obtener el nombre del set
+        color: determineCardColor(card.manaCost || '') // Función auxiliar para determinar el color a partir del coste de maná
+      }));
+      
+      setSearchResults(cards);
     } catch (err) {
-      setError('Error al cargar las cartas del set');
+      console.error('Error fetching cards:', err);
+      setError('Error al buscar cartas. Por favor, inténtalo de nuevo.');
+      setSearchResults([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
-      </div>
-    );
-  }
+  // Función auxiliar para determinar el color principal de la carta basado en su coste de maná
+  const determineCardColor = (manaCost: string): string => {
+    if (!manaCost) return 'colorless';
+    
+    const colors = {
+      'W': 'white',
+      'U': 'blue',
+      'B': 'black',
+      'R': 'red',
+      'G': 'green'
+    };
+    
+    let foundColors = [];
+    
+    for (const [symbol, color] of Object.entries(colors)) {
+      if (manaCost.includes(`{${symbol}}`)) {
+        foundColors.push(color);
+      }
+    }
+    
+    if (foundColors.length === 0) return 'colorless';
+    if (foundColors.length > 1) return 'multicolor';
+    return foundColors[0];
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="container mx-auto px-4 py-8">
-        <header className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-800">Magic: The Gathering</h1>
-          <p className="text-gray-600 mt-2">Explora los sets y cartas de Magic: The Gathering</p>
-        </header>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Lista de Sets */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-2xl font-semibold mb-6">Sets Disponibles</h2>
-              <div className="space-y-4">
-                {sets.map((set) => (
-                  <SetItem
-                    key={set.setId}
-                    set={set}
-                    isSelected={selectedSet?.setId === set.setId}
-                    onClick={handleSetClick}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Lista de Cartas */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-2xl font-semibold mb-6">
-                {selectedSet ? `Cartas de ${selectedSet.name}` : 'Selecciona un set'}
-              </h2>
-              {selectedSet ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {cards.map((card) => (
-                    <CardItem key={card.cardId} card={card} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center text-gray-500 py-12">
-                  Selecciona un set para ver sus cartas
-                </div>
-              )}
-            </div>
-          </div>
+    <div className="home-container">
+      <Header />
+      <main className="container home-main">
+        <div className={`hero-section ${hasSearched ? 'searched' : ''}`}>
+          <h1 className="home-title">Welcome to SetCollectorMTG</h1>
+          <p className="home-description">
+            Your ultimate platform for collecting and managing Magic: The Gathering sets.
+            Search for cards below to start your collection journey.
+          </p>
         </div>
-      </div>
+        
+        <SearchBar onSearch={handleSearch} />
+        
+        {error && (
+          <div className="error-message">
+            {error}
+          </div>
+        )}
+        
+        {hasSearched && (
+          <CardGrid cards={searchResults} loading={loading} />
+        )}
+      </main>
     </div>
   );
 };

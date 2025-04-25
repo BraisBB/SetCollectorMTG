@@ -1,0 +1,135 @@
+/* CardGrid styles */
+.card-grid-container {
+  margin-top: 2rem;
+  padding: 1rem;
+}
+
+.results-title {
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  color: #f5f5f5;
+  border-bottom: 2px solid #e65100;
+  padding-bottom: 0.5rem;
+  width: fit-content;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.card-item {
+  background: transparent;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+  z-index: 1;
+  position: relative;
+  will-change: transform;
+}
+
+.card-item:hover {
+  transform: translateY(-10px) scale(1.12);
+  box-shadow: 0 15px 25px rgba(230, 81, 0, 0.35);
+  z-index: 2; /* Asegura que la carta expandida esté por encima de las demás */
+}
+
+.card-image-container {
+  position: relative;
+  width: 100%;
+  padding-top: 140%; /* Aspect ratio 7:5 (MTG cards) */
+  overflow: hidden;
+  border-radius: 10px; /* Bordes redondeados para las imágenes */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  backface-visibility: hidden; /* Mejora el rendimiento de la animación */
+}
+
+.card-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px; /* Asegura que la imagen tenga bordes redondeados */
+  transform: none; /* Reseteamos cualquier transformación anterior */
+  transition: none; /* Eliminamos la transición de la imagen */
+}
+
+.card-item:after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 2px rgba(230, 81, 0, 0.6);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card-item:hover:after {
+  opacity: 1;
+}
+
+/* Loading state */
+.cards-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 0;
+  color: #ccc;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(230, 81, 0, 0.3);
+  border-top: 4px solid #e65100;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* No results state */
+.no-cards-found {
+  background-color: rgba(0, 0, 0, 0.1);
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  margin: 2rem 0;
+  color: #ccc;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+  }
+  
+  .card-item:hover {
+    transform: translateY(-8px) scale(1.08);
+  }
+}
+
+@media (max-width: 480px) {
+  .card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.75rem;
+  }
+  
+  .card-item:hover {
+    transform: translateY(-5px) scale(1.05);
+  }
+} 

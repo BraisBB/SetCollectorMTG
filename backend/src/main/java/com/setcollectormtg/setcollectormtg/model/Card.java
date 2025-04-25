@@ -29,7 +29,7 @@ public class Card {
     private String oracleText;
 
     @Column(name = "mana_value")
-    private Double manaValue; // Cambiado a Double para manejar costes como {X}
+    private Double manaValue; // Coste de maná convertido (CMC)
 
     @Column(name = "mana_cost")
     private String manaCost;
@@ -56,5 +56,11 @@ public class Card {
         if (node != null && !node.isNull()) {
             this.manaValue = node.asDouble();
         }
+    }
+
+    // Método para facilitar la búsqueda por rango de coste de maná
+    @Transient
+    public Integer getConvertedManaCost() {
+        return manaValue != null ? manaValue.intValue() : null;
     }
 }
