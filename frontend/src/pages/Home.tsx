@@ -82,7 +82,7 @@ const Home = () => {
       setSearchResults(cards);
     } catch (err) {
       console.error('Error fetching cards:', err);
-      setError('Error al buscar cartas. Por favor, inténtalo de nuevo.');
+      setError('Error fetching cards. Please try again.');
       setSearchResults([]);
     } finally {
       setLoading(false);
