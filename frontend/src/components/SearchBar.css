@@ -108,6 +108,18 @@
   box-shadow: 0 0 0 2px rgba(230, 81, 0, 0.2);
 }
 
+.filter-group select option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+.filter-group select option span {
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
 .toggle-filters {
   display: flex;
   justify-content: center;

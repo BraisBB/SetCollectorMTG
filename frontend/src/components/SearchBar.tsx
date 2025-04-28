@@ -1,5 +1,6 @@
 import { useState, FormEvent, useEffect } from 'react';
 import axios from 'axios';
+import ColorSelect from './ColorSelect';
 import './SearchBar.css';
 
 interface SearchBarProps {
@@ -49,7 +50,7 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
   });
 
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
-    colors: ['white', 'blue', 'black', 'red', 'green', 'colorless', 'multicolor'],
+    colors: ['white', 'blue', 'black', 'red', 'green', 'colorless'],
     types: ['Creature', 'Sorcery', 'Instant', 'Artifact', 'Enchantment', 'Planeswalker', 'Land'],
     rarities: ['Common', 'Uncommon', 'Rare', 'Mythic Rare'],
     sets: [],
@@ -118,19 +119,11 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
         <div className="filters-container">
           <div className="filter-group">
             <label htmlFor="color">Color</label>
-            <select
-              id="color"
-              name="color"
+            <ColorSelect
               value={searchParams.color}
-              onChange={handleInputChange}
-            >
-              <option value="">Any</option>
-              {filterOptions.colors.map(color => (
-                <option key={color} value={color}>
-                  {color.charAt(0).toUpperCase() + color.slice(1)}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => setSearchParams(prev => ({ ...prev, color: value }))}
+              options={filterOptions.colors}
+            />
           </div>
 
           <div className="filter-group">
