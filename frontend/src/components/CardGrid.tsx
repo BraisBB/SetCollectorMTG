@@ -28,7 +28,7 @@ const CardGrid = ({ cards, loading }: CardGridProps) => {
   if (cards.length === 0) {
     return (
       <div className="no-cards-found">
-        <p>No cards found. Try adjusting your search criteria.</p>
+        <p>No cards found. Try adjusting your search.</p>
       </div>
     );
   }
