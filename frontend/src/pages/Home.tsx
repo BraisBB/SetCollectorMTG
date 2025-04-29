@@ -41,6 +41,7 @@ const Home = () => {
       }
       
       if (searchParams.color) {
+        // El color ya viene formateado correctamente desde el componente SearchBar
         params.append('color', searchParams.color);
       }
       
@@ -93,7 +94,8 @@ const Home = () => {
   const determineCardColor = (manaCost: string): string => {
     if (!manaCost) return 'colorless';
     
-    const colors = {
+    // Mapeamos los símbolos de mana a nombres de colores para la UI
+    const colorMap: Record<string, string> = {
       'W': 'white',
       'U': 'blue',
       'B': 'black',
@@ -101,11 +103,12 @@ const Home = () => {
       'G': 'green'
     };
     
-    let foundColors = [];
+    const foundColors: string[] = [];
     
-    for (const [symbol, color] of Object.entries(colors)) {
+    // Buscar símbolos de color en el coste de maná
+    for (const [symbol, colorName] of Object.entries(colorMap)) {
       if (manaCost.includes(`{${symbol}}`)) {
-        foundColors.push(color);
+        foundColors.push(colorName);
       }
     }
     

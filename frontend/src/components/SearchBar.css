@@ -62,6 +62,108 @@
   transform: translateY(0);
 }
 
+/* Estilos para los checkboxes de colores */
+.color-filter-group {
+  grid-column: 1 / -1;
+  margin-bottom: 1rem;
+}
+
+.color-checkboxes {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.5rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  flex-wrap: wrap;
+}
+
+.color-check-label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  cursor: pointer;
+  border-radius: 50%;
+  background-color: rgba(30, 30, 30, 0.7);
+  transition: all 0.3s ease;
+}
+
+.color-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.color-icon {
+  font-size: 1.8rem;
+  filter: grayscale(70%) brightness(0.8);
+  transition: all 0.3s ease;
+}
+
+/* Estilos para cada color */
+.ms-w {
+  color: #f9faf4 !important;
+  text-shadow: 0 0 1px #000, 0 0 2px #000;
+}
+
+.ms-u {
+  color: #0e68ab !important;
+}
+
+.ms-b {
+  color: #150b00 !important;
+}
+
+.ms-r {
+  color: #d3202a !important;
+}
+
+.ms-g {
+  color: #00733e !important;
+}
+
+.ms-c {
+  color: #cccacb !important;
+  text-shadow: 0 0 1px #000;
+}
+
+/* Estilo para label seleccionado */
+.color-check-label.selected {
+  box-shadow: 0 0 0 2px #e65100, 0 0 10px rgba(230, 81, 0, 0.8);
+  background-color: rgba(50, 50, 50, 0.9);
+  transform: translateY(-3px);
+}
+
+.color-check-label.selected .color-icon {
+  filter: grayscale(0%) brightness(1.2);
+}
+
+.color-check-label:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 1px #e65100;
+}
+
+.color-check-label:hover .color-icon {
+  filter: grayscale(30%) brightness(1);
+}
+
+/* Añadir indicador de selección */
+.color-check-label.selected::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  background-color: #e65100;
+  border-radius: 50%;
+}
+
 .filters-container {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -75,7 +177,7 @@
 }
 
 .expanded .filters-container {
-  max-height: 300px;
+  max-height: 500px;
   opacity: 1;
   margin-top: 1rem;
   margin-bottom: 1.5rem;
@@ -153,6 +255,19 @@
     padding: 1rem;
     margin: 1.5rem 1rem;
   }
+  
+  .color-checkboxes {
+    gap: 0.7rem;
+  }
+  
+  .color-check-label {
+    width: 2.2rem;
+    height: 2.2rem;
+  }
+  
+  .color-icon {
+    font-size: 1.5rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -172,5 +287,18 @@
   .search-button {
     border-radius: 4px;
     width: 100%;
+  }
+  
+  .color-checkboxes {
+    gap: 0.5rem;
+  }
+  
+  .color-check-label {
+    width: 2rem;
+    height: 2rem;
+  }
+  
+  .color-icon {
+    font-size: 1.3rem;
   }
 } 

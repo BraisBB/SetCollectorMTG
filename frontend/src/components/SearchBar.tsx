@@ -1,6 +1,5 @@
 import { useState, FormEvent, useEffect } from 'react';
 import axios from 'axios';
-import ColorSelect from './ColorSelect';
 import './SearchBar.css';
 
 interface SearchBarProps {
@@ -27,7 +26,7 @@ interface SetResponse {
 }
 
 interface FilterOptions {
-  colors: string[];
+  colors: {id: string, name: string}[];
   types: string[];
   rarities: string[];
   sets: {
@@ -49,8 +48,17 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
     manaCost: ''
   });
 
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
-    colors: ['white', 'blue', 'black', 'red', 'green', 'colorless'],
+    colors: [
+      { id: 'W', name: 'white' },
+      { id: 'U', name: 'blue' },
+      { id: 'B', name: 'black' },
+      { id: 'R', name: 'red' },
+      { id: 'G', name: 'green' },
+      { id: 'C', name: 'colorless' }
+    ],
     types: ['Creature', 'Sorcery', 'Instant', 'Artifact', 'Enchantment', 'Planeswalker', 'Land'],
     rarities: ['Common', 'Uncommon', 'Rare', 'Mythic Rare'],
     sets: [],
@@ -86,12 +94,52 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
     fetchFilterOptions();
   }, []);
 
+  // Actualizar el parámetro de color cuando cambian los colores seleccionados
+  useEffect(() => {
+    // El backend espera los símbolos de color (W, U, B, R, G) separados por comas
+    const colorValue = selectedColors.length > 0 ? selectedColors.join(',') : '';
+    setSearchParams(prev => ({
+      ...prev,
+      color: colorValue
+    }));
+  }, [selectedColors]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setSearchParams(prev => ({
       ...prev,
       [name]: value
     }));
+  };
+
+  // Manejar la selección de colores
+  const handleColorToggle = (colorId: string) => {
+    setSelectedColors(prev => {
+      if (prev.includes(colorId)) {
+        return prev.filter(c => c !== colorId);
+      } else {
+        // Si seleccionamos "colorless" (C), desactivamos cualquier otro color
+        if (colorId === 'C') {
+          return ['C'];
+        } 
+        // Si hay algún otro color seleccionado, quitamos "colorless"
+        const newColors = [...prev.filter(c => c !== 'C'), colorId];
+        return newColors;
+      }
+    });
+  };
+
+  // Obtener la clase CSS para el símbolo de mana según el color
+  const getManaSymbolClass = (colorId: string) => {
+    switch (colorId) {
+      case 'W': return 'ms ms-w';
+      case 'U': return 'ms ms-u';
+      case 'B': return 'ms ms-b';
+      case 'R': return 'ms ms-r';
+      case 'G': return 'ms ms-g';
+      case 'C': return 'ms ms-c';
+      default: return '';
+    }
   };
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -117,13 +165,25 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
         </div>
 
         <div className="filters-container">
-          <div className="filter-group">
-            <label htmlFor="color">Color</label>
-            <ColorSelect
-              value={searchParams.color}
-              onChange={(value) => setSearchParams(prev => ({ ...prev, color: value }))}
-              options={filterOptions.colors}
-            />
+          <div className="filter-group color-filter-group">
+            <label>Colors</label>
+            <div className="color-checkboxes">
+              {filterOptions.colors.map(color => (
+                <label 
+                  key={color.id} 
+                  className={`color-check-label ${selectedColors.includes(color.id) ? 'selected' : ''}`}
+                  title={color.name.charAt(0).toUpperCase() + color.name.slice(1)}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedColors.includes(color.id)}
+                    onChange={() => handleColorToggle(color.id)}
+                    className="color-checkbox"
+                  />
+                  <span className={`${getManaSymbolClass(color.id)} color-icon`}></span>
+                </label>
+              ))}
+            </div>
           </div>
 
           <div className="filter-group">
