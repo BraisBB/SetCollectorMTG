@@ -186,11 +186,6 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
           <div className="filter-group color-filter-group">
             <div className="filter-header">
               <label>Colors</label>
-              {selectedColors.length > 0 && (
-                <button type="button" className="clear-filter" onClick={() => setSelectedColors([])}>
-                  Clear
-                </button>
-              )}
             </div>
             <div className="color-checkboxes">
               {filterOptions.colors.map(color => (
