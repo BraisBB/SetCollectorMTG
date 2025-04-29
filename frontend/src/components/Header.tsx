@@ -1,5 +1,5 @@
-import logo from '../assets/logo.png';
-import './Header.css';
+import logo from "../assets/logo.png";
+import "./Header.css";
 
 const Header = () => {
   return (
@@ -11,7 +11,6 @@ const Header = () => {
             <h1 className="site-title">SetCollectorMTG</h1>
           </div>
         </div>
-        
         <nav>
           <div className="nav-links">
             <a href="/">Home</a>
@@ -24,4 +23,4 @@ const Header = () => {
   );
 };
 
-export default Header; 
+export default Header;

@@ -1,6 +1,6 @@
 /* Header styles */
 header {
-  background:  #242424;
+  background:  #202020;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   padding: 0.5rem 0;
   position: sticky;
@@ -35,7 +35,6 @@ header img {
   height: 60px;
   width: auto;
   margin-right: 1rem;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
 .site-title {
