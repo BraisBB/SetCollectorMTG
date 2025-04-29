@@ -293,7 +293,7 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
             onClick={() => setIsExpanded(!isExpanded)}
             className="toggle-button"
           >
-            {isExpanded ? 'Hide Filters' : 'Show Filters'} ▼
+            {isExpanded ? 'Hide Filters' : 'Show Filters'} <span className={`arrow ${isExpanded ? 'up' : 'down'}`}>▼</span>
           </button>
         </div>
       </form>

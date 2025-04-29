@@ -1,6 +1,6 @@
 /* SearchBar styles */
 .search-container {
-  background: linear-gradient(to bottom, #2d1e1a, #1a1a1a);
+  background:#494949;
   border-radius: 8px;
   padding: 1.5rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -44,7 +44,7 @@
 .search-button {
   padding: 0.75rem 1.5rem;
   font-size: 1.1rem;
-  background: linear-gradient(to right, #ff8f00, #e65100);
+  background-color: #e65100;
   color: white;
   border: none;
   border-radius: 0 4px 4px 0;
@@ -54,7 +54,7 @@
 }
 
 .search-button:hover {
-  background: linear-gradient(to right, #ff9d1b, #f55c00);
+  background-color: #ff8f00;
   transform: translateY(-2px);
 }
 
@@ -296,7 +296,20 @@
 
 .toggle-button:hover {
   color: #e65100;
-  text-decoration: underline;
+}
+
+/* Estilos para la flecha del botón de filtros */
+.toggle-button .arrow {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.toggle-button .arrow.down {
+  transform: rotate(0deg);
+}
+
+.toggle-button .arrow.up {
+  transform: rotate(180deg);
 }
 
 /* Estilos para las rarezas */

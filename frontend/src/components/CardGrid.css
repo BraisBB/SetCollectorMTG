@@ -1,6 +1,7 @@
 /* CardGrid styles */
 .card-grid-container {
   margin-top: 2rem;
+  margin-bottom: 2rem;
   padding: 1rem;
 }
 
@@ -31,7 +32,7 @@
 }
 
 .card-item:hover {
-  transform: translateY(-10px) scale(1.12);
+  transform: translateY(-10px) scale(1.07);
   box-shadow: 0 15px 25px rgba(230, 81, 0, 0.35);
   z-index: 2; /* Asegura que la carta expandida esté por encima de las demás */
 }
