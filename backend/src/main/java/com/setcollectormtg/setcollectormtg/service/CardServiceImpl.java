@@ -173,13 +173,15 @@ public class CardServiceImpl implements CardService {
      * @param name Nombre o parte del nombre de la carta (opcional)
      * @param cardType Tipo o parte del tipo de la carta (opcional)
      * @param colorSymbol Símbolo de color o múltiples símbolos separados por comas (opcional)
+     * @param setCode Código del set (opcional)
+     * @param rarity Rareza de la carta (opcional)
      * @param manaCostMin Coste mínimo de maná (opcional)
      * @param manaCostMax Coste máximo de maná (opcional)
      * @return Lista de cartas que cumplen todos los criterios proporcionados
      */
     @Override
     @Transactional(readOnly = true)
-    public List<CardDto> getCardsByFilters(String name, String cardType, String colorSymbol, Integer manaCostMin, Integer manaCostMax) {
+    public List<CardDto> getCardsByFilters(String name, String cardType, String colorSymbol, String setCode, String rarity, Integer manaCostMin, Integer manaCostMax) {
         // Si hay múltiples colores separados por comas, realizar búsquedas para cada color
         // y devolver la intersección de los resultados
         if (colorSymbol != null && colorSymbol.contains(",") && !colorSymbol.equals("C")) {
@@ -192,7 +194,7 @@ public class CardServiceImpl implements CardService {
             }
             
             // Obtenemos los resultados para el primer color
-            List<Card> result = cardRepository.findByFilters(name, cardType, colors[0], manaCostMin, manaCostMax);
+            List<Card> result = cardRepository.findByFilters(name, cardType, rarity, setCode, colors[0], manaCostMin, manaCostMax);
             
             // Para cada color adicional, filtramos los resultados
             for (int i = 1; i < colors.length; i++) {
@@ -209,7 +211,7 @@ public class CardServiceImpl implements CardService {
         }
         
         // Caso normal: un solo color o ninguno
-        return cardRepository.findByFilters(name, cardType, colorSymbol, manaCostMin, manaCostMax).stream()
+        return cardRepository.findByFilters(name, cardType, rarity, setCode, colorSymbol, manaCostMin, manaCostMax).stream()
                 .map(cardMapper::toDto)
                 .collect(Collectors.toList());
     }

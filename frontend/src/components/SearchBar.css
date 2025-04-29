@@ -299,6 +299,36 @@
   text-decoration: underline;
 }
 
+/* Estilos para las rarezas */
+.rarity-mythic, .rarity-mythic option {
+  color: #e15717 !important;
+  font-weight: bold !important;
+}
+
+.rarity-rare, .rarity-rare option {
+  color: #e0c74f !important;
+  font-weight: bold !important;
+}
+
+.rarity-uncommon, .rarity-uncommon option {
+  color: #a5c1ce !important;
+  font-weight: 500 !important;
+}
+
+.rarity-common, .rarity-common option {
+  color: #c4c4c4 !important;
+}
+
+/* Estilos para el dropdown de rareza */
+#rarity option {
+  padding: 5px;
+  background-color: #262626;
+}
+
+#rarity option:hover {
+  background-color: #333;
+}
+
 /* Responsive styles */
 @media (max-width: 768px) {
   .filters-container {

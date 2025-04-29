@@ -21,5 +21,5 @@ public interface CardService {
 
     List<CardDto> getCardsByColor(String colorSymbol);
 
-    List<CardDto> getCardsByFilters(String name, String cardType, String colorSymbol, Integer manaCostMin, Integer manaCostMax);
+    List<CardDto> getCardsByFilters(String name, String cardType, String colorSymbol, String setCode, String rarity, Integer manaCostMin, Integer manaCostMax);
 }

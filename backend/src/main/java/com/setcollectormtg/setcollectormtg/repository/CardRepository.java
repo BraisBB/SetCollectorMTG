@@ -35,6 +35,8 @@ public interface CardRepository extends JpaRepository<Card, Long> {
     @Query("SELECT c FROM Card c WHERE " +
            "(:name IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
            "(:cardType IS NULL OR LOWER(c.cardType) LIKE LOWER(CONCAT('%', :cardType, '%'))) AND " +
+           "(:rarity IS NULL OR LOWER(c.rarity) = LOWER(:rarity)) AND " +
+           "(:setCode IS NULL OR c.setMtg.setCode = :setCode) AND " +
            "(:colorSymbol IS NULL OR " +
            "(:colorSymbol = 'C' AND (c.manaCost IS NULL OR " +
            "c.manaCost NOT LIKE '%W%' AND " +
@@ -48,6 +50,8 @@ public interface CardRepository extends JpaRepository<Card, Long> {
     List<Card> findByFilters(
             @Param("name") String name, 
             @Param("cardType") String cardType, 
+            @Param("rarity") String rarity,
+            @Param("setCode") String setCode,
             @Param("colorSymbol") String colorSymbol,
             @Param("manaCostMin") Integer manaCostMin,
             @Param("manaCostMax") Integer manaCostMax);

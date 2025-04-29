@@ -40,7 +40,7 @@ public class CardController {
         
         // Si hay algún filtro aplicado, utilizamos la búsqueda con filtros
         if (name != null || type != null || color != null || setCode != null || rarity != null || manaCostMin != null || manaCostMax != null) {
-            return ResponseEntity.ok(cardService.getCardsByFilters(name, type, color, manaCostMin, manaCostMax));
+            return ResponseEntity.ok(cardService.getCardsByFilters(name, type, color, setCode, rarity, manaCostMin, manaCostMax));
         }
         
         // Si no hay filtros, devolver todas las cartas
@@ -64,6 +64,8 @@ public class CardController {
      * @param name Nombre o parte del nombre (opcional)
      * @param cardType Tipo de carta (opcional)
      * @param color Color de la carta (W, U, B, R, G o colorless) (opcional)
+     * @param setCode Código del set (opcional)
+     * @param rarity Rareza de la carta (opcional)
      * @param manaCostMin Coste mínimo de maná (opcional)
      * @param manaCostMax Coste máximo de maná (opcional)
      * @return Lista de cartas que cumplen los criterios
@@ -73,10 +75,12 @@ public class CardController {
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String cardType,
             @RequestParam(required = false) String color,
+            @RequestParam(required = false) String setCode,
+            @RequestParam(required = false) String rarity,
             @RequestParam(required = false) Integer manaCostMin,
             @RequestParam(required = false) Integer manaCostMax) {
         
-        return ResponseEntity.ok(cardService.getCardsByFilters(name, cardType, color, manaCostMin, manaCostMax));
+        return ResponseEntity.ok(cardService.getCardsByFilters(name, cardType, color, setCode, rarity, manaCostMin, manaCostMax));
     }
 
     /**

@@ -238,8 +238,8 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
             >
               <option value="">Any</option>
               {filterOptions.rarities.map(rarity => (
-                <option key={rarity} value={rarity.toLowerCase()}>
-                  {rarity}
+                <option key={rarity} value={rarity.toLowerCase()} className={`rarity-${rarity.toLowerCase()}`}>
+                  {rarity.charAt(0).toUpperCase() + rarity.slice(1)}
                 </option>
               ))}
             </select>
