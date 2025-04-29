@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -144,13 +146,22 @@ public class CardServiceImpl implements CardService {
     /**
      * Busca cartas por color usando el símbolo de color en el coste de maná.
      *
-     * @param colorSymbol Símbolo de color (W, U, B, R, G)
+     * @param colorSymbol Símbolo de color (W, U, B, R, G) o C para incoloro
      * @return Lista de cartas que contienen el símbolo de color
      */
     @Override
     @Transactional(readOnly = true)
     public List<CardDto> getCardsByColor(String colorSymbol) {
-        return cardRepository.findByColorSymbol(colorSymbol).stream()
+        List<Card> cards;
+        
+        // Si es C (incoloro), usar la consulta especial para cartas incoloras
+        if ("C".equals(colorSymbol)) {
+            cards = cardRepository.findColorlessCards();
+        } else {
+            cards = cardRepository.findByColorSymbol(colorSymbol);
+        }
+        
+        return cards.stream()
                 .map(cardMapper::toDto)
                 .collect(Collectors.toList());
     }
@@ -161,7 +172,7 @@ public class CardServiceImpl implements CardService {
      *
      * @param name Nombre o parte del nombre de la carta (opcional)
      * @param cardType Tipo o parte del tipo de la carta (opcional)
-     * @param colorSymbol Símbolo de color (opcional)
+     * @param colorSymbol Símbolo de color o múltiples símbolos separados por comas (opcional)
      * @param manaCostMin Coste mínimo de maná (opcional)
      * @param manaCostMax Coste máximo de maná (opcional)
      * @return Lista de cartas que cumplen todos los criterios proporcionados
@@ -169,6 +180,35 @@ public class CardServiceImpl implements CardService {
     @Override
     @Transactional(readOnly = true)
     public List<CardDto> getCardsByFilters(String name, String cardType, String colorSymbol, Integer manaCostMin, Integer manaCostMax) {
+        // Si hay múltiples colores separados por comas, realizar búsquedas para cada color
+        // y devolver la intersección de los resultados
+        if (colorSymbol != null && colorSymbol.contains(",") && !colorSymbol.equals("C")) {
+            String[] colors = colorSymbol.split(",");
+            
+            // Si uno de los colores es C (incoloro), es una contradicción, devolvemos lista vacía
+            // Una carta no puede ser incolora y tener color al mismo tiempo
+            if (Arrays.asList(colors).contains("C")) {
+                return new ArrayList<>();
+            }
+            
+            // Obtenemos los resultados para el primer color
+            List<Card> result = cardRepository.findByFilters(name, cardType, colors[0], manaCostMin, manaCostMax);
+            
+            // Para cada color adicional, filtramos los resultados
+            for (int i = 1; i < colors.length; i++) {
+                final String currentColor = colors[i];
+                // Retenemos solo cartas que también contienen este color
+                result = result.stream()
+                        .filter(card -> card.getManaCost() != null && card.getManaCost().contains(currentColor))
+                        .collect(Collectors.toList());
+            }
+            
+            return result.stream()
+                    .map(cardMapper::toDto)
+                    .collect(Collectors.toList());
+        }
+        
+        // Caso normal: un solo color o ninguno
         return cardRepository.findByFilters(name, cardType, colorSymbol, manaCostMin, manaCostMax).stream()
                 .map(cardMapper::toDto)
                 .collect(Collectors.toList());

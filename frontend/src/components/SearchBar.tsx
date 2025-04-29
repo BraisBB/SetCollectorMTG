@@ -60,7 +60,7 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
       { id: 'C', name: 'colorless' }
     ],
     types: ['Creature', 'Sorcery', 'Instant', 'Artifact', 'Enchantment', 'Planeswalker', 'Land'],
-    rarities: ['Common', 'Uncommon', 'Rare', 'Mythic Rare'],
+    rarities: ['common', 'uncommon', 'rare', 'mythic'],
     sets: [],
     manaCosts: ['0', '1', '2', '3', '4', '5', '6', '7', '8+']
   });
@@ -96,7 +96,8 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
 
   // Actualizar el parámetro de color cuando cambian los colores seleccionados
   useEffect(() => {
-    // El backend espera los símbolos de color (W, U, B, R, G) separados por comas
+    // El backend espera los símbolos de color (W, U, B, R, G, C) separados por comas
+    // Para el caso de 'C' (incoloro), se debe enviar solo ese valor, no combinado con otros
     const colorValue = selectedColors.length > 0 ? selectedColors.join(',') : '';
     setSearchParams(prev => ({
       ...prev,
@@ -115,17 +116,34 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
   // Manejar la selección de colores
   const handleColorToggle = (colorId: string) => {
     setSelectedColors(prev => {
+      // Si ya está seleccionado, quitarlo
       if (prev.includes(colorId)) {
         return prev.filter(c => c !== colorId);
-      } else {
-        // Si seleccionamos "colorless" (C), desactivamos cualquier otro color
-        if (colorId === 'C') {
-          return ['C'];
-        } 
-        // Si hay algún otro color seleccionado, quitamos "colorless"
-        const newColors = [...prev.filter(c => c !== 'C'), colorId];
-        return newColors;
+      } 
+      
+      // Si seleccionamos "colorless" (C), desactivamos cualquier otro color
+      if (colorId === 'C') {
+        return ['C'];
       }
+      
+      // Si ya hay algún color seleccionado y uno de ellos es "colorless", eliminamos "colorless"
+      const newColors = prev.filter(c => c !== 'C');
+      
+      // Añadimos el nuevo color
+      return [...newColors, colorId];
+    });
+  };
+
+  // Limpiar todos los filtros
+  const handleClearFilters = () => {
+    setSelectedColors([]);
+    setSearchParams({
+      name: '',
+      color: '',
+      type: '',
+      rarity: '',
+      set: '',
+      manaCost: ''
     });
   };
 
@@ -166,7 +184,14 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
 
         <div className="filters-container">
           <div className="filter-group color-filter-group">
-            <label>Colors</label>
+            <div className="filter-header">
+              <label>Colors</label>
+              {selectedColors.length > 0 && (
+                <button type="button" className="clear-filter" onClick={() => setSelectedColors([])}>
+                  Clear
+                </button>
+              )}
+            </div>
             <div className="color-checkboxes">
               {filterOptions.colors.map(color => (
                 <label 
@@ -253,6 +278,12 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="filter-actions">
+            <button type="button" className="clear-all-btn" onClick={handleClearFilters}>
+              Clear All Filters
+            </button>
           </div>
         </div>
 

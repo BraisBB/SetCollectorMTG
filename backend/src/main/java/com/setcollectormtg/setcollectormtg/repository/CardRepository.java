@@ -21,11 +21,28 @@ public interface CardRepository extends JpaRepository<Card, Long> {
     @Query("SELECT c FROM Card c WHERE c.manaCost LIKE %:colorSymbol%")
     List<Card> findByColorSymbol(@Param("colorSymbol") String colorSymbol);
     
+    // Buscar cartas incoloras (que no contengan símbolos de colores W, U, B, R, G en su coste de maná)
+    @Query("SELECT c FROM Card c WHERE " +
+           "(c.manaCost IS NULL OR " +
+           "c.manaCost NOT LIKE '%W%' AND " +
+           "c.manaCost NOT LIKE '%U%' AND " +
+           "c.manaCost NOT LIKE '%B%' AND " +
+           "c.manaCost NOT LIKE '%R%' AND " +
+           "c.manaCost NOT LIKE '%G%')")
+    List<Card> findColorlessCards();
+    
     // Método combinado para buscar por múltiples criterios
     @Query("SELECT c FROM Card c WHERE " +
            "(:name IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
            "(:cardType IS NULL OR LOWER(c.cardType) LIKE LOWER(CONCAT('%', :cardType, '%'))) AND " +
-           "(:colorSymbol IS NULL OR c.manaCost LIKE CONCAT('%', :colorSymbol, '%')) AND " +
+           "(:colorSymbol IS NULL OR " +
+           "(:colorSymbol = 'C' AND (c.manaCost IS NULL OR " +
+           "c.manaCost NOT LIKE '%W%' AND " +
+           "c.manaCost NOT LIKE '%U%' AND " +
+           "c.manaCost NOT LIKE '%B%' AND " +
+           "c.manaCost NOT LIKE '%R%' AND " +
+           "c.manaCost NOT LIKE '%G%')) OR " +
+           "(:colorSymbol != 'C' AND c.manaCost LIKE CONCAT('%', :colorSymbol, '%'))) AND " +
            "(:manaCostMin IS NULL OR c.manaValue >= :manaCostMin) AND " +
            "(:manaCostMax IS NULL OR c.manaValue <= :manaCostMax)")
     List<Card> findByFilters(

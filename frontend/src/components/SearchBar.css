@@ -68,6 +68,28 @@
   margin-bottom: 1rem;
 }
 
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.clear-filter {
+  background: none;
+  border: none;
+  color: #e65100;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.clear-filter:hover {
+  text-decoration: underline;
+  color: #ff8f00;
+}
+
 .color-checkboxes {
   display: flex;
   justify-content: center;
@@ -76,6 +98,14 @@
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 6px;
   flex-wrap: wrap;
+}
+
+.colorless-info {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #aaa;
+  font-style: italic;
+  text-align: center;
 }
 
 .color-check-label {
@@ -162,6 +192,30 @@
   height: 8px;
   background-color: #e65100;
   border-radius: 50%;
+}
+
+.filter-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.clear-all-btn {
+  background: none;
+  border: 1px solid #444;
+  color: #ccc;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.clear-all-btn:hover {
+  background-color: rgba(230, 81, 0, 0.1);
+  border-color: #e65100;
+  color: #e65100;
 }
 
 .filters-container {
