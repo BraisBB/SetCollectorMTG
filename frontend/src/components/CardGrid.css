@@ -133,4 +133,53 @@
   .card-item:hover {
     transform: translateY(-5px) scale(1.05);
   }
+}
+
+/* Load More button styles */
+.load-more-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.load-more-button {
+  background-color: #e65100;
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.load-more-button:hover {
+  background-color: #ff8f00;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.load-more-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Loading more cards indicator */
+.load-more-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 2rem 0;
+  color: #333;
+}
+
+.load-more-loading .spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid rgba(230, 81, 0, 0.3);
+  border-top: 3px solid #e65100;
+  margin-bottom: 0.75rem;
 } 

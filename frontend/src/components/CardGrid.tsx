@@ -13,10 +13,12 @@ export interface Card {
 interface CardGridProps {
   cards: Card[];
   loading: boolean;
+  hasMore: boolean;
+  onLoadMore: () => void;
 }
 
-const CardGrid = ({ cards, loading }: CardGridProps) => {
-  if (loading) {
+const CardGrid = ({ cards, loading, hasMore, onLoadMore }: CardGridProps) => {
+  if (loading && cards.length === 0) {
     return (
       <div className="cards-loading">
         <div className="spinner"></div>
@@ -50,6 +52,24 @@ const CardGrid = ({ cards, loading }: CardGridProps) => {
           </div>
         ))}
       </div>
+      
+      {loading && (
+        <div className="load-more-loading">
+          <div className="spinner"></div>
+          <p>Loading more cards...</p>
+        </div>
+      )}
+      
+      {hasMore && !loading && (
+        <div className="load-more-container">
+          <button 
+            className="load-more-button" 
+            onClick={onLoadMore}
+          >
+            Load More
+          </button>
+        </div>
+      )}
     </div>
   );
 };

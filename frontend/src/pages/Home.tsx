@@ -10,6 +10,9 @@ import axios from 'axios';
 // URL base del backend
 const API_BASE_URL = 'http://localhost:8080';
 
+// Tamaño de página para cargar cartas
+const PAGE_SIZE = 20;
+
 // Interfaz para los datos de la carta recibidos del backend
 interface CardResponse {
   cardId: number;
@@ -26,11 +29,13 @@ const Home = () => {
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasMoreCards, setHasMoreCards] = useState(false);
+  const [allCards, setAllCards] = useState<CardResponse[]>([]);
+  const [currentSearchParams, setCurrentSearchParams] = useState<SearchParams | null>(null);
 
-  const handleSearch = async (searchParams: SearchParams) => {
+  const fetchCards = async (searchParams: SearchParams, page: number = 0) => {
     setLoading(true);
-    setHasSearched(true);
-    setError(null);
     
     try {
       // Construir los parámetros de consulta para la búsqueda
@@ -68,26 +73,73 @@ const Home = () => {
       
       // Hacer la llamada al backend
       const response = await axios.get<CardResponse[]>(`${API_BASE_URL}/cards`, { params });
+      setAllCards(response.data);
+      
+      // Dividir los resultados para la paginación
+      const totalResults = response.data.length;
+      const pagedResults = response.data.slice(0, PAGE_SIZE);
+      
+      // Determinar si hay más cartas para cargar
+      setHasMoreCards(totalResults > PAGE_SIZE);
       
       // Transformar los datos recibidos al formato esperado por CardGrid
-      const cards: Card[] = response.data.map((card: CardResponse) => ({
+      const cards: Card[] = pagedResults.map((card: CardResponse) => ({
         id: card.cardId.toString(),
         name: card.name,
         imageUrl: card.imageUrl || 'https://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=0&type=card', // Imagen por defecto
         type: card.cardType,
         rarity: card.rarity,
-        set: card.setId.toString(), // Idealmente deberíamos obtener el nombre del set
-        color: determineCardColor(card.manaCost || '') // Función auxiliar para determinar el color a partir del coste de maná
+        set: card.setId.toString(), 
+        color: determineCardColor(card.manaCost || '')
       }));
       
       setSearchResults(cards);
+      setCurrentPage(0);
     } catch (err) {
       console.error('Error fetching cards:', err);
       setError('Error fetching cards. Please try again.');
       setSearchResults([]);
+      setHasMoreCards(false);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = async (searchParams: SearchParams) => {
+    setHasSearched(true);
+    setError(null);
+    setCurrentSearchParams(searchParams);
+    await fetchCards(searchParams);
+  };
+
+  const handleLoadMore = () => {
+    if (!hasMoreCards || loading || !allCards.length) return;
+    
+    setLoading(true);
+    const nextPage = currentPage + 1;
+    
+    setTimeout(() => {
+      const startIndex = nextPage * PAGE_SIZE;
+      const endIndex = startIndex + PAGE_SIZE;
+      const nextPageItems = allCards.slice(startIndex, endIndex);
+      
+      // Transformar los datos
+      const newCards: Card[] = nextPageItems.map((card: CardResponse) => ({
+        id: card.cardId.toString(),
+        name: card.name,
+        imageUrl: card.imageUrl || 'https://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=0&type=card',
+        type: card.cardType,
+        rarity: card.rarity,
+        set: card.setId.toString(),
+        color: determineCardColor(card.manaCost || '')
+      }));
+      
+      // Actualizar el estado
+      setSearchResults(prev => [...prev, ...newCards]);
+      setCurrentPage(nextPage);
+      setHasMoreCards((nextPage + 1) * PAGE_SIZE < allCards.length);
+      setLoading(false);
+    }, 500); // Pequeño retraso para mejor experiencia visual
   };
 
   // Función auxiliar para determinar el color principal de la carta basado en su coste de maná
@@ -138,7 +190,12 @@ const Home = () => {
         )}
         
         {hasSearched && (
-          <CardGrid cards={searchResults} loading={loading} />
+          <CardGrid 
+            cards={searchResults} 
+            loading={loading} 
+            hasMore={hasMoreCards}
+            onLoadMore={handleLoadMore}
+          />
         )}
       </main>
     </div>
