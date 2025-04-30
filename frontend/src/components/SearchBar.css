@@ -9,7 +9,7 @@
   transition: all 0.5s ease;
   border: 1px solid #333;
   position: relative;
-  font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
+  font-family: 'Noto Sans', sans-serif;
 }
 
 .search-container.expanded {
@@ -30,7 +30,7 @@
   background-color: #262626;
   color: #fff;
   transition: all 0.3s ease;
-  font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
+  font-family: 'Noto Sans', sans-serif;
 }
 
 .search-input:focus {
@@ -53,7 +53,7 @@
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: 600;
-  font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
+  font-family: 'Noto Sans', sans-serif;
 }
 
 .search-button:hover {

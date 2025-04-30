@@ -3,7 +3,7 @@
   margin-top: 2rem;
   margin-bottom: 2rem;
   padding: 1rem;
-  font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
+  font-family: 'Noto Sans', sans-serif;
 }
 
 .results-title {
@@ -16,7 +16,7 @@
   margin-left: auto;
   margin-right: auto;
   text-align: center;
-  font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
+  font-family: 'Noto Sans', sans-serif;
 }
 
 .card-grid {
@@ -159,7 +159,7 @@
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
+  font-family: 'Noto Sans', sans-serif;
 }
 
 .load-more-button:hover {
