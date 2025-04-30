@@ -173,13 +173,15 @@ const Home = () => {
     <div className="home-container">
       <Header />
       <main className="container home-main">
-        <div className={`hero-section ${hasSearched ? 'searched' : ''}`}>
-          <h1 className="home-title">Welcome to SetCollectorMTG</h1>
-          <p className="home-description">
-            Your ultimate platform for collecting and managing Magic: The Gathering sets.
-            Search for cards below to start your collection journey.
-          </p>
-        </div>
+        {!hasSearched && (
+          <div className="hero-section">
+            <h1 className="home-title">Welcome to SetCollectorMTG</h1>
+            <p className="home-description">
+              Your ultimate platform for collecting and managing Magic: The Gathering sets.
+              Search for cards below to start your collection journey.
+            </p>
+          </div>
+        )}
         
         <SearchBar onSearch={handleSearch} />
         

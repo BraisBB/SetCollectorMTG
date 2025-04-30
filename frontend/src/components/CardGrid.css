@@ -3,6 +3,7 @@
   margin-top: 2rem;
   margin-bottom: 2rem;
   padding: 1rem;
+  font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
 }
 
 .results-title {
@@ -12,11 +13,15 @@
   border-bottom: 2px solid #e65100;
   padding-bottom: 0.5rem;
   width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
 }
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 1.5rem;
 }
 
@@ -32,8 +37,8 @@
 }
 
 .card-item:hover {
-  transform: translateY(-10px) scale(1.07);
-  box-shadow: 0 15px 25px rgba(230, 81, 0, 0.35);
+  transform: translateY(-12px) scale(1.08);
+  box-shadow: 0 15px 30px rgba(230, 81, 0, 0.35);
   z-index: 2; /* Asegura que la carta expandida esté por encima de las demás */
 }
 
@@ -115,7 +120,7 @@
 /* Responsive */
 @media (max-width: 768px) {
   .card-grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
     gap: 1rem;
   }
   
@@ -126,7 +131,7 @@
 
 @media (max-width: 480px) {
   .card-grid {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 0.75rem;
   }
   
@@ -154,6 +159,7 @@
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
 }
 
 .load-more-button:hover {
