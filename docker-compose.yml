@@ -73,12 +73,13 @@ services:
     container_name: setcollector-frontend
     ports:
       - "5173:80"
+      - "80:80"  # Puerto adicional para acceso directo por HTTP
     depends_on:
       - backend
     networks:
       - setcollector-network
     environment:
-      - NGINX_HOST=localhost
+      - NGINX_HOST=setcollectormtg.com
       - NGINX_PORT=80
 
 networks:
