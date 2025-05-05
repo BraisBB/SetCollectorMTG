@@ -2,6 +2,7 @@
   width: 100%;
   min-height: 100vh;
   background-color: #f5f5f5;
+  font-family: 'Noto Sans', sans-serif;
 }
 
 .register-container {
@@ -22,10 +23,11 @@
 }
 
 .register-card h2 {
-  color: #192a56;
+  color: #000000;
   text-align: center;
   margin-bottom: 24px;
   font-size: 24px;
+  font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
 }
 
 .form-row {
@@ -46,6 +48,7 @@
   margin-bottom: 6px;
   font-weight: 500;
   color: #333;
+  font-family: 'Noto Sans', sans-serif;
 }
 
 .form-group input {
@@ -55,6 +58,7 @@
   border-radius: 4px;
   font-size: 16px;
   transition: border-color 0.3s;
+  font-family: 'Noto Sans', sans-serif;
 }
 
 .form-group input:focus {
@@ -71,12 +75,13 @@
   color: #e53e3e;
   font-size: 14px;
   margin-top: 4px;
+  font-family: 'Noto Sans', sans-serif;
 }
 
 .register-button {
   width: 100%;
   padding: 12px;
-  background-color: #192a56;
+  background-color:#e65100;;
   color: white;
   border: none;
   border-radius: 4px;
@@ -84,10 +89,11 @@
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.3s;
+  font-family: 'Noto Sans', sans-serif;
 }
 
 .register-button:hover {
-  background-color: #1e3a8a;
+  background-color: #ff8f00;
 }
 
 .register-button:disabled {
@@ -102,20 +108,23 @@
   border-radius: 4px;
   margin-bottom: 20px;
   text-align: center;
+  font-family: 'Noto Sans', sans-serif;
 }
 
 .register-footer {
   margin-top: 24px;
   text-align: center;
   color: #666;
+  font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
 }
 
 .register-footer a {
-  color: #192a56;
+  color: #3560cc;
   text-decoration: none;
   font-weight: 500;
+  font-family: 'Noto Sans', sans-serif;
 }
 
 .register-footer a:hover {
   text-decoration: underline;
-} 
+}

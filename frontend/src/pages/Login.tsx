@@ -111,7 +111,6 @@ const Login: React.FC = () => {
                 className={fieldErrors.username ? 'error-input' : ''}
               />
               {fieldErrors.username && <div className="field-error">{fieldErrors.username}</div>}
-              <div className="field-info">Username is case-sensitive</div>
             </div>
             
             <div className="form-group">
