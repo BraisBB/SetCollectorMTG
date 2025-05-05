@@ -37,9 +37,6 @@ const Header: React.FC = () => {
             ) : (
               <>
                 <Link to="/login">Login</Link>
-                <Link to="/register" className="register-link">
-                  Register
-                </Link>
               </>
             )}
           </div>
