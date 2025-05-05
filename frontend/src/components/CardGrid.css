@@ -37,7 +37,7 @@
 }
 
 .card-item:hover {
-  transform: translateY(-12px) scale(1.08);
+  transform: translateY(-12px) scale(1.04);
   box-shadow: 0 15px 30px rgba(230, 81, 0, 0.35);
   z-index: 2; /* Asegura que la carta expandida esté por encima de las demás */
 }

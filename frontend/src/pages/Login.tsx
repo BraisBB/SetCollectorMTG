@@ -1,0 +1,161 @@
+import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import authService from '../services/authService';
+import Header from '../components/Header';
+import './Login.css';
+
+interface LocationState {
+  message?: string;
+}
+
+interface ErrorResponse {
+  message: string;
+  errors?: Record<string, string>;
+}
+
+const Login: React.FC = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Obtener el mensaje de la página anterior (si existe)
+  const locationState = location.state as LocationState | null;
+  const [successMessage, setSuccessMessage] = useState<string | null>(
+    locationState?.message || null
+  );
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
+    const { name, value } = e.target;
+    setter(value);
+    
+    // Limpiar error del campo cuando el usuario modifica su valor
+    if (fieldErrors[name]) {
+      const updatedErrors = { ...fieldErrors };
+      delete updatedErrors[name];
+      setFieldErrors(updatedErrors);
+    }
+  };
+
+  const validateForm = (): boolean => {
+    let isValid = true;
+    const newErrors: Record<string, string> = {};
+    
+    if (!username) {
+      newErrors.username = 'Username is required';
+      isValid = false;
+    }
+    
+    if (!password) {
+      newErrors.password = 'Password is required';
+      isValid = false;
+    }
+    
+    setFieldErrors(newErrors);
+    return isValid;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    setLoading(true);
+    setError('');
+    setSuccessMessage(null);
+    setFieldErrors({});
+    
+    try {
+      const success = await authService.login({ username, password });
+      
+      if (success) {
+        navigate('/'); // Redirect to home page on successful login
+      } else {
+        setError('Invalid username or password');
+      }
+    } catch (error: unknown) {
+      console.error(error);
+      
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: ErrorResponse } };
+        if (axiosError.response?.data?.message) {
+          setError(axiosError.response.data.message);
+        } else {
+          setError('Authentication failed. Please check your credentials and try again.');
+        }
+      } else {
+        setError('An error occurred during login. Please try again later.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="login-page">
+      <Header />
+      <div className="login-container">
+        <div className="login-card">
+          <h2>Login</h2>
+          
+          {successMessage && (
+            <div className="success-message">{successMessage}</div>
+          )}
+          
+          {error && <div className="error-message">{error}</div>}
+          
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label htmlFor="username">Username</label>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                value={username}
+                onChange={(e) => handleInputChange(e, setUsername)}
+                autoComplete="username"
+                disabled={loading}
+                className={fieldErrors.username ? 'error-input' : ''}
+              />
+              {fieldErrors.username && <div className="field-error">{fieldErrors.username}</div>}
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="password">Password</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={password}
+                onChange={(e) => handleInputChange(e, setPassword)}
+                autoComplete="current-password"
+                disabled={loading}
+                className={fieldErrors.password ? 'error-input' : ''}
+              />
+              {fieldErrors.password && <div className="field-error">{fieldErrors.password}</div>}
+            </div>
+            
+            <button 
+              type="submit" 
+              className="login-button"
+              disabled={loading}
+            >
+              {loading ? 'Logging in...' : 'Login'}
+            </button>
+          </form>
+          
+          <div className="login-footer">
+            <p>Don't have an account? <a href="/register">Register</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Login; 
