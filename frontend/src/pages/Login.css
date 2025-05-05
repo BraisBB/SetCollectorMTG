@@ -64,6 +64,20 @@
   margin-top: 4px;
 }
 
+.field-warning {
+  color: #dd6b20;
+  font-size: 14px;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.field-info {
+  color: #4299e1;
+  font-size: 13px;
+  margin-top: 4px;
+  font-style: italic;
+}
+
 .login-button {
   width: 100%;
   padding: 12px;
@@ -118,4 +132,4 @@
 
 .login-footer a:hover {
   text-decoration: underline;
-} 
+}

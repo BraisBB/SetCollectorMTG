@@ -8,11 +8,6 @@ interface LocationState {
   message?: string;
 }
 
-interface ErrorResponse {
-  message: string;
-  errors?: Record<string, string>;
-}
-
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -76,21 +71,14 @@ const Login: React.FC = () => {
       if (success) {
         navigate('/'); // Redirect to home page on successful login
       } else {
+        // Mensaje genérico para cualquier error de autenticación
         setError('Invalid username or password');
       }
     } catch (error: unknown) {
       console.error(error);
       
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { data?: ErrorResponse } };
-        if (axiosError.response?.data?.message) {
-          setError(axiosError.response.data.message);
-        } else {
-          setError('Authentication failed. Please check your credentials and try again.');
-        }
-      } else {
-        setError('An error occurred during login. Please try again later.');
-      }
+      // Mensaje genérico para cualquier error
+      setError('Invalid username or password');
     } finally {
       setLoading(false);
     }
@@ -123,6 +111,7 @@ const Login: React.FC = () => {
                 className={fieldErrors.username ? 'error-input' : ''}
               />
               {fieldErrors.username && <div className="field-error">{fieldErrors.username}</div>}
+              <div className="field-info">Username is case-sensitive</div>
             </div>
             
             <div className="form-group">
@@ -158,4 +147,4 @@ const Login: React.FC = () => {
   );
 };
 
-export default Login; 
+export default Login;
