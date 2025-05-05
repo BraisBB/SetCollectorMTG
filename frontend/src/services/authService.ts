@@ -5,6 +5,7 @@ const AUTH_API_URL = 'http://localhost:8080/api/auth';
 const KEYCLOAK_URL = 'http://localhost:8181';
 const REALM = 'setcollector-realm';
 const CLIENT_ID = 'setcollector-app';
+const CLIENT_SECRET = 'IiAm00pAe5U3Np4rUjRZPUIg0c7zWwB1';
 
 export interface LoginCredentials {
   username: string;
@@ -31,9 +32,18 @@ class AuthService {
     try {
       const params = new URLSearchParams();
       params.append('client_id', CLIENT_ID);
+      params.append('client_secret', CLIENT_SECRET);
       params.append('grant_type', 'password');
       params.append('username', credentials.username);
       params.append('password', credentials.password);
+      params.append('scope', 'openid profile email');
+
+      console.log('Attempting login with:', {
+        url: `${KEYCLOAK_URL}/realms/${REALM}/protocol/openid-connect/token`,
+        client_id: CLIENT_ID,
+        username: credentials.username,
+        client_secret: CLIENT_SECRET.substring(0, 4) + '...' // Only showing first 4 characters for security
+      });
 
       const response = await axios.post<AuthTokens>(
         `${KEYCLOAK_URL}/realms/${REALM}/protocol/openid-connect/token`,
@@ -41,14 +51,25 @@ class AuthService {
         {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json'
           },
         }
       );
 
+      console.log('Login successful:', {
+        access_token: response.data.access_token.substring(0, 10) + '...',
+        expires_in: response.data.expires_in
+      });
+      
       this.setSession(response.data);
       return true;
-    } catch (error) {
-      console.error('Login failed:', error);
+    } catch (error: any) {
+      console.error('Login failed:', {
+        error: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        headers: error.response?.headers
+      });
       return false;
     }
   }
