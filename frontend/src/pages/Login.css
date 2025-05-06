@@ -15,10 +15,10 @@
 
 .login-card {
   width: 100%;
-  max-width: 400px;
-  background: white;
+  max-width: 900px;
+  background: #494949;
   border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   padding: 30px;
 }
 
@@ -38,7 +38,7 @@
   display: block;
   margin-bottom: 6px;
   font-weight: 500;
-  color: #333;
+  color: #ffffff;
   font-family: 'Noto Sans', sans-serif;
 }
 
@@ -123,7 +123,7 @@
 .login-footer {
   margin-top: 24px;
   text-align: center;
-  color: #666;
+  color: #ffffff;
   font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
 }
 
