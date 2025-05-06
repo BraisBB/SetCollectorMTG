@@ -90,6 +90,80 @@ header nav a:hover::before {
   transform: translateX(0);
 }
 
+/* User menu styles */
+.user-menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.username-button {
+  background: none;
+  border: none;
+  color: #fff;
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.username-button:hover {
+  background-color: rgba(230, 81, 0, 0.15);
+}
+
+.username-button::after {
+  content: '▼';
+  font-size: 0.7rem;
+  margin-left: 0.5rem;
+  transition: transform 0.3s ease;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #2d2d2d;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  width: 180px;
+  z-index: 200;
+  overflow: hidden;
+  margin-top: 0.5rem;
+  border: 1px solid rgba(230, 81, 0, 0.3);
+}
+
+.dropdown-menu a,
+.dropdown-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  color: #e0e0e0;
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dropdown-menu a:last-child,
+.dropdown-menu button:last-child {
+  border-bottom: none;
+}
+
+.dropdown-menu a:hover,
+.dropdown-menu button:hover {
+  background-color: rgba(230, 81, 0, 0.15);
+  color: #fff;
+}
+
 /* Responsive styles */
 @media (max-width: 768px) {
   header .container {
@@ -121,6 +195,18 @@ header nav a:hover::before {
     font-size: 1rem;
     padding: 0.5rem;
   }
+  
+  .user-menu {
+    position: static;
+  }
+  
+  .dropdown-menu {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 300px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -137,7 +223,8 @@ header nav a:hover::before {
     gap: 0.25rem;
   }
   
-  header nav a {
+  header nav a,
+  .username-button {
     width: 100%;
     text-align: center;
     padding: 0.75rem;
@@ -145,7 +232,8 @@ header nav a:hover::before {
     background-color: rgba(230, 81, 0, 0.05);
   }
   
-  header nav a:hover {
+  header nav a:hover,
+  .username-button:hover {
     background-color: rgba(230, 81, 0, 0.2);
   }
 } 

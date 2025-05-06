@@ -231,10 +231,30 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public UserDto getUserById(Long id) {
-        // Tu lógica existente...
-        return userRepository.findById(id)
-                .map(userMapper::toDto)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+        log.info("API request to get user by id: {}", id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("User with id {} not found", id);
+                    return new ResourceNotFoundException("User not found with id: " + id);
+                });
+        return userMapper.toDto(user);
+    }
+
+    /**
+     * Obtiene un usuario por su nombre de usuario.
+     *
+     * @param username Nombre de usuario
+     * @return DTO del usuario
+     */
+    @Override
+    public UserDto getUserByUsername(String username) {
+        log.info("API request to get user by username: {}", username);
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> {
+                    log.warn("User with username {} not found", username);
+                    return new ResourceNotFoundException("User not found with username: " + username);
+                });
+        return userMapper.toDto(user);
     }
 
     /**
@@ -247,28 +267,64 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserDto updateUser(Long id, UserDto userDto) {
+        log.info("API request to update user: {}", id);
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+                .orElseThrow(() -> {
+                    log.warn("User with id {} not found for update", id);
+                    return new ResourceNotFoundException("User not found with id: " + id);
+                });
 
-        if (userDto.getUsername() != null && !user.getUsername().equals(userDto.getUsername())) {
-            if (userRepository.existsByUsernameAndKeycloakIdNot(userDto.getUsername(), user.getKeycloakId())) {
-                throw new RuntimeException("Username already exists for a different user.");
-            }
-        }
-        if (userDto.getEmail() != null && !user.getEmail().equals(userDto.getEmail())) {
-            if (userRepository.existsByEmailAndKeycloakIdNot(userDto.getEmail(), user.getKeycloakId())) {
-                throw new RuntimeException("Email already exists for a different user.");
-            }
+        // Verificar que el username no esté en uso por otro usuario
+        if (!user.getUsername().equals(userDto.getUsername()) &&
+                userRepository.existsByUsername(userDto.getUsername())) {
+            log.warn("Username {} already in use by another user", userDto.getUsername());
+            throw new RuntimeException("Username already in use by another user");
         }
 
+        // Verificar que el email no esté en uso por otro usuario
+        if (!user.getEmail().equals(userDto.getEmail()) &&
+                userRepository.existsByEmail(userDto.getEmail())) {
+            log.warn("Email {} already in use by another user", userDto.getEmail());
+            throw new RuntimeException("Email already in use by another user");
+        }
+
+        // Actualizar campos del usuario
         userMapper.updateUserFromDto(userDto, user);
+        User updatedUser = userRepository.save(user);
+        return userMapper.toDto(updatedUser);
+    }
 
-        if (user.getFirstName() == null)
-            user.setFirstName("UpdatedFirst");
-        if (user.getLastName() == null)
-            user.setLastName("UpdatedLast");
+    /**
+     * Actualiza los datos de un usuario local por nombre de usuario, validando que el email no esté repetido en otros usuarios.
+     *
+     * @param username Nombre de usuario
+     * @param userDto  DTO con los nuevos datos
+     * @return DTO actualizado del usuario
+     */
+    @Override
+    @Transactional
+    public UserDto updateUserByUsername(String username, UserDto userDto) {
+        log.info("API request to update user by username: {}", username);
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> {
+                    log.warn("User with username {} not found for update", username);
+                    return new ResourceNotFoundException("User not found with username: " + username);
+                });
 
-        return userMapper.toDto(userRepository.save(user));
+        // Verificar que el email no esté en uso por otro usuario
+        if (!user.getEmail().equals(userDto.getEmail()) &&
+                userRepository.existsByEmail(userDto.getEmail())) {
+            log.warn("Email {} already in use by another user", userDto.getEmail());
+            throw new RuntimeException("Email already in use by another user");
+        }
+
+        // Actualizar campos del usuario (excepto el username)
+        user.setEmail(userDto.getEmail());
+        user.setFirstName(userDto.getFirstName());
+        user.setLastName(userDto.getLastName());
+
+        User updatedUser = userRepository.save(user);
+        return userMapper.toDto(updatedUser);
     }
 
     /**
@@ -282,7 +338,7 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
-        
+
         String keycloakUserId = user.getKeycloakId();
         if (keycloakUserId != null) {
             try {

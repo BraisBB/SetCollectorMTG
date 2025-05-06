@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from './pages/Home.tsx';
 import Login from './pages/Login.tsx';
 import Register from './pages/Register.tsx';
+import Profile from './pages/Profile.tsx';
 import authService from "./services/authService.ts";
 
 const App: React.FC = () => {
@@ -17,6 +18,7 @@ const App: React.FC = () => {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </BrowserRouter>
   );

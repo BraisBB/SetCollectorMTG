@@ -37,6 +37,11 @@ public class UserController {
     public ResponseEntity<UserDto> getUserById(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }
+    
+    @GetMapping("/username/{username}")
+    public ResponseEntity<UserDto> getUserByUsername(@PathVariable String username) {
+        return ResponseEntity.ok(userService.getUserByUsername(username));
+    }
 
     @PutMapping("/{id}")
     @PreAuthorize("@userSecurity.canAccessUserResource(authentication, #id)")
@@ -44,6 +49,13 @@ public class UserController {
             @PathVariable Long id,
             @Valid @RequestBody UserDto userDto) {
         return ResponseEntity.ok(userService.updateUser(id, userDto));
+    }
+    
+    @PutMapping("/username/{username}")
+    public ResponseEntity<UserDto> updateUserByUsername(
+            @PathVariable String username,
+            @Valid @RequestBody UserDto userDto) {
+        return ResponseEntity.ok(userService.updateUserByUsername(username, userDto));
     }
 
     @DeleteMapping("/{id}")

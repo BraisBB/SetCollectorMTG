@@ -21,6 +21,13 @@ export interface Card {
   setId: number;
 }
 
+export interface User {
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+
 const api = {
   // Sets
   getAllSets: async (): Promise<SetMtg[]> => {
@@ -46,6 +53,35 @@ const api = {
 
   getCardById: async (id: number): Promise<Card> => {
     const response = await axios.get<Card>(`${API_URL}/cards/${id}`);
+    return response.data;
+  },
+
+  // Users
+  getUserProfile: async (username: string): Promise<User> => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    
+    const response = await axios.get<User>(`${API_URL}/users/username/${username}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  },
+
+  updateUserProfile: async (username: string, userData: Partial<User>): Promise<User> => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    
+    const response = await axios.put<User>(`${API_URL}/users/username/${username}`, userData, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
     return response.data;
   }
 };

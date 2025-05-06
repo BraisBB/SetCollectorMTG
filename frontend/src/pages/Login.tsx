@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import authService from '../services/authService';
 import Header from '../components/Header';
@@ -22,6 +22,13 @@ const Login: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(
     locationState?.message || null
   );
+
+  // Check if user is already authenticated and redirect to home
+  useEffect(() => {
+    if (authService.isAuthenticated()) {
+      navigate('/');
+    }
+  }, [navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
     const { name, value } = e.target;
@@ -69,6 +76,8 @@ const Login: React.FC = () => {
       const success = await authService.login({ username, password });
       
       if (success) {
+        // Store username in localStorage for the header component
+        localStorage.setItem('username', username);
         navigate('/'); // Redirect to home page on successful login
       } else {
         // Mensaje genérico para cualquier error de autenticación

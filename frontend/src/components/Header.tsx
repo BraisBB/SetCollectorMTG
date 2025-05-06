@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 import authService from "../services/authService";
@@ -7,10 +7,28 @@ import "./Header.css";
 const Header: React.FC = () => {
   const navigate = useNavigate();
   const isAuthenticated = authService.isAuthenticated();
+  const [username, setUsername] = useState<string>("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    // Get username from localStorage or other source when authenticated
+    if (isAuthenticated) {
+      // Try to get the username from localStorage
+      const storedUsername = localStorage.getItem('username');
+      if (storedUsername) {
+        setUsername(storedUsername);
+      }
+    }
+  }, [isAuthenticated]);
 
   const handleLogout = async () => {
     await authService.logout();
+    setDropdownOpen(false);
     navigate("/login");
+  };
+
+  const toggleDropdown = () => {
+    setDropdownOpen(!dropdownOpen);
   };
 
   return (
@@ -28,12 +46,19 @@ const Header: React.FC = () => {
             <Link to="/about">About Us</Link>
             
             {isAuthenticated ? (
-              <>
-                <Link to="/profile">My Profile</Link>
-                <button className="logout-button" onClick={handleLogout}>
-                  Logout
+              <div className="user-menu">
+                <button className="username-button" onClick={toggleDropdown}>
+                  {username || "User"}
                 </button>
-              </>
+                {dropdownOpen && (
+                  <div className="dropdown-menu">
+                    <Link to="/profile" onClick={() => setDropdownOpen(false)}>My Profile</Link>
+                    <button className="dropdown-item" onClick={handleLogout}>
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <>
                 <Link to="/login">Login</Link>

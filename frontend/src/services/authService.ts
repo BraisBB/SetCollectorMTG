@@ -230,6 +230,9 @@ class AuthService {
       }
     }
     
+    // Remove username from localStorage
+    localStorage.removeItem('username');
+    
     this.clearSession();
   }
 
