@@ -1,10 +1,22 @@
 import React, { useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Home from './pages/Home.tsx';
 import Login from './pages/Login.tsx';
 import Register from './pages/Register.tsx';
 import Profile from './pages/Profile.tsx';
 import authService from "./services/authService.ts";
+
+// Componente para rutas protegidas
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const isAuthenticated = authService.isAuthenticated();
+  
+  if (!isAuthenticated) {
+    // Redirigir a login si no está autenticado
+    return <Navigate to="/login" replace />;
+  }
+  
+  return <>{children}</>;
+};
 
 const App: React.FC = () => {
   useEffect(() => {
@@ -18,7 +30,15 @@ const App: React.FC = () => {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        } />
+        {/* Ruta para About Us */}
+        <Route path="/about" element={<Home />} />
+        {/* Ruta para cualquier otra URL no definida */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

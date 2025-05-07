@@ -28,9 +28,6 @@ header .container {
   transition: transform 0.3s ease;
 }
 
-.logo-container:hover {
-  transform: scale(1.05);
-}
 
 header img {
   height: 60px;

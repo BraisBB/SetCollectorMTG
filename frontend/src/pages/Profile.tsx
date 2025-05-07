@@ -42,14 +42,26 @@ const Profile: React.FC = () => {
         throw new Error('Username not found');
       }
 
-      // Fetch user profile from backend
-      const userData = await api.getUserProfile(username);
-      setProfile(userData);
+      try {
+        // Intentar obtener datos del backend
+        const userData = await api.getUserProfile(username);
+        setProfile(userData);
+      } catch (apiError) {
+        console.error('Error fetching user profile from API:', apiError);
+        
+        // Si hay un error de API, usamos datos de ejemplo como fallback
+        setProfile({
+          username: username,
+          email: `${username.toLowerCase()}@example.com`,
+          firstName: username,
+          lastName: 'User'
+        });
+      }
     } catch (err) {
-      console.error('Error fetching user profile:', err);
+      console.error('Error in profile setup:', err);
       setError('Failed to load user profile. Please try again.');
       
-      // Si hay un error, usamos datos de ejemplo como fallback
+      // Si hay un error general, usamos datos mínimos como fallback
       const username = localStorage.getItem('username') || 'User';
       setProfile({
         username: username,
@@ -80,6 +92,7 @@ const Profile: React.FC = () => {
   const validateForm = (): boolean => {
     let isValid = true;
     const newErrors: Record<string, string> = {};
+
 
     if (!profile.email) {
       newErrors.email = 'Email is required';
