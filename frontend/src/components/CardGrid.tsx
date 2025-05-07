@@ -1,4 +1,6 @@
 import './CardGrid.css';
+import { useState } from 'react';
+import CardModal from './CardModal'; // Asegúrate de que el componente CardModal esté en el mismo directorio o ajusta la ruta según sea necesario
 
 export interface Card {
   id: string;
@@ -8,6 +10,10 @@ export interface Card {
   rarity: string;
   set: string;
   color: string;
+  manaCost?: string;
+  manaValue?: number;
+  oracleText?: string;
+  scryfallId?: string;
 }
 
 interface CardGridProps {
@@ -18,6 +24,12 @@ interface CardGridProps {
 }
 
 const CardGrid = ({ cards, loading, hasMore, onLoadMore }: CardGridProps) => {
+  const [selectedCard, setSelectedCard] = useState<Card | null>(null);
+
+  const handleCardClick = (card: Card) => {
+    setSelectedCard(card);
+  };
+
   if (loading && cards.length === 0) {
     return (
       <div className="cards-loading">
@@ -40,7 +52,13 @@ const CardGrid = ({ cards, loading, hasMore, onLoadMore }: CardGridProps) => {
       <h2 className="results-title">Search Results</h2>
       <div className="card-grid">
         {cards.map(card => (
-          <div key={card.id} className="card-item">
+          <div 
+            key={card.id} 
+            className="card-item" 
+            onClick={() => handleCardClick(card)}
+            role="button"
+            tabIndex={0}
+          >
             <div className="card-image-container">
               <img 
                 src={card.imageUrl} 
@@ -70,6 +88,10 @@ const CardGrid = ({ cards, loading, hasMore, onLoadMore }: CardGridProps) => {
           </button>
         </div>
       )}
+      <CardModal
+        card={selectedCard}
+        onClose={() => setSelectedCard(null)}
+      />
     </div>
   );
 };

@@ -1,0 +1,337 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  font-family: 'Noto Sans', sans-serif;
+}
+
+.modal-content {
+  background: #262626;
+  padding: 2rem;
+  border-radius: 10px;
+  max-width: 800px;
+  width: 90%;
+  position: relative;
+  border: 2px solid #333;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), 0 0 15px rgba(230, 81, 0, 0.2);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #444;
+  padding-bottom: 1rem;
+}
+
+.card-title {
+  font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
+  color: #e65100;
+  margin: 0;
+  font-size: 1.8rem;
+  text-shadow: 0 0 10px rgba(230, 81, 0, 0.3);
+}
+
+.card-mana-cost {
+  font-family: 'Noto Sans', sans-serif;
+  color: #fff;
+  font-size: 1.2rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(30, 30, 30, 0.7);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.card-modal-layout {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+}
+
+.card-modal-image {
+  flex: 0 0 40%;
+}
+
+.modal-image {
+  width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+  transition: transform 0.3s ease;
+  border: 2px solid #444;
+}
+
+.modal-image:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6), 0 0 0 1px #e65100;
+}
+
+.image-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 350px;
+  background: #333;
+  border-radius: 8px;
+  color: #ccc;
+  font-style: italic;
+  border: 2px solid #444;
+}
+
+.image-error {
+  opacity: 0.7;
+  filter: grayscale(50%);
+}
+
+.card-modal-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.card-details-section {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid #444;
+  transition: box-shadow 0.3s ease;
+}
+
+.card-details-section:hover {
+  box-shadow: 0 0 0 1px rgba(230, 81, 0, 0.3);
+}
+
+.section-title {
+  font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
+  color: #ff8f00;
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 1.2rem;
+  border-bottom: 1px solid #444;
+  padding-bottom: 0.5rem;
+}
+
+.card-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.card-detail-row {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem;
+  border-radius: 4px;
+  background: rgba(30, 30, 30, 0.5);
+  transition: background-color 0.3s ease;
+}
+
+.card-detail-row:hover {
+  background: rgba(50, 50, 50, 0.5);
+}
+
+.card-detail-label {
+  font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
+.card-detail-value {
+  font-family: 'Noto Sans', sans-serif;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.card-oracle-text {
+  font-family: 'Noto Sans', sans-serif;
+  color: #ddd;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  padding: 0.5rem;
+  background: rgba(20, 20, 20, 0.3);
+  border-radius: 4px;
+}
+
+.oracle-text-paragraph {
+  margin: 0.5rem 0;
+}
+
+.oracle-text-paragraph:first-child {
+  margin-top: 0;
+}
+
+.oracle-text-paragraph:last-child {
+  margin-bottom: 0;
+}
+
+.close-button {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  z-index: 10;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.close-button:hover {
+  background-color: rgba(230, 81, 0, 0.2);
+  color: #e65100;
+}
+
+.card-links {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.external-link {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: #1a1a1a;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #e65100;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.external-link:hover {
+  background: #333;
+  border-color: #e65100;
+  transform: translateY(-2px);
+}
+
+.scryfall-link {
+  color: #1EAEDB;
+}
+
+.scryfall-link:hover {
+  border-color: #1EAEDB;
+}
+
+/* Mana symbol styling for the modal */
+.modal-content .ms {
+  display: inline-block;
+  font-size: 1.2rem;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  border-radius: 50%;
+  background-color: #333;
+  margin: 0 2px;
+}
+
+/* Style specific mana symbols */
+.modal-content .ms-w {
+  background-color: #f9faf4;
+  color: #333;
+}
+
+.modal-content .ms-u {
+  background-color: #0e68ab;
+  color: white;
+}
+
+.modal-content .ms-b {
+  background-color: #150b00;
+  color: white;
+}
+
+.modal-content .ms-r {
+  background-color: #d3202a;
+  color: white;
+}
+
+.modal-content .ms-g {
+  background-color: #00733e;
+  color: white;
+}
+
+/* For colorless mana */
+.modal-content .ms-c {
+  background-color: #ccc;
+  color: #333;
+}
+
+/* X costs */
+.modal-content .ms-x {
+  background-color: #333;
+  color: #ccc;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-modal-layout {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+ 
+  .card-modal-image {
+    flex: 0 0 auto;
+  }
+ 
+  .card-details-grid {
+    grid-template-columns: 1fr;
+  }
+ 
+  .modal-content {
+    padding: 1.5rem;
+    width: 95%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .card-title {
+    font-size: 1.5rem;
+  }
+
+  .modal-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-content {
+    padding: 1rem;
+  }
+
+  .card-details-section {
+    padding: 0.75rem;
+  }
+
+  .card-title {
+    font-size: 1.3rem;
+  }
+
+  .modal-image {
+    max-height: 300px;
+    object-fit: contain;
+  }
+}
