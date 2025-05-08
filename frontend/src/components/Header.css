@@ -1,7 +1,6 @@
 /* Header styles */
 header {
   background:  #202020;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   padding: 0.5rem 0;
   position: sticky;
   top: 0;
