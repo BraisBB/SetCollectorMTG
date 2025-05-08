@@ -37,14 +37,6 @@ const CardModal: React.FC<CardModalProps> = ({ card, onClose }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Manejar cierre con useCallback para evitar recreaciones
-  const handleClose = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log("Close button clicked");
-    if (onClose) onClose();
-  }, [onClose]);
-
   // Manejar cierre al hacer clic en el overlay
   const handleOverlayClick = useCallback((e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -157,11 +149,12 @@ const CardModal: React.FC<CardModalProps> = ({ card, onClose }) => {
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        {/* Botón de cierre con eventos directos */}
+        {/* Botón de cierre con estilos en CSS */}
         <button 
+          id="modal-close-button"
           type="button"
           className="close-button" 
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }}
+          onClick={() => onClose()}
           aria-label="Cerrar modal"
         >
           &times;

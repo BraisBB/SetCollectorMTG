@@ -236,38 +236,25 @@
   position: absolute;
   right: 15px;
   top: 15px;
-  width: 40px;
-  height: 40px;
-  background-color: rgba(20, 20, 20, 0.8);
+  background-color: transparent;
   color: #ffffff;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  font-size: 24px;
-  line-height: 0;
+  border: none;
+  font-size: 28px;
+  font-weight: bold;
+  line-height: 1;
   padding: 0;
+  width: auto;
+  height: auto;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 100;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  transition: background-color 0.2s, color 0.2s, transform 0.2s;
-  margin: 0;
-  text-decoration: none;
-  pointer-events: auto;
+  z-index: 1000;
+  transition: color 0.3s ease;
 }
 
-.close-button:hover, 
-.close-button:focus {
-  background-color: #e65100;
-  color: white;
-  transform: scale(1.1);
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
-.close-button:active {
-  transform: scale(0.95);
-  background-color: #ff8f00;
+.close-button:hover {
+  color: #ff8c00;
 }
 
 .card-links {
