@@ -1,6 +1,6 @@
 import './CardGrid.css';
 import { useState } from 'react';
-import CardModal from './CardModal'; // Asegúrate de que el componente CardModal esté en el mismo directorio o ajusta la ruta según sea necesario
+import CardModal, { Card as CardModalType } from './CardModal'; // Importamos el tipo Card desde CardModal
 
 export interface Card {
   id: string;
@@ -24,10 +24,25 @@ interface CardGridProps {
 }
 
 const CardGrid = ({ cards, loading, hasMore, onLoadMore }: CardGridProps) => {
-  const [selectedCard, setSelectedCard] = useState<Card | null>(null);
+  const [selectedCard, setSelectedCard] = useState<CardModalType | null>(null);
 
   const handleCardClick = (card: Card) => {
-    setSelectedCard(card);
+    // Adaptamos el objeto Card de CardGrid al formato esperado por CardModal
+    const cardModalFormat: CardModalType = {
+      cardId: parseInt(card.id, 10),
+      name: card.name,
+      rarity: card.rarity,
+      cardType: card.type,
+      imageUrl: card.imageUrl,
+      oracleText: card.oracleText,
+      manaCost: card.manaCost,
+      manaValue: card.manaValue,
+      scryfallId: card.scryfallId,
+      set: card.set,
+      color: card.color
+    };
+    
+    setSelectedCard(cardModalFormat);
   };
 
   if (loading && cards.length === 0) {

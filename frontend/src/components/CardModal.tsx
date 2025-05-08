@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './CardModal.css';
+import axios from 'axios';
+
+const API_BASE_URL = 'http://localhost:8080';
 
 export interface Card {
   cardId: number;
@@ -12,8 +15,15 @@ export interface Card {
   imageUrl: string;
   scryfallId?: string;
   set?: string;
-  type?: string; // For backward compatibility with your existing code
-  color?: string; // For displaying color information
+  setId?: number;  // Añadimos setId para manejar explícitamente el ID del set
+  type?: string;
+  color?: string;
+}
+
+interface SetInfo {
+  setId: number;
+  setCode: string;
+  name: string;
 }
 
 interface CardModalProps {
@@ -22,91 +32,219 @@ interface CardModalProps {
 }
 
 const CardModal: React.FC<CardModalProps> = ({ card, onClose }) => {
-  if (!card) return null;
+  const [sets, setSets] = useState<SetInfo[]>([]);
+  const [fullCardData, setFullCardData] = useState<Card | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Helper function to render card details with consistent styling
-  const renderCardDetail = (label: string, value: string | number | undefined) => {
-    if (value === undefined || value === null || value === '') return null;
-    return (
-      <div className="card-detail-row">
-        <span className="card-detail-label">{label}:</span>
-        <span className="card-detail-value">{value}</span>
-      </div>
-    );
+  // Manejar cierre con useCallback para evitar recreaciones
+  const handleClose = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("Close button clicked");
+    if (onClose) onClose();
+  }, [onClose]);
+
+  // Manejar cierre al hacer clic en el overlay
+  const handleOverlayClick = useCallback((e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      console.log("Overlay clicked");
+      if (onClose) onClose();
+    }
+  }, [onClose]);
+
+  // Añadir soporte para cerrar con la tecla Escape
+  useEffect(() => {
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        console.log("Escape key pressed");
+        if (onClose) onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscapeKey);
+    return () => {
+      window.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [onClose]);
+
+  // Cargar los sets disponibles
+  useEffect(() => {
+    const fetchSets = async () => {
+      try {
+        const response = await axios.get<SetInfo[]>(`${API_BASE_URL}/sets`);
+        setSets(response.data);
+      } catch (error) {
+        console.error('Error fetching sets:', error);
+      }
+    };
+
+    fetchSets();
+  }, []);
+
+  // Cargar los detalles completos de la carta cuando se selecciona
+  useEffect(() => {
+    if (card && card.cardId) {
+      setLoading(true);
+      setError(null);
+      
+      const fetchFullCardData = async () => {
+        try {
+          console.log(`Fetching card details for ID: ${card.cardId}`);
+          const response = await axios.get<Card>(`${API_BASE_URL}/cards/${card.cardId}`);
+          console.log('Fetched card data:', response.data);
+          setFullCardData(response.data);
+        } catch (err) {
+          console.error('Error fetching card details:', err);
+          setError('No se pudieron cargar los detalles completos de la carta');
+          // Usamos los datos parciales que ya tenemos
+          setFullCardData(card);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchFullCardData();
+    } else {
+      setFullCardData(null);
+    }
+  }, [card]);
+
+  const getSetName = (card: Card | null): string => {
+    if (!card) return 'Unknown Set';
+    
+    // Intentar obtener el setId de varias formas posibles
+    let setId: number | undefined;
+    
+    // Si tenemos setId directo
+    if (card.setId !== undefined) {
+      setId = card.setId;
+    } 
+    // Si tenemos set como string, intentar parsear como número
+    else if (card.set) {
+      const parsedId = parseInt(card.set, 10);
+      if (!isNaN(parsedId)) {
+        setId = parsedId;
+      }
+    }
+    
+    // Buscar el set por su ID
+    if (setId !== undefined) {
+      const foundSet = sets.find(set => set.setId === setId);
+      if (foundSet) {
+        return foundSet.name;
+      }
+    }
+    
+    // Si no encontramos el set, devolver el valor original o Unknown
+    return card.set || 'Unknown Set';
   };
+
+  // Usar fullCardData (datos completos de la carta) si está disponible, si no, usar card (datos parciales)
+  const displayCard = fullCardData || card;
+
+  if (!displayCard) return null;
 
   // Helper to format oracle text with proper line breaks and symbols
   const formatOracleText = (text?: string) => {
-    if (!text) return null;
+    if (!text?.trim()) return [<span key="empty" className="no-text-message">No oracle text available</span>];
     
-    // Split by line breaks and map each line to a paragraph
     return text.split('\n').map((line, index) => (
       <p key={index} className="oracle-text-paragraph">{line}</p>
     ));
   };
 
-  // Handle card type display (use cardType if available, otherwise fallback to type)
-  const displayType = card.cardType || card.type;
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="close-button" onClick={onClose}>&times;</button>
+        {/* Botón de cierre con eventos directos */}
+        <button 
+          type="button"
+          className="close-button" 
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }}
+          aria-label="Cerrar modal"
+        >
+          &times;
+        </button>
        
         <header className="modal-header">
-          <h2 className="card-title">{card.name}</h2>
-          {card.manaCost && (
-            <div className="card-mana-cost" dangerouslySetInnerHTML={{ __html: formatManaCost(card.manaCost) }} />
+          <h2 className="card-title">{displayCard.name}</h2>
+          {displayCard.manaCost && (
+            <div className="card-mana-cost" dangerouslySetInnerHTML={{ __html: formatManaCost(displayCard.manaCost) }} />
           )}
         </header>
         
-        <div className="card-modal-layout">
-          <div className="card-modal-image">
-            {card.imageUrl ? (
-              <img
-                src={card.imageUrl}
-                alt={card.name}
-                className="modal-image"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = '/placeholder-card.jpg'; // Fallback image path
-                  target.classList.add('image-error');
-                }}
-              />
-            ) : (
-              <div className="image-placeholder">
-                <span>{card.name}</span>
-              </div>
-            )}
+        {loading ? (
+          <div className="loading-indicator">
+            <div className="spinner"></div>
+            <p>Cargando detalles de la carta...</p>
           </div>
-         
-          <div className="card-modal-details">
-            <div className="card-details-section">
-              <h3 className="section-title">Card Information</h3>
-              <div className="card-details-grid">
-                {renderCardDetail('Type', displayType)}
-                {renderCardDetail('Rarity', capitalizeFirstLetter(card.rarity))}
-                {renderCardDetail('Set', card.set)}
-                {renderCardDetail('Color', card.color)}
-                {renderCardDetail('Mana Value', card.manaValue)}
-              </div>
+        ) : (
+          <div className="card-modal-layout">
+            <div className="card-modal-image">
+              {displayCard.imageUrl ? (
+                <img
+                  src={displayCard.imageUrl}
+                  alt={displayCard.name}
+                  className="modal-image"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/placeholder-card.jpg';
+                    target.classList.add('image-error');
+                  }}
+                />
+              ) : (
+                <div className="image-placeholder">
+                  <span>{displayCard.name}</span>
+                </div>
+              )}
             </div>
-            
-            {card.oracleText && (
+           
+            <div className="card-modal-details">
+              {error && (
+                <div className="error-message">
+                  {error}
+                </div>
+              )}
+              
               <div className="card-details-section">
-                <h3 className="section-title">Card Text</h3>
-                <div className="card-oracle-text">
-                  {formatOracleText(card.oracleText)}
+                <h3 className="section-title">Card Details</h3>
+                <div className="card-details-grid">
+                  <div className="card-detail-row">
+                    <span className="card-detail-label">Type:</span>
+                    <span className="card-detail-value">{displayCard.cardType || displayCard.type}</span>
+                  </div>
+                  
+                  <div className="card-detail-row">
+                    <span className="card-detail-label">Set:</span>
+                    <span className="card-detail-value">
+                      {getSetName(displayCard)}
+                    </span>
+                  </div>
+                  
+                  {displayCard.oracleText && (
+                    <div className="card-detail-row oracle-text">
+                      <span className="card-detail-label">Text:</span>
+                      <div className="card-detail-value oracle-text-content"
+                        style={{
+                          whiteSpace: 'pre-wrap',
+                          fontFamily: '"Noto Sans", sans-serif',
+                          fontSize: '0.95rem',
+                          lineHeight: '1.5',
+                          minHeight: '60px',
+                          overflowY: 'auto'
+                        }}>
+                        {formatOracleText(displayCard.oracleText)}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
 
-            {card.scryfallId && (
-              <div className="card-details-section">
-                <h3 className="section-title">External Links</h3>
-                <div className="card-links">
+              {displayCard.scryfallId && (
+                <div className="card-details-section">
                   <a 
-                    href={`https://scryfall.com/card/${card.scryfallId}`} 
+                    href={`https://scryfall.com/card/${displayCard.scryfallId}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="external-link scryfall-link"
@@ -114,19 +252,13 @@ const CardModal: React.FC<CardModalProps> = ({ card, onClose }) => {
                     View on Scryfall
                   </a>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
-};
-
-// Helper function to capitalize the first letter of a string
-const capitalizeFirstLetter = (str?: string): string => {
-  if (!str) return '';
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
 // Helper function to format mana cost with proper icons

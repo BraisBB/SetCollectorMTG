@@ -10,11 +10,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/cards")
 @RequiredArgsConstructor
 public class CardController {
+
+    private static final Logger logger = LoggerFactory.getLogger(CardController.class);
+
+    static {
+        logger.info("CardController class loaded");
+        logger.info("ClassLoader: " + CardController.class.getClassLoader());
+    }
 
     private final CardService cardService;
 
@@ -38,13 +47,26 @@ public class CardController {
             @RequestParam(required = false) Integer manaCostMin,
             @RequestParam(required = false) Integer manaCostMax) {
         
+        List<CardDto> cards;
+        
         // Si hay algún filtro aplicado, utilizamos la búsqueda con filtros
         if (name != null || type != null || color != null || setCode != null || rarity != null || manaCostMin != null || manaCostMax != null) {
-            return ResponseEntity.ok(cardService.getCardsByFilters(name, type, color, setCode, rarity, manaCostMin, manaCostMax));
+            cards = cardService.getCardsByFilters(name, type, color, setCode, rarity, manaCostMin, manaCostMax);
+        } else {
+            // Si no hay filtros, devolver todas las cartas
+            cards = cardService.getAllCards();
         }
         
-        // Si no hay filtros, devolver todas las cartas
-        return ResponseEntity.ok(cardService.getAllCards());
+        // Añadir logging para verificar contenido
+        cards.forEach(card -> {
+            System.out.println("Card: " + 
+                "id=" + card.getCardId() + 
+                ", name=" + card.getName() + 
+                ", oracleText=" + card.getOracleText()
+            );
+        });
+        
+        return ResponseEntity.ok(cards);
     }
 
     /**

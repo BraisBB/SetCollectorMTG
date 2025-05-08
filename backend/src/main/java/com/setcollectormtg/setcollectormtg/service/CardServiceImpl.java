@@ -34,7 +34,21 @@ public class CardServiceImpl implements CardService {
     @Transactional(readOnly = true)
     public List<CardDto> getAllCards() {
         return cardRepository.findAll().stream()
-                .map(cardMapper::toDto)
+                .map(card -> {
+                    CardDto dto = cardMapper.toDto(card);
+                    // Forzar inclusión de campos
+                    dto.setCardId(card.getCardId());
+                    dto.setOracleText(card.getOracleText());
+                    
+                    // Logging para depuración
+                    System.out.println("Card: " + 
+                        "id=" + dto.getCardId() + 
+                        ", name=" + dto.getName() + 
+                        ", oracleText=" + dto.getOracleText()
+                    );
+                    
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 

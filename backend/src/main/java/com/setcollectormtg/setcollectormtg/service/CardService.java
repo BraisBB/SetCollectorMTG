@@ -4,6 +4,7 @@ import com.setcollectormtg.setcollectormtg.dto.CardCreateDto;
 import com.setcollectormtg.setcollectormtg.dto.CardDto;
 import java.util.List;
 
+
 public interface CardService {
     List<CardDto> getAllCards();
 
