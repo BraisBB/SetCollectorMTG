@@ -335,62 +335,63 @@ const CardModal: React.FC<CardModalProps> = ({
                   <span>{displayCard.name}</span>
                 </div>
               )}
-            </div>
-           
-            <div className="card-modal-details">
-              {error && (
-                <div className="error-message">
-                  {error}
-                </div>
-              )}
               
-              {/* Collection Controls - En la parte derecha */}
+              {/* Collection Controls - Posicionados sobre la imagen */}
               {isAuthenticated && (
-                <div className="collection-controls">
-                  {collectionCount > 0 && (
-                    <div className="collection-count">
-                      <span>In your collection: <strong>{collectionCount}</strong></span>
-                    </div>
-                  )}
-                  
-                  <div className="collection-actions">
-                    <div className="copies-control">
+                <div className="image-overlay-controls">
+                  <div className="minimal-controls">
+                    <button 
+                      className="minimal-btn remove-btn"
+                      onClick={handleRemoveFromCollection}
+                      disabled={addingToCollection || collectionCount === 0}
+                      title="Quitar de colección"
+                    >
+                      −
+                    </button>
+                    
+                    <div className="minimal-copies">
                       <button 
-                        className="copies-btn" 
+                        className="minimal-btn copy-change"
                         onClick={() => setCopiesCount(prev => Math.max(1, prev - 1))}
-                        disabled={addingToCollection}
+                        disabled={addingToCollection || copiesCount <= 1}
+                        title="Disminuir cantidad"
                       >
-                        -
+                        −
                       </button>
-                      <span className="copies-count">{copiesCount}</span>
+                      <span className="minimal-copy-count">{copiesCount}</span>
                       <button 
-                        className="copies-btn" 
+                        className="minimal-btn copy-change"
                         onClick={() => setCopiesCount(prev => prev + 1)}
                         disabled={addingToCollection}
+                        title="Aumentar cantidad"
                       >
                         +
                       </button>
                     </div>
                     
                     <button 
-                      className="add-to-collection-btn" 
+                      className="minimal-btn add-btn"
                       onClick={handleAddToCollection}
                       disabled={addingToCollection}
+                      title="Añadir a colección"
                     >
-                      {addingToCollection ? 'Adding...' : 'Add to Collection'}
+                      +
                     </button>
-                    
-                    {/* Solo mostrar botón de eliminar en la página de colección */}
-                    {isCollectionPage && collectionCount > 0 && (
-                      <button 
-                        className="remove-from-collection-btn" 
-                        onClick={handleRemoveFromCollection}
-                        disabled={addingToCollection}
-                      >
-                        Remove One
-                      </button>
-                    )}
                   </div>
+                  
+                  {collectionCount > 0 && (
+                    <div className="minimal-count">
+                      <span>{collectionCount}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+           
+            <div className="card-modal-details">
+              {error && (
+                <div className="error-message">
+                  {error}
                 </div>
               )}
               
