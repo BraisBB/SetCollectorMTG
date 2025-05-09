@@ -118,7 +118,7 @@
   padding: 10px 0;
   margin-top: 10px;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
   z-index: 5;
 }
@@ -127,6 +127,9 @@
   background-color: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  width: auto;
+  justify-content: center;
+  border-radius: 20px;
 }
 
 .image-overlay-controls .minimal-count {
@@ -845,6 +848,20 @@
   color: #ddd;
   min-width: 1.5rem;
   text-align: center;
+}
+
+.copies-display {
+  width: auto;
+  min-width: 120px;
+  text-align: center;
+  margin-top: 10px;
+  background-color: rgba(230, 81, 0, 0.2);
+  border-radius: 15px;
+  padding: 5px;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 /* Media queries para ajustes responsivos */

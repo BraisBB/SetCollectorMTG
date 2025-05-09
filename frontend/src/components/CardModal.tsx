@@ -380,8 +380,8 @@ const CardModal: React.FC<CardModalProps> = ({
                   </div>
                   
                   {collectionCount > 0 && (
-                    <div className="minimal-count">
-                      <span>{collectionCount}</span>
+                    <div className="copies-display">
+                      <span>Copies: {collectionCount}</span>
                     </div>
                   )}
                 </div>

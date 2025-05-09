@@ -7,20 +7,6 @@ import collectionService from '../services/collectionService';
 import authService from '../services/authService';
 import './Collection.css';
 
-// Interfaz para la estructura de la carta en la colección tal como viene de la API
-interface CollectionCardResponse {
-  collectionId: number;
-  cardId: number;
-  cardName?: string;
-  cardImageUrl?: string;
-  cardType?: string;
-  rarity?: string;
-  manaCost?: string;
-  ncopies?: number;
-  card?: any; // Mantener compatibilidad con ambos formatos
-  nCopies?: number; // Mantener compatibilidad con ambos formatos
-}
-
 const Collection = () => {
   const [collectionCards, setCollectionCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
