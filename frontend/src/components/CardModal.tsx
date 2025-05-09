@@ -336,7 +336,7 @@ const CardModal: React.FC<CardModalProps> = ({
                 </div>
               )}
               
-              {/* Collection Controls - Posicionados sobre la imagen */}
+              {/* Collection Controls - Posicionados debajo de la imagen */}
               {isAuthenticated && (
                 <div className="image-overlay-controls">
                   <div className="minimal-controls">
@@ -387,7 +387,7 @@ const CardModal: React.FC<CardModalProps> = ({
                 </div>
               )}
             </div>
-           
+            
             <div className="card-modal-details">
               {error && (
                 <div className="error-message">
