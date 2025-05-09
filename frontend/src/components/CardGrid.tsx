@@ -14,6 +14,7 @@ export interface Card {
   manaValue?: number;
   oracleText?: string;
   scryfallId?: string;
+  collectionCount?: number; // Cantidad en la colección (opcional)
 }
 
 interface CardGridProps {
@@ -21,9 +22,12 @@ interface CardGridProps {
   loading: boolean;
   hasMore: boolean;
   onLoadMore: () => void;
+  isAuthenticated?: boolean;
+  isCollectionPage?: boolean; // Indica si estamos en la página de colección
+  onCardRemoved?: (cardId: number) => void; // Callback cuando una carta es eliminada
 }
 
-const CardGrid = ({ cards, loading, hasMore, onLoadMore }: CardGridProps) => {
+const CardGrid = ({ cards, loading, hasMore, onLoadMore, isAuthenticated = false, isCollectionPage = false, onCardRemoved }: CardGridProps) => {
   const [selectedCard, setSelectedCard] = useState<CardModalType | null>(null);
 
   const handleCardClick = (card: Card) => {
@@ -39,7 +43,9 @@ const CardGrid = ({ cards, loading, hasMore, onLoadMore }: CardGridProps) => {
       manaValue: card.manaValue,
       scryfallId: card.scryfallId,
       set: card.set,
-      color: card.color
+      color: card.color,
+      // Si tenemos información sobre la cantidad en la colección, la pasamos al modal
+      collectionCount: card.collectionCount
     };
     
     setSelectedCard(cardModalFormat);
@@ -81,6 +87,11 @@ const CardGrid = ({ cards, loading, hasMore, onLoadMore }: CardGridProps) => {
                 className="card-image"
                 title={card.name}
               />
+              {card.collectionCount && card.collectionCount > 0 && (
+                <div className="card-collection-count">
+                  <span>{card.collectionCount}x</span>
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -106,6 +117,9 @@ const CardGrid = ({ cards, loading, hasMore, onLoadMore }: CardGridProps) => {
       <CardModal
         card={selectedCard}
         onClose={() => setSelectedCard(null)}
+        isAuthenticated={isAuthenticated}
+        isCollectionPage={isCollectionPage}
+        onCardRemoved={onCardRemoved}
       />
     </div>
   );

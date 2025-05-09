@@ -6,6 +6,7 @@ import { SearchParams } from '../components/SearchBar';
 import { Card } from '../components/CardGrid';
 import './Home.css';
 import axios from 'axios';
+import authService from '../services/authService';
 
 // URL base del backend
 const API_BASE_URL = 'http://localhost:8080';
@@ -33,6 +34,14 @@ const Home = () => {
   const [hasMoreCards, setHasMoreCards] = useState(false);
   const [allCards, setAllCards] = useState<CardResponse[]>([]);
   const [currentSearchParams, setCurrentSearchParams] = useState<SearchParams | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+
+  // Check authentication status
+  useEffect(() => {
+    const isAuth = authService.isAuthenticated();
+    console.log('Home - Authentication status:', isAuth);
+    setIsAuthenticated(isAuth);
+  }, []);
 
   const fetchCards = async (searchParams: SearchParams, page: number = 0) => {
     setLoading(true);
@@ -197,6 +206,7 @@ const Home = () => {
             loading={loading} 
             hasMore={hasMoreCards}
             onLoadMore={handleLoadMore}
+            isAuthenticated={isAuthenticated}
           />
         )}
       </main>

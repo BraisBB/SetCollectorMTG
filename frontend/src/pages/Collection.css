@@ -1,0 +1,172 @@
+.collection-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  font-family: 'Noto Sans', sans-serif;
+}
+
+.collection-main {
+  flex: 1;
+  padding: 2rem 1rem;
+}
+
+.collection-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.collection-title {
+  font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
+  font-size: 2.5rem;
+  color: #e65100;
+  margin-bottom: 1rem;
+  position: relative;
+  display: inline-block;
+}
+
+.collection-title::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 10%;
+  right: 10%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #e65100, transparent);
+}
+
+.collection-description {
+  font-size: 1.1rem;
+  color: #777;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.collection-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  min-height: 300px;
+}
+
+.collection-loading .spinner {
+  border: 4px solid rgba(230, 81, 0, 0.1);
+  border-left-color: #e65100;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1.5rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.empty-collection {
+  text-align: center;
+  padding: 3rem;
+  background-color: rgba(230, 81, 0, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(230, 81, 0, 0.1);
+  max-width: 600px;
+  margin: 2rem auto;
+}
+
+.empty-collection p {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 1.5rem;
+}
+
+.browse-cards-btn {
+  background-color: #e65100;
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 1.25rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.browse-cards-btn:hover {
+  background-color: #ff8f00;
+}
+
+.error-message {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  padding: 1rem;
+  border-radius: 4px;
+  border-left: 4px solid #dc3545;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.error-message p {
+  margin-bottom: 1rem;
+}
+
+.retry-button {
+  background-color: #dc3545;
+  color: white;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.3s ease;
+  align-self: flex-end;
+}
+
+.retry-button:hover {
+  background-color: #bd2130;
+}
+
+.debug-info {
+  background: rgba(33, 37, 41, 0.1);
+  border-left: 4px solid #212529;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+  font-family: monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.debug-info pre {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .collection-title {
+    font-size: 2rem;
+  }
+  
+  .collection-main {
+    padding: 1.5rem 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .collection-title {
+    font-size: 1.75rem;
+  }
+  
+  .collection-description {
+    font-size: 1rem;
+  }
+  
+  .empty-collection {
+    padding: 2rem 1rem;
+  }
+}

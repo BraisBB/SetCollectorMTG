@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './CardModal.css';
 import axios from 'axios';
+import { collectionService } from '../services/collectionService';
 
 const API_BASE_URL = 'http://localhost:8080';
 
@@ -18,6 +19,7 @@ export interface Card {
   setId?: number;  // Añadimos setId para manejar explícitamente el ID del set
   type?: string;
   color?: string;
+  collectionCount?: number; // Cantidad en la colección del usuario
 }
 
 interface SetInfo {
@@ -29,13 +31,25 @@ interface SetInfo {
 interface CardModalProps {
   card: Card | null;
   onClose: () => void;
+  isAuthenticated?: boolean;
+  isCollectionPage?: boolean; // Indica si estamos en la página de colección
+  onCardRemoved?: (cardId: number) => void; // Callback cuando una carta es completamente eliminada
 }
 
-const CardModal: React.FC<CardModalProps> = ({ card, onClose }) => {
+const CardModal: React.FC<CardModalProps> = ({ 
+  card, 
+  onClose, 
+  isAuthenticated = false,
+  isCollectionPage = false, // Por defecto, asumimos que no estamos en la página de colección
+  onCardRemoved = () => {} // Función vacía por defecto
+}) => {
   const [sets, setSets] = useState<SetInfo[]>([]);
   const [fullCardData, setFullCardData] = useState<Card | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [collectionCount, setCollectionCount] = useState<number>(0);
+  const [copiesCount, setCopiesCount] = useState<number>(1);
+  const [addingToCollection, setAddingToCollection] = useState<boolean>(false);
 
   // Manejar cierre al hacer clic en el overlay
   const handleOverlayClick = useCallback((e: React.MouseEvent) => {
@@ -74,33 +88,75 @@ const CardModal: React.FC<CardModalProps> = ({ card, onClose }) => {
     fetchSets();
   }, []);
 
-  // Cargar los detalles completos de la carta cuando se selecciona
+  // Cargar los detalles completos de la carta y la cantidad en la colección cuando se selecciona
   useEffect(() => {
     if (card && card.cardId) {
       setLoading(true);
       setError(null);
       
-      const fetchFullCardData = async () => {
+      const fetchCardData = async () => {
         try {
           console.log(`Fetching card details for ID: ${card.cardId}`);
           const response = await axios.get<Card>(`${API_BASE_URL}/cards/${card.cardId}`);
           console.log('Fetched card data:', response.data);
-          setFullCardData(response.data);
-        } catch (err) {
+          
+          // Mezclamos los datos de la carta que ya tenemos con los detalles adicionales
+          const mergedData = {
+            ...response.data,
+            // Si la carta ya tiene información sobre la cantidad en la colección, la conservamos
+            collectionCount: card.collectionCount
+          };
+          
+          setFullCardData(mergedData);
+          
+          // Si la carta ya tiene un contador de colección, lo usamos
+          if (card.collectionCount !== undefined) {
+            console.log(`Card already has collection count: ${card.collectionCount}`);
+            setCollectionCount(card.collectionCount);
+            // Si ya tiene copias, establecemos el contador en 1 para añadir más
+            setCopiesCount(1);
+          }
+          // Si el usuario está autenticado y no tenemos información de colección, la consultamos
+          else if (isAuthenticated) {
+            try {
+              console.log(`Checking if card ${card.cardId} is in user's collection`);
+              const quantity = await collectionService.getCardInCollection(card.cardId);
+              console.log(`Card ${card.cardId} quantity in collection: ${quantity}`);
+              setCollectionCount(quantity);
+              // Si ya tiene copias, establecemos el contador en 1 para añadir más
+              setCopiesCount(1);
+            } catch (collectionError: any) {
+              console.error('Error fetching collection info:', collectionError);
+              if (collectionError.message?.includes('Authentication failed')) {
+                setError('Your session has expired. Please login again.');
+              } else {
+                // Para errores de colección, simplemente asumimos que no tiene la carta
+                setCollectionCount(0);
+              }
+            }
+          } else {
+            console.log('User not authenticated, skipping collection info');
+          }
+        } catch (err: any) {
           console.error('Error fetching card details:', err);
-          setError('No se pudieron cargar los detalles completos de la carta');
+          setError('Could not load the complete card details');
           // Usamos los datos parciales que ya tenemos
           setFullCardData(card);
+          
+          // Si la carta ya tiene un contador de colección, lo usamos aunque fallara la carga de detalles
+          if (card.collectionCount !== undefined) {
+            setCollectionCount(card.collectionCount);
+          }
         } finally {
           setLoading(false);
         }
       };
 
-      fetchFullCardData();
+      fetchCardData();
     } else {
       setFullCardData(null);
     }
-  }, [card]);
+  }, [card, isAuthenticated]);
 
   const getSetName = (card: Card | null): string => {
     if (!card) return 'Unknown Set';
@@ -132,6 +188,94 @@ const CardModal: React.FC<CardModalProps> = ({ card, onClose }) => {
     return card.set || 'Unknown Set';
   };
 
+  const handleAddToCollection = async () => {
+    if (!card || !isAuthenticated) {
+      if (!isAuthenticated) {
+        setError('You need to be logged in to add cards to your collection');
+      }
+      return;
+    }
+    
+    setAddingToCollection(true);
+    setError(null);
+    
+    try {
+      console.log(`Adding/updating card ${card.cardId} in collection`);
+      
+      if (collectionCount > 0) {
+        // Ya existe en la colección, actualizar cantidad
+        console.log(`Card already in collection (${collectionCount}), updating to ${collectionCount + copiesCount}`);
+        await collectionService.updateCardQuantity(card.cardId, collectionCount + copiesCount);
+      } else {
+        // Añadir por primera vez
+        console.log(`Adding card to collection for the first time (${copiesCount} copies)`);
+        await collectionService.addCardToCollection(card.cardId, copiesCount);
+      }
+      
+      // Actualizar contador local
+      const newCount = collectionCount + copiesCount;
+      console.log(`Collection updated, new count: ${newCount}`);
+      setCollectionCount(newCount);
+      setCopiesCount(1); // Resetear el contador de copias a añadir
+    } catch (error: any) {
+      console.error('Error updating collection:', error);
+      
+      if (error.message?.includes('Authentication failed')) {
+        setError('Your session has expired. Please login again.');
+      } else {
+        setError(`Failed to update your collection: ${error.message || 'Unknown error'}`);
+      }
+    } finally {
+      setAddingToCollection(false);
+    }
+  };
+
+  const handleRemoveFromCollection = async () => {
+    if (!card || !isAuthenticated || collectionCount === 0) {
+      if (!isAuthenticated) {
+        setError('You need to be logged in to manage your collection');
+      }
+      return;
+    }
+    
+    setAddingToCollection(true);
+    setError(null);
+    
+    try {
+      console.log(`Removing/decreasing card ${card.cardId} from collection`);
+      
+      if (collectionCount === 1) {
+        // Eliminar completamente
+        console.log('Removing the last copy from collection');
+        await collectionService.removeCardFromCollection(card.cardId);
+        setCollectionCount(0);
+        
+        // Notificar que la carta ha sido eliminada completamente
+        if (isCollectionPage && onCardRemoved) {
+          console.log(`Notifying removal of card ${card.cardId} from collection`);
+          onCardRemoved(card.cardId);
+        }
+      } else {
+        // Reducir cantidad
+        console.log(`Decreasing quantity from ${collectionCount} to ${collectionCount - 1}`);
+        await collectionService.updateCardQuantity(card.cardId, collectionCount - 1);
+        setCollectionCount(prevCount => prevCount - 1);
+      }
+      
+      console.log('Collection updated successfully');
+    } catch (error: any) {
+      console.error('Error updating collection:', error);
+      
+      if (error.message?.includes('Authentication failed')) {
+        setError('Your session has expired. Please login again.');
+      } else {
+        setError(`Failed to update your collection: ${error.message || 'Unknown error'}`);
+      }
+    } finally {
+      setAddingToCollection(false);
+    }
+  };
+
   // Usar fullCardData (datos completos de la carta) si está disponible, si no, usar card (datos parciales)
   const displayCard = fullCardData || card;
 
@@ -155,7 +299,7 @@ const CardModal: React.FC<CardModalProps> = ({ card, onClose }) => {
           type="button"
           className="close-button" 
           onClick={() => onClose()}
-          aria-label="Cerrar modal"
+          aria-label="Close modal"
         >
           &times;
         </button>
@@ -170,7 +314,7 @@ const CardModal: React.FC<CardModalProps> = ({ card, onClose }) => {
         {loading ? (
           <div className="loading-indicator">
             <div className="spinner"></div>
-            <p>Cargando detalles de la carta...</p>
+            <p>Loading card details...</p>
           </div>
         ) : (
           <div className="card-modal-layout">
@@ -197,6 +341,56 @@ const CardModal: React.FC<CardModalProps> = ({ card, onClose }) => {
               {error && (
                 <div className="error-message">
                   {error}
+                </div>
+              )}
+              
+              {/* Collection Controls - En la parte derecha */}
+              {isAuthenticated && (
+                <div className="collection-controls">
+                  {collectionCount > 0 && (
+                    <div className="collection-count">
+                      <span>In your collection: <strong>{collectionCount}</strong></span>
+                    </div>
+                  )}
+                  
+                  <div className="collection-actions">
+                    <div className="copies-control">
+                      <button 
+                        className="copies-btn" 
+                        onClick={() => setCopiesCount(prev => Math.max(1, prev - 1))}
+                        disabled={addingToCollection}
+                      >
+                        -
+                      </button>
+                      <span className="copies-count">{copiesCount}</span>
+                      <button 
+                        className="copies-btn" 
+                        onClick={() => setCopiesCount(prev => prev + 1)}
+                        disabled={addingToCollection}
+                      >
+                        +
+                      </button>
+                    </div>
+                    
+                    <button 
+                      className="add-to-collection-btn" 
+                      onClick={handleAddToCollection}
+                      disabled={addingToCollection}
+                    >
+                      {addingToCollection ? 'Adding...' : 'Add to Collection'}
+                    </button>
+                    
+                    {/* Solo mostrar botón de eliminar en la página de colección */}
+                    {isCollectionPage && collectionCount > 0 && (
+                      <button 
+                        className="remove-from-collection-btn" 
+                        onClick={handleRemoveFromCollection}
+                        disabled={addingToCollection}
+                      >
+                        Remove One
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
               
@@ -254,13 +448,19 @@ const CardModal: React.FC<CardModalProps> = ({ card, onClose }) => {
   );
 };
 
-// Helper function to format mana cost with proper icons
+// Función auxiliar para formatear los símbolos de mana en HTML
 const formatManaCost = (manaCost: string): string => {
-  // Replace {X}, {W}, {U}, etc. with span elements with the appropriate mana symbol classes
-  return manaCost.replace(/{([^}]+)}/g, (match, symbol) => {
-    const lowerSymbol = symbol.toLowerCase();
-    return `<span class="ms ms-${lowerSymbol}"></span>`;
-  });
+  // Reemplazar símbolos como {W}, {U}, {B}, {R}, {G} con clases de mana de MTG
+  return manaCost
+    .replace(/{W}/g, '<i class="ms ms-w ms-cost"></i>')
+    .replace(/{U}/g, '<i class="ms ms-u ms-cost"></i>')
+    .replace(/{B}/g, '<i class="ms ms-b ms-cost"></i>')
+    .replace(/{R}/g, '<i class="ms ms-r ms-cost"></i>')
+    .replace(/{G}/g, '<i class="ms ms-g ms-cost"></i>')
+    .replace(/{C}/g, '<i class="ms ms-c ms-cost"></i>')
+    .replace(/{T}/g, '<i class="ms ms-tap ms-cost"></i>')
+    .replace(/{X}/g, '<i class="ms ms-x ms-cost"></i>')
+    .replace(/{(\d+)}/g, '<i class="ms ms-$1 ms-cost"></i>');
 };
 
 export default CardModal;

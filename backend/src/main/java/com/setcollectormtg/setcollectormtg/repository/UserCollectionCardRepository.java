@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -16,6 +17,8 @@ public interface UserCollectionCardRepository extends JpaRepository<UserCollecti
     Optional<UserCollectionCard> findByUserCollection_CollectionIdAndCard_CardId(Long collectionId, Long cardId);
 
     boolean existsByUserCollection_CollectionIdAndCard_CardId(Long collectionId, Long cardId);
+
+    List<UserCollectionCard> findByUserCollection_CollectionId(Long collectionId);
 
     @Transactional
     @Modifying

@@ -9,6 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class UserCollectionCardServiceImpl implements UserCollectionCardService {
@@ -125,6 +128,29 @@ public class UserCollectionCardServiceImpl implements UserCollectionCardService 
                 .findByUserCollection_CollectionIdAndCard_CardId(collectionId, cardId)
                 .map(UserCollectionCard::getNCopies)
                 .orElse(0);
+    }
+
+    /**
+     * Obtiene todas las cartas de una colección específica.
+     *
+     * @param collectionId ID de la colección de usuario
+     * @return Lista de DTOs de cartas en la colección
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserCollectionCardDto> getCardsByCollectionId(Long collectionId) {
+        // Primero verificamos que la colección exista
+        userCollectionRepository.findById(collectionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Collection not found with id: " + collectionId));
+                
+        // Obtenemos todas las cartas de la colección
+        List<UserCollectionCard> collectionCards = userCollectionCardRepository
+                .findByUserCollection_CollectionId(collectionId);
+                
+        // Convertimos a DTOs
+        return collectionCards.stream()
+                .map(mapper::toDto)
+                .collect(Collectors.toList());
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.setcollectormtg.setcollectormtg.service;
 
 import com.setcollectormtg.setcollectormtg.dto.UserCollectionCardDto;
+import java.util.List;
 
 public interface UserCollectionCardService {
     UserCollectionCardDto addCardToCollection(Long collectionId, Long cardId, Integer quantity);
@@ -12,4 +13,6 @@ public interface UserCollectionCardService {
     UserCollectionCardDto getCardCollectionInfo(Long collectionId, Long cardId);
 
     Integer getCardCountInCollection(Long collectionId, Long cardId);
+    
+    List<UserCollectionCardDto> getCardsByCollectionId(Long collectionId);
 }

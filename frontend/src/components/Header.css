@@ -65,6 +65,24 @@ header nav a {
   overflow: hidden;
 }
 
+/* Estilos específicos para el enlace de colección */
+header nav a.collection-link {
+  color: #ff8f00;
+  font-weight: 600;
+  border: 1px solid rgba(255, 143, 0, 0.3);
+  background-color: rgba(230, 81, 0, 0.05);
+}
+
+header nav a.collection-link:hover {
+  background-color: rgba(230, 81, 0, 0.2);
+  border-color: rgba(255, 143, 0, 0.6);
+}
+
+header nav a.collection-link::before {
+  background: linear-gradient(90deg, #ff8f00, #ff6d00);
+  height: 2px;
+}
+
 header nav a:hover {
   color: #fff;
   background-color: rgba(230, 81, 0, 0.15);
@@ -147,6 +165,12 @@ header nav a:hover::before {
   cursor: pointer;
   transition: all 0.2s ease;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Destacar el enlace de colección en el menú desplegable */
+.dropdown-menu a[href="/collection"] {
+  color: #ff8f00;
+  font-weight: 500;
 }
 
 .dropdown-menu a:last-child,

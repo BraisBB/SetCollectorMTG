@@ -377,16 +377,28 @@
 @media (max-width: 768px) {
   .card-modal-layout {
     flex-direction: column;
-    gap: 1.5rem;
     padding: 1.5rem;
+    gap: 1.5rem;
   }
- 
+  
   .card-modal-image {
     flex: 0 0 auto;
-    max-width: 400px;
-    margin: 0 auto;
+    max-width: 100%;
   }
- 
+  
+  .collection-controls {
+    margin-top: 1rem;
+    padding: 1rem;
+  }
+  
+  .collection-actions {
+    flex-direction: column;
+  }
+  
+  .copies-control {
+    margin-bottom: 1rem;
+  }
+
   .modal-content {
     width: 95%;
     max-height: 90vh;
@@ -518,4 +530,120 @@
   text-align: center;
   width: 100%;
   border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+/* Collection Controls */
+.collection-controls {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: rgba(20, 20, 20, 0.4);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border-left: 3px solid #e65100;
+  width: 100%;
+}
+
+.collection-count {
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  color: #ddd;
+}
+
+.collection-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  width: 100%;
+}
+
+.copies-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  width: 100%;
+}
+
+.copies-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(230, 81, 0, 0.2);
+  border: 1px solid rgba(230, 81, 0, 0.6);
+  color: #fff;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.copies-btn:hover {
+  background-color: rgba(230, 81, 0, 0.4);
+}
+
+.copies-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.copies-count {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #fff;
+  min-width: 30px;
+  text-align: center;
+}
+
+.add-to-collection-btn, .remove-from-collection-btn {
+  padding: 0.6rem 1.25rem;
+  border-radius: 4px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  font-size: 1rem;
+}
+
+.add-to-collection-btn {
+  background-color: #e65100;
+  color: white;
+}
+
+.add-to-collection-btn:hover {
+  background-color: #ff8f00;
+}
+
+.remove-from-collection-btn {
+  background-color: #b71c1c;
+  color: white;
+}
+
+.remove-from-collection-btn:hover {
+  background-color: #d32f2f;
+}
+
+.add-to-collection-btn:disabled, .remove-from-collection-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Error message for collection actions */
+.error-message {
+  color: #e74c3c;
+  font-size: 0.9rem;
+  padding: 5px 10px;
+  background-color: rgba(231, 76, 60, 0.1);
+  border-left: 3px solid #e74c3c;
+  margin: 10px 0;
 }

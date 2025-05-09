@@ -4,6 +4,7 @@ import Home from './pages/Home.tsx';
 import Login from './pages/Login.tsx';
 import Register from './pages/Register.tsx';
 import Profile from './pages/Profile.tsx';
+import Collection from './pages/Collection.tsx';
 import authService from "./services/authService.ts";
 
 // Componente para rutas protegidas
@@ -33,6 +34,11 @@ const App: React.FC = () => {
         <Route path="/profile" element={
           <ProtectedRoute>
             <Profile />
+          </ProtectedRoute>
+        } />
+        <Route path="/collection" element={
+          <ProtectedRoute>
+            <Collection />
           </ProtectedRoute>
         } />
         {/* Ruta para About Us */}

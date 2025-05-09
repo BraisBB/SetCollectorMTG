@@ -43,6 +43,9 @@ const Header: React.FC = () => {
         <nav>
           <div className="nav-links">
             <Link to="/">Home</Link>
+            {isAuthenticated && (
+              <Link to="/collection" className="collection-link">My Collection</Link>
+            )}
             <Link to="/about">About Us</Link>
             
             {isAuthenticated ? (
@@ -53,6 +56,7 @@ const Header: React.FC = () => {
                 {dropdownOpen && (
                   <div className="dropdown-menu">
                     <Link to="/profile" onClick={() => setDropdownOpen(false)}>My Profile</Link>
+                    <Link to="/collection" onClick={() => setDropdownOpen(false)}>My Collection</Link>
                     <button className="dropdown-item" onClick={handleLogout}>
                       Logout
                     </button>

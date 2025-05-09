@@ -10,6 +10,12 @@ import org.springframework.security.config.annotation.web.configurers.HeadersCon
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Configuración principal de seguridad para la aplicación Set Collector MTG.
@@ -53,9 +59,12 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // OPTIONS preflight requests
+                        .requestMatchers("OPTIONS", "/**").permitAll()
                         // Endpoints públicos
                         .requestMatchers(
                                 "/v3/api-docs/**",
@@ -68,7 +77,7 @@ public class SecurityConfig {
                         ).permitAll()
 
                         // Configuración básica para endpoints protegidos
-                        .requestMatchers("/users/**", "/collections/**", "/decks/**").authenticated()
+                        .requestMatchers("/users/**", "/collections/**", "/decks/**", "/collection/**").authenticated()
 
                         // Permite acceso a todos los métodos autenticados (las anotaciones manejarán los roles)
                         .anyRequest().authenticated()
@@ -83,6 +92,26 @@ public class SecurityConfig {
                 );
 
         return http.build();
+    }
+
+    /**
+     * Configura el origen de la configuración CORS para permitir solicitudes desde los orígenes del frontend.
+     *
+     * @return CorsConfigurationSource configurado
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
     /**

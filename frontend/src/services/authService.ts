@@ -272,27 +272,95 @@ class AuthService {
    * Verifica si el usuario está autenticado
    */
   isAuthenticated(): boolean {
-    return !!this.getToken() && Date.now() < this.getExpiresAt();
+    const token = this.getToken();
+    const expiresAt = this.getExpiresAt();
+    
+    // Se requiere token y que no haya expirado
+    if (!token || Date.now() >= expiresAt) {
+      console.log('Authentication check failed: ', !token ? 'No token' : 'Token expired');
+      return false;
+    }
+    
+    return true;
   }
 
   /**
    * Obtiene el token de acceso actual
    */
   getToken(): string | null {
-    if (!this.accessToken) {
-      this.accessToken = localStorage.getItem('access_token');
+    // Siempre verificar localStorage primero para obtener el token más reciente
+    const localToken = localStorage.getItem('access_token');
+    
+    // Actualizar el token en memoria si existe en localStorage
+    if (localToken) {
+      this.accessToken = localToken;
     }
+    
     return this.accessToken;
+  }
+
+  /**
+   * Verifica si el token está próximo a expirar (menos de 5 minutos)
+   */
+  isTokenExpiringSoon(): boolean {
+    const expiresAt = this.getExpiresAt();
+    const fiveMinutesFromNow = Date.now() + (5 * 60 * 1000); // 5 minutos en milisegundos
+    
+    return expiresAt > 0 && expiresAt < fiveMinutesFromNow;
+  }
+
+  /**
+   * Intenta refrescar el token antes de que expire
+   */
+  async refreshTokenIfNeeded(): Promise<boolean> {
+    if (!this.refreshToken || !this.isTokenExpiringSoon()) {
+      return false;
+    }
+    
+    try {
+      const params = new URLSearchParams();
+      params.append('client_id', CLIENT_ID);
+      params.append('client_secret', CLIENT_SECRET);
+      params.append('grant_type', 'refresh_token');
+      params.append('refresh_token', this.refreshToken);
+      
+      console.log('Attempting to refresh token');
+      
+      const response = await axios.post<AuthTokens>(
+        `${KEYCLOAK_URL}/realms/${REALM}/protocol/openid-connect/token`,
+        params,
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        }
+      );
+      
+      console.log('Token refresh successful');
+      this.setSession(response.data);
+      return true;
+    } catch (error) {
+      console.error('Error refreshing token:', error);
+      if (this.isAuthenticated()) {
+        // Si aún tenemos un token válido, seguimos
+        return true;
+      }
+      // Si no pudimos refrescar el token y ya no es válido, limpiamos la sesión
+      this.clearSession();
+      return false;
+    }
   }
 
   /**
    * Obtiene el tiempo de expiración del token
    */
   getExpiresAt(): number {
-    if (this.expiresAt === 0) {
-      const expiresAt = localStorage.getItem('expires_at');
-      this.expiresAt = expiresAt ? parseInt(expiresAt, 10) : 0;
+    // Siempre verificar localStorage primero
+    const storedExpiresAt = localStorage.getItem('expires_at');
+    if (storedExpiresAt) {
+      this.expiresAt = parseInt(storedExpiresAt, 10);
     }
+    
     return this.expiresAt;
   }
 
@@ -300,14 +368,41 @@ class AuthService {
    * Inicializa el servicio de autenticación al cargar la aplicación
    */
   initAuth(): void {
+    // Cargar token del localStorage
     const token = localStorage.getItem('access_token');
     if (token) {
+      console.log('Found token in localStorage, initializing auth service');
       this.accessToken = token;
+      
+      // Configurar el token en los encabezados de axios
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
+      // Cargar refresh_token y expires_at
       this.refreshToken = localStorage.getItem('refresh_token');
       const expiresAt = localStorage.getItem('expires_at');
       this.expiresAt = expiresAt ? parseInt(expiresAt, 10) : 0;
+      
+      // Verificar si el token es válido
+      if (this.isAuthenticated()) {
+        console.log('Token is valid, authentication initialized');
+        
+        // Intentar refrescar el token si está próximo a expirar
+        if (this.isTokenExpiringSoon()) {
+          console.log('Token is expiring soon, will attempt refresh');
+          this.refreshTokenIfNeeded().then(success => {
+            if (success) {
+              console.log('Token refreshed successfully during initialization');
+            } else {
+              console.warn('Failed to refresh token during initialization');
+            }
+          });
+        }
+      } else {
+        console.warn('Found token in localStorage but it is invalid or expired');
+        this.clearSession();
+      }
+    } else {
+      console.log('No authentication token found in localStorage');
     }
     
     // Cargar nombres de usuario conocidos
