@@ -3,12 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import CardGrid from '../components/CardGrid';
 import { Card } from '../components/CardGrid';
+import SearchBar from '../components/SearchBar';
+import { SearchParams } from '../components/SearchBar';
 import collectionService from '../services/collectionService';
 import authService from '../services/authService';
 import './Collection.css';
 
 const Collection = () => {
   const [collectionCards, setCollectionCards] = useState<Card[]>([]);
+  const [filteredCards, setFilteredCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -20,6 +23,7 @@ const Collection = () => {
     console.log(`Removing card ${cardId} from collection view`);
     // Filtrar la carta eliminada de la lista de cartas
     setCollectionCards(prevCards => prevCards.filter(card => parseInt(card.id, 10) !== cardId));
+    setFilteredCards(prevCards => prevCards.filter(card => parseInt(card.id, 10) !== cardId));
   }, []);
 
   // Check authentication status
@@ -57,6 +61,7 @@ const Collection = () => {
         if (!collectionData || !Array.isArray(collectionData) || collectionData.length === 0) {
           console.log('No collection cards found or empty array returned');
           setCollectionCards([]);
+          setFilteredCards([]);
           setLoading(false);
           return;
         }
@@ -109,6 +114,7 @@ const Collection = () => {
 
         console.log('Transformed cards:', validCards);
         setCollectionCards(validCards);
+        setFilteredCards(validCards);
       } catch (err: any) {
         console.error('Error fetching collection cards:', err);
         setError(`Error loading your collection: ${err.message || 'Unknown error'}`);
@@ -120,6 +126,100 @@ const Collection = () => {
 
     fetchCollectionCards();
   }, [isAuthenticated]);
+
+  // Función para manejar la búsqueda/filtrado de cartas
+  const handleSearch = (searchParams: SearchParams) => {
+    if (collectionCards.length === 0) return;
+    
+    console.log('Filtrando colección con parámetros:', searchParams);
+    
+    // Filtrar las cartas según los parámetros de búsqueda
+    let results = [...collectionCards];
+
+    // Filtrar por nombre
+    if (searchParams.name) {
+      const searchTerm = searchParams.name.toLowerCase();
+      results = results.filter(card => card.name.toLowerCase().includes(searchTerm));
+      console.log(`Filtrado por nombre "${searchTerm}": ${results.length} resultados`);
+    }
+
+    // Filtrar por color
+    if (searchParams.color) {
+      const colors = searchParams.color.split(',');
+      console.log('Filtrando por colores:', colors);
+      
+      results = results.filter(card => {
+        // Para cartas incoloras
+        if (colors.includes('C') && card.color === 'colorless') {
+          return true;
+        }
+        
+        // Para otros colores
+        for (const color of colors) {
+          if (color === 'C') continue; // Ya manejamos el caso de incoloro arriba
+          
+          if (color === 'W' && card.color === 'white') return true;
+          if (color === 'U' && card.color === 'blue') return true;
+          if (color === 'B' && card.color === 'black') return true;
+          if (color === 'R' && card.color === 'red') return true;
+          if (color === 'G' && card.color === 'green') return true;
+          
+          // Para multicolor, cualquier match es válido
+          if (card.color === 'multicolor') {
+            // Si hay algún color seleccionado que podría estar en una carta multicolor
+            if (['W', 'U', 'B', 'R', 'G'].includes(color)) {
+              return true;
+            }
+          }
+        }
+        
+        return false;
+      });
+      
+      console.log(`Filtrado por color: ${results.length} resultados`);
+    }
+
+    // Filtrar por tipo
+    if (searchParams.type) {
+      const typeSearch = searchParams.type.toLowerCase();
+      results = results.filter(card => 
+        card.type.toLowerCase().includes(typeSearch)
+      );
+      console.log(`Filtrado por tipo "${typeSearch}": ${results.length} resultados`);
+    }
+
+    // Filtrar por rareza
+    if (searchParams.rarity) {
+      const raritySearch = searchParams.rarity.toLowerCase();
+      results = results.filter(card => 
+        card.rarity.toLowerCase() === raritySearch
+      );
+      console.log(`Filtrado por rareza "${raritySearch}": ${results.length} resultados`);
+    }
+
+    // Filtrar por set
+    if (searchParams.set) {
+      results = results.filter(card => card.set === searchParams.set);
+      console.log(`Filtrado por set "${searchParams.set}": ${results.length} resultados`);
+    }
+
+    // Actualizar las cartas filtradas
+    console.log(`Resultados finales: ${results.length} cartas`);
+    setFilteredCards(results);
+  };
+
+  // Función auxiliar para mapear códigos de color a nombres
+  const mapColorCodeToName = (code: string): string => {
+    const colorMap: Record<string, string> = {
+      'W': 'white',
+      'U': 'blue',
+      'B': 'black',
+      'R': 'red',
+      'G': 'green',
+      'C': 'colorless'
+    };
+    return colorMap[code] || code;
+  };
 
   // Función auxiliar para determinar el color principal de la carta basado en su coste de maná
   const determineCardColor = (manaCost: string): string => {
@@ -162,6 +262,9 @@ const Collection = () => {
           </p>
         </div>
 
+        {/* Barra de búsqueda para filtrar la colección */}
+        <SearchBar onSearch={handleSearch} />
+
         {/* Debug info (visible solo en desarrollo) */}
         {isDevelopment && debugInfo && (
           <div className="debug-info">
@@ -181,12 +284,12 @@ const Collection = () => {
           </div>
         )}
 
-        {loading && collectionCards.length === 0 ? (
+        {loading && filteredCards.length === 0 ? (
           <div className="collection-loading">
             <div className="spinner"></div>
             <p>Loading your collection...</p>
           </div>
-        ) : collectionCards.length === 0 ? (
+        ) : filteredCards.length === 0 ? (
           <div className="empty-collection">
             <p>Your collection is empty. Start by adding cards from the home page.</p>
             <button 
@@ -198,7 +301,7 @@ const Collection = () => {
           </div>
         ) : (
           <CardGrid 
-            cards={collectionCards} 
+            cards={filteredCards} 
             loading={loading}
             hasMore={false}
             onLoadMore={() => {}}
