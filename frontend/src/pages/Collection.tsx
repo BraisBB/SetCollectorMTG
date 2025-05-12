@@ -220,28 +220,54 @@ const Collection = () => {
           }
         }
         
-        // Para cartas de un solo color, mapear el nombre del color a su código
+        // Filtrar primero los colores que no son incoloros (C)
+        const selectedColors = colors.filter(color => color !== 'C');
+        console.log(`  Colores seleccionados a verificar: ${selectedColors.join(', ')}`);
+        
+        // Para cartas de un solo color, verificar si el color de la carta está entre los seleccionados
+        // Y además, si hay más de un color seleccionado, la carta debe ser excluida
         if (card.color === 'white') {
+          // Si hay más de un color seleccionado, excluir cartas monocolor
+          if (selectedColors.length > 1) {
+            console.log(`  Carta blanca pero se seleccionaron múltiples colores: EXCLUIDA`);
+            return false;
+          }
           const result = colors.includes('W');
           console.log(`  Carta blanca: ${result ? 'INCLUIDA' : 'EXCLUIDA'}`);
           return result;
         }
         if (card.color === 'blue') {
+          if (selectedColors.length > 1) {
+            console.log(`  Carta azul pero se seleccionaron múltiples colores: EXCLUIDA`);
+            return false;
+          }
           const result = colors.includes('U');
           console.log(`  Carta azul: ${result ? 'INCLUIDA' : 'EXCLUIDA'}`);
           return result;
         }
         if (card.color === 'black') {
+          if (selectedColors.length > 1) {
+            console.log(`  Carta negra pero se seleccionaron múltiples colores: EXCLUIDA`);
+            return false;
+          }
           const result = colors.includes('B');
           console.log(`  Carta negra: ${result ? 'INCLUIDA' : 'EXCLUIDA'}`);
           return result;
         }
         if (card.color === 'red') {
+          if (selectedColors.length > 1) {
+            console.log(`  Carta roja pero se seleccionaron múltiples colores: EXCLUIDA`);
+            return false;
+          }
           const result = colors.includes('R');
           console.log(`  Carta roja: ${result ? 'INCLUIDA' : 'EXCLUIDA'}`);
           return result;
         }
         if (card.color === 'green') {
+          if (selectedColors.length > 1) {
+            console.log(`  Carta verde pero se seleccionaron múltiples colores: EXCLUIDA`);
+            return false;
+          }
           const result = colors.includes('G');
           console.log(`  Carta verde: ${result ? 'INCLUIDA' : 'EXCLUIDA'}`);
           return result;
@@ -426,12 +452,9 @@ const Collection = () => {
     
     console.log(`  Un solo color encontrado: ${foundColors[0]}`);
     return foundColors[0];
-  };
-
-  // Determinar si estamos en modo desarrollo
-  const isDevelopment = import.meta.env.DEV;
-
-  return (
+  }
+  
+    return (
     <div className="collection-container">
       <Header />
       <main className="container collection-main">
@@ -444,13 +467,6 @@ const Collection = () => {
 
         {/* Barra de búsqueda para filtrar la colección */}
         <SearchBar onSearch={handleSearch} />
-
-        {/* Debug info (visible solo en desarrollo) */}
-        {isDevelopment && debugInfo && (
-          <div className="debug-info">
-            <pre>{debugInfo}</pre>
-          </div>
-        )}
 
         {error && (
           <div className="error-message">

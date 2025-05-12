@@ -45,9 +45,7 @@ const Header: React.FC = () => {
             <Link to="/">Home</Link>
             {isAuthenticated && (
               <Link to="/collection" className="collection-link">My Collection</Link>
-            )}
-            <Link to="/about">About Us</Link>
-            
+            )} 
             {isAuthenticated ? (
               <div className="user-menu">
                 <button className="username-button" onClick={toggleDropdown}>
