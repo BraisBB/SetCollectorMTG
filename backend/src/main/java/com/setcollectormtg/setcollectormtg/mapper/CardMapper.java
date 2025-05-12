@@ -20,12 +20,13 @@ public interface CardMapper {
     @Mapping(target = "oracleText", ignore = true)
     @Mapping(target = "userCollectionCards", ignore = true)
     @Mapping(target = "manaValueFromNode", ignore = true)
-    @Mapping(target = "manaValue", source = "manaValue")
+    @Mapping(target = "manaValue", expression = "java(cardCreateDto.getManaValue() != null ? cardCreateDto.getManaValue().doubleValue() : null)")
     Card toEntity(CardCreateDto cardCreateDto);
 
     @Mapping(target = "setId", source = "setMtg.setId")
     @Mapping(target = "oracleText", source = "oracleText")
     @Mapping(target = "cardType", source = "cardType")
+    @Mapping(target = "manaValue", expression = "java(card.getManaValue() != null ? card.getManaValue().intValue() : null)")
     CardDto toDto(Card card);
 
     @Mapping(target = "setMtg", ignore = true)
@@ -33,6 +34,6 @@ public interface CardMapper {
     @Mapping(target = "oracleText", ignore = true)
     @Mapping(target = "userCollectionCards", ignore = true)
     @Mapping(target = "manaValueFromNode", ignore = true)
-    @Mapping(target = "manaValue", source = "manaValue")
+    @Mapping(target = "manaValue", expression = "java(cardDto.getManaValue() != null ? cardDto.getManaValue().doubleValue() : null)")
     void updateCardFromDto(CardDto cardDto, @MappingTarget Card card);
 }

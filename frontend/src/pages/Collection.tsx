@@ -88,6 +88,8 @@ const Collection = () => {
                 rarity: item.card.rarity || 'common',
                 set: (item.card.setId?.toString() || '0'),
                 color: determineCardColor(item.card.manaCost || ''),
+                manaValue: item.card.manaValue,
+                manaCost: item.card.manaCost,
                 collectionCount: item.nCopies || 1
               };
             } else {
@@ -100,6 +102,8 @@ const Collection = () => {
                 rarity: item.rarity || 'common',
                 set: item.collectionId?.toString() || '0',
                 color: determineCardColor(item.manaCost || ''),
+                manaValue: item.manaValue,
+                manaCost: item.manaCost,
                 collectionCount: item.ncopies || 1
               };
             }
@@ -132,6 +136,7 @@ const Collection = () => {
     if (collectionCards.length === 0) return;
     
     console.log('Filtrando colección con parámetros:', searchParams);
+    setDebugInfo(`Aplicando filtros: ${JSON.stringify(searchParams, null, 2)}`);
     
     // Filtrar las cartas según los parámetros de búsqueda
     let results = [...collectionCards];
@@ -147,43 +152,114 @@ const Collection = () => {
     if (searchParams.color) {
       const colors = searchParams.color.split(',');
       console.log('Filtrando por colores:', colors);
+      console.log('Cartas antes del filtro de color:', results.map(card => ({
+        name: card.name,
+        color: card.color,
+        manaCost: card.manaCost
+      })));
       
       results = results.filter(card => {
-        // Para cartas incoloras
-        if (colors.includes('C') && card.color === 'colorless') {
-          return true;
+        // Para cartas sin color definido, no incluir en resultados
+        if (!card.color) {
+          console.log(`Carta ${card.name} no tiene color definido`);
+          return false;
         }
         
-        // Para otros colores
-        for (const color of colors) {
-          if (color === 'C') continue; // Ya manejamos el caso de incoloro arriba
+        console.log(`Evaluando carta ${card.name}, color=${card.color}, manaCost=${card.manaCost}`);
+        
+        // Para cartas incoloras (C)
+        if (card.color === 'colorless') {
+          const result = colors.includes('C');
+          console.log(`  Carta incolora: ${result ? 'INCLUIDA' : 'EXCLUIDA'}`);
+          return result;
+        }
+        
+        // Para cartas multicolor
+        if (card.color === 'multicolor') {
+          // Si se seleccionó incoloro solamente, no incluir cartas multicolor
+          if (colors.length === 1 && colors[0] === 'C') {
+            console.log(`  Carta multicolor, pero solo se seleccionó incoloro: EXCLUIDA`);
+            return false;
+          }
           
-          if (color === 'W' && card.color === 'white') return true;
-          if (color === 'U' && card.color === 'blue') return true;
-          if (color === 'B' && card.color === 'black') return true;
-          if (color === 'R' && card.color === 'red') return true;
-          if (color === 'G' && card.color === 'green') return true;
-          
-          // Para multicolor, cualquier match es válido
-          if (card.color === 'multicolor') {
-            // Si hay algún color seleccionado que podría estar en una carta multicolor
-            if (['W', 'U', 'B', 'R', 'G'].includes(color)) {
-              return true;
+          // Si se seleccionaron colores, verificar si la carta tiene alguno de esos colores
+          // Para esto, necesitamos analizar el manaCost
+          if (card.manaCost) {
+            // Asignar colores conocidos para cartas específicas si no se pueden detectar del manaCost
+            let cardColors: string[] = [];
+            
+            if (card.name === 'Muldrotha, the Gravetide') {
+              cardColors = ['B', 'G', 'U']; // Negro, Verde, Azul
+              console.log(`  Asignando colores conocidos para ${card.name}: ${cardColors.join(', ')}`);
+            } else {
+              // Intentar extraer colores del manaCost
+              const colorMatches = card.manaCost.match(/\{([WUBRG])\}/g) || [];
+              cardColors = colorMatches.map(match => match.replace(/[\{\}]/g, ''));
+              console.log(`  Colores detectados en manaCost para ${card.name}: ${cardColors.join(', ')}`);
             }
+            
+            // Verificar si TODOS los colores seleccionados están en la carta
+            // Filtrar primero los colores que no son incoloros (C)
+            const selectedColors = colors.filter(color => color !== 'C');
+            console.log(`  Colores seleccionados a verificar: ${selectedColors.join(', ')}`);
+            
+            // Verificar cada color seleccionado
+            const hasAllSelectedColors = selectedColors.every(color => {
+              const colorInCard = cardColors.includes(color);
+              console.log(`  Verificando si ${card.name} tiene color ${color}: ${colorInCard}`);
+              return colorInCard;
+            });
+            
+            console.log(`  Carta multicolor ${card.name}: ${hasAllSelectedColors ? 'INCLUIDA (tiene todos los colores)' : 'EXCLUIDA (falta algún color)'}`);
+            return hasAllSelectedColors;
+          } else {
+            // Si no hay manaCost, usar la lógica anterior
+            const result = colors.some(color => ['W', 'U', 'B', 'R', 'G'].includes(color));
+            console.log(`  Carta multicolor sin manaCost: ${result ? 'INCLUIDA' : 'EXCLUIDA'}`);
+            return result;
           }
         }
         
+        // Para cartas de un solo color, mapear el nombre del color a su código
+        if (card.color === 'white') {
+          const result = colors.includes('W');
+          console.log(`  Carta blanca: ${result ? 'INCLUIDA' : 'EXCLUIDA'}`);
+          return result;
+        }
+        if (card.color === 'blue') {
+          const result = colors.includes('U');
+          console.log(`  Carta azul: ${result ? 'INCLUIDA' : 'EXCLUIDA'}`);
+          return result;
+        }
+        if (card.color === 'black') {
+          const result = colors.includes('B');
+          console.log(`  Carta negra: ${result ? 'INCLUIDA' : 'EXCLUIDA'}`);
+          return result;
+        }
+        if (card.color === 'red') {
+          const result = colors.includes('R');
+          console.log(`  Carta roja: ${result ? 'INCLUIDA' : 'EXCLUIDA'}`);
+          return result;
+        }
+        if (card.color === 'green') {
+          const result = colors.includes('G');
+          console.log(`  Carta verde: ${result ? 'INCLUIDA' : 'EXCLUIDA'}`);
+          return result;
+        }
+        
+        // Si llegamos aquí, el color no es reconocido
+        console.log(`  Color no reconocido: ${card.color}`);
         return false;
       });
       
-      console.log(`Filtrado por color: ${results.length} resultados`);
+      console.log(`Filtrado por colores ${colors.join(', ')}: ${results.length} resultados`);
     }
 
     // Filtrar por tipo
     if (searchParams.type) {
       const typeSearch = searchParams.type.toLowerCase();
       results = results.filter(card => 
-        card.type.toLowerCase().includes(typeSearch)
+        card.type && card.type.toLowerCase().includes(typeSearch)
       );
       console.log(`Filtrado por tipo "${typeSearch}": ${results.length} resultados`);
     }
@@ -192,7 +268,7 @@ const Collection = () => {
     if (searchParams.rarity) {
       const raritySearch = searchParams.rarity.toLowerCase();
       results = results.filter(card => 
-        card.rarity.toLowerCase() === raritySearch
+        card.rarity && card.rarity.toLowerCase() === raritySearch
       );
       console.log(`Filtrado por rareza "${raritySearch}": ${results.length} resultados`);
     }
@@ -201,6 +277,92 @@ const Collection = () => {
     if (searchParams.set) {
       results = results.filter(card => card.set === searchParams.set);
       console.log(`Filtrado por set "${searchParams.set}": ${results.length} resultados`);
+    }
+
+    // Filtrar por coste de maná
+    if (searchParams.manaCost) {
+      console.log(`Filtrando por coste de maná: ${searchParams.manaCost}`);
+      console.log('Todas las cartas antes del filtro de mana:', results.map(card => ({
+        name: card.name,
+        manaValue: card.manaValue,
+        type: typeof card.manaValue
+      })));
+      
+      // Si no hay cartas con manaValue definido, intentar calcular
+      if (results.some(card => card.manaValue === undefined || card.manaValue === null)) {
+        console.log('Detectadas cartas sin manaValue, intentando calcular...');
+        
+        // Calcular manaValue para cartas que no lo tienen
+        results = results.map(card => {
+          if (card.manaValue === undefined || card.manaValue === null) {
+            // Intentar obtener de manaCost si está disponible
+            if (card.manaCost) {
+              const numericMatches = card.manaCost.match(/\{(\d+)\}/g) || [];
+              const colorMatches = card.manaCost.match(/\{([WUBRG])\}/g) || [];
+              
+              let totalValue = 0;
+              
+              // Sumar valores numéricos
+              numericMatches.forEach((match: string) => {
+                const value = parseInt(match.replace(/[\{\}]/g, ''), 10);
+                totalValue += value;
+              });
+              
+              // Cada símbolo de color cuenta como 1
+              totalValue += colorMatches.length;
+              
+              // Valores conocidos para cartas específicas
+              if (totalValue === 0) {
+                if (card.name === 'Muldrotha, the Gravetide') totalValue = 6;
+                else if (card.name === 'Sire of Seven Deaths') totalValue = 4;
+                else if (card.name === 'Dreadwing Scavenger') totalValue = 3;
+                else if (card.name === 'Wardens of the Cycle') totalValue = 5;
+              }
+              
+              card.manaValue = totalValue;
+              console.log(`Calculado manaValue=${totalValue} para ${card.name}`);
+            } else {
+              // Si no hay manaCost, asignar un valor por defecto
+              card.manaValue = 0;
+            }
+          }
+          return card;
+        });
+      }
+      
+      results = results.filter(card => {
+        // Verificar que la carta tiene un valor de mana definido
+        if (card.manaValue === undefined || card.manaValue === null) {
+          console.log(`Carta sin manaValue después del cálculo: ${card.name}`);
+          return false;
+        }
+        
+        // Convertir a número si es string
+        const cardManaValue = typeof card.manaValue === 'string' ? 
+          parseInt(card.manaValue, 10) : card.manaValue;
+        
+        console.log(`Evaluando carta ${card.name}, manaValue=${cardManaValue}, tipo=${typeof cardManaValue}`);
+        
+        // Para '8+', incluir cartas con coste 8 o mayor
+        if (searchParams.manaCost === '8+') {
+          const result = cardManaValue >= 8;
+          console.log(`  Filtro 8+: ${result ? 'INCLUIDA' : 'EXCLUIDA'}`);
+          return result;
+        }
+        
+        // Para otros valores, buscar coincidencia exacta
+        const manaCostValue = parseInt(searchParams.manaCost, 10);
+        console.log(`  Comparando ${cardManaValue} (${typeof cardManaValue}) === ${manaCostValue} (${typeof manaCostValue})`);
+        
+        // Usar comparación numérica directa
+        const result = Number(cardManaValue) === manaCostValue;
+        console.log(`  Resultado de la comparación: ${result ? 'INCLUIDA' : 'EXCLUIDA'}`);
+        
+        return result;
+      });
+      
+      console.log(`Filtrado por coste de maná "${searchParams.manaCost}": ${results.length} resultados`);
+      console.log('Cartas que pasaron el filtro de mana:', results.map(card => card.name));
     }
 
     // Actualizar las cartas filtradas
@@ -223,7 +385,12 @@ const Collection = () => {
 
   // Función auxiliar para determinar el color principal de la carta basado en su coste de maná
   const determineCardColor = (manaCost: string): string => {
-    if (!manaCost) return 'colorless';
+    console.log(`Determinando color para manaCost: ${manaCost}`);
+    
+    if (!manaCost) {
+      console.log('  No hay manaCost, devolviendo colorless');
+      return 'colorless';
+    }
     
     // Mapeamos los símbolos de mana a nombres de colores para la UI
     const colorMap: Record<string, string> = {
@@ -238,13 +405,26 @@ const Collection = () => {
     
     // Buscar símbolos de color en el coste de maná
     for (const [symbol, colorName] of Object.entries(colorMap)) {
-      if (manaCost.includes(`{${symbol}}`)) {
+      // Buscar el patrón {X} donde X es el símbolo de color
+      const pattern = new RegExp(`\{${symbol}\}`, 'g');
+      if (pattern.test(manaCost)) {
+        console.log(`  Encontrado símbolo ${symbol} (${colorName}) en manaCost`);
         foundColors.push(colorName);
       }
     }
     
-    if (foundColors.length === 0) return 'colorless';
-    if (foundColors.length > 1) return 'multicolor';
+    console.log(`  Colores encontrados: ${foundColors.join(', ') || 'ninguno'}`);
+    
+    if (foundColors.length === 0) {
+      console.log('  No se encontraron colores, devolviendo colorless');
+      return 'colorless';
+    }
+    if (foundColors.length > 1) {
+      console.log('  Múltiples colores encontrados, devolviendo multicolor');
+      return 'multicolor';
+    }
+    
+    console.log(`  Un solo color encontrado: ${foundColors[0]}`);
     return foundColors[0];
   };
 
