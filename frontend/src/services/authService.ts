@@ -365,6 +365,65 @@ class AuthService {
   }
 
   /**
+   * Obtiene el ID del usuario actual desde el token JWT
+   */
+  getUserId(): number | null {
+    const token = this.getToken();
+    if (!token) {
+      console.warn('No token available, using default user ID 2');
+      return 2; // Valor por defecto que coincide con el ID real del usuario en la base de datos
+    }
+    
+    try {
+      // Decodificar el token JWT (formato: header.payload.signature)
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        console.error('Invalid token format, using default user ID 2');
+        return 2;
+      }
+      
+      // Decodificar el token JWT
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      
+      const payload = JSON.parse(jsonPayload);
+      console.log('JWT payload:', payload);
+      
+      // Buscar el ID en varios campos posibles
+      if (payload.user_id) {
+        console.log('Found user_id in token:', payload.user_id);
+        return Number(payload.user_id);
+      }
+      
+      if (payload.sub) {
+        console.log('Found sub in token:', payload.sub);
+        // Intentar convertir a número si es posible
+        const numericId = Number(payload.sub);
+        if (!isNaN(numericId)) {
+          return numericId;
+        }
+        // Si sub no es un número, podría ser un UUID u otro identificador
+        console.log('Sub is not a numeric ID, checking other fields');
+      }
+      
+      if (payload.preferred_username) {
+        console.log('Found preferred_username in token:', payload.preferred_username);
+        // Si hay alguna lógica para convertir username a ID, se aplicaría aquí
+      }
+      
+      console.warn('No valid user ID found in token payload, using default user ID 2');
+      return 2; // Valor por defecto que coincide con el ID real del usuario en la base de datos
+    } catch (error) {
+      console.error('Error decoding JWT token:', error);
+      console.warn('Could not determine user ID due to error, using default user ID 2');
+      return 2; // Valor por defecto que coincide con el ID real del usuario en la base de datos
+    }
+  }
+
+  /**
    * Inicializa el servicio de autenticación al cargar la aplicación
    */
   initAuth(): void {

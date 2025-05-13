@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import authService from '../services/authService';
-import api, { User } from '../services/api';
+import api, { User } from '../services/apiService';
 import './Profile.css';
 
 const Profile: React.FC = () => {

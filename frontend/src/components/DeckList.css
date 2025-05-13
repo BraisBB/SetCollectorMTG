@@ -1,0 +1,321 @@
+/* Estilos para el componente DeckList */
+.deck-list-container {
+  margin: 2rem 0;
+  font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
+}
+
+.deck-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #e65100;
+  padding-bottom: 0.5rem;
+}
+
+.deck-list-header h2 {
+  font-size: 1.8rem;
+  color: #000000;
+  margin: 0;
+}
+
+.create-deck-button {
+  background-color: #e65100;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-family: 'Noto Sans', sans-serif;
+}
+
+.create-deck-button:hover {
+  background-color: #ff8f00;
+}
+
+.no-decks-message {
+  background-color: rgba(230, 81, 0, 0.05);
+  border: 1px solid rgba(230, 81, 0, 0.2);
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.no-decks-message p {
+  color: #333;
+  font-size: 1.1rem;
+}
+
+/* Grid de mazos */
+.decks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.deck-card {
+  background-color: #494949;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+  position: relative;
+  overflow: hidden;
+  color: #ffffff;
+}
+
+.deck-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #ff8f00, #e65100);
+}
+
+/* Estilos específicos según el tipo de juego */
+.deck-card.standard::before {
+  background: linear-gradient(90deg, #ff8f00, #e65100);
+}
+
+.deck-card.commander::before {
+  background: linear-gradient(90deg, #9c27b0, #673ab7);
+}
+
+.deck-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.deck-card h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.deck-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.deck-info span {
+  font-size: 0.9rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.1);
+  font-family: 'Noto Sans', sans-serif;
+}
+
+.deck-type {
+  background-color: rgba(230, 81, 0, 0.2) !important;
+  color: #ff8f00;
+}
+
+.card-count {
+  margin-left: auto;
+}
+
+/* Estilos para los botones de acciones */
+.deck-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.deck-card:hover .deck-actions {
+  opacity: 1;
+}
+
+.edit-deck-button,
+.delete-deck-button {
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-family: 'Noto Sans', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.edit-deck-button {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.edit-deck-button:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.delete-deck-button {
+  background-color: rgba(220, 53, 69, 0.2);
+  color: #ff6b6b;
+}
+
+.delete-deck-button:hover {
+  background-color: rgba(220, 53, 69, 0.3);
+}
+
+/* Modal para crear deck */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #494949;
+  border-radius: 8px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  color: #ffffff;
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #ffffff;
+  font-size: 1.8rem;
+  text-align: center;
+  font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #ffffff;
+  font-family: 'Noto Sans', sans-serif;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: #ffffff;
+  color: #333;
+  font-family: 'Noto Sans', sans-serif;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #ff8f00;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 143, 0, 0.2);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.cancel-button,
+.create-button {
+  padding: 0.8rem 1.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Noto Sans', sans-serif;
+}
+
+.cancel-button {
+  background-color: transparent;
+  border: 1px solid #ddd;
+  color: #ddd;
+}
+
+.cancel-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.create-button {
+  background-color: #e65100;
+  color: white;
+  border: none;
+}
+
+.create-button:hover {
+  background-color: #ff8f00;
+}
+
+.create-button:disabled,
+.cancel-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-message {
+  background-color: rgba(220, 53, 69, 0.1);
+  border: 1px solid #dc3545;
+  color: #ff6b6b;
+  padding: 0.8rem;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+  text-align: center;
+  font-family: 'Noto Sans', sans-serif;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .deck-list-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .deck-list-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .decks-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .decks-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .cancel-button,
+  .create-button {
+    width: 100%;
+    text-align: center;
+  }
+}

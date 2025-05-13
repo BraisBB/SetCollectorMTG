@@ -5,6 +5,7 @@ import Login from './pages/Login.tsx';
 import Register from './pages/Register.tsx';
 import Profile from './pages/Profile.tsx';
 import Collection from './pages/Collection.tsx';
+import DeckEditor from './pages/DeckEditor.tsx';
 import authService from "./services/authService.ts";
 
 // Componente para rutas protegidas
@@ -39,6 +40,11 @@ const App: React.FC = () => {
         <Route path="/collection" element={
           <ProtectedRoute>
             <Collection />
+          </ProtectedRoute>
+        } />
+        <Route path="/deck/:deckId" element={
+          <ProtectedRoute>
+            <DeckEditor />
           </ProtectedRoute>
         } />
         {/* Ruta para About Us */}

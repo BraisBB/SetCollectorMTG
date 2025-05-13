@@ -1,4 +1,4 @@
-.modal-overlay {
+.card-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -14,7 +14,7 @@
   padding: 1rem;
 }
 
-.modal-content {
+.card-modal-content {
   background:  #494949;
   border-radius: 16px;
   max-width: 850px;
@@ -330,7 +330,7 @@
 }
 
 /* Mana symbol styling for the modal - Igualando con SearchBar */
-.modal-content .ms {
+.card-modal-content .ms {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -344,57 +344,57 @@
 }
 
 /* Style specific mana symbols exactamente como SearchBar */
-.modal-content .ms-w {
+.card-modal-content .ms-w {
   color: #f9faf4 !important;
   text-shadow: 0 0 1px #000, 0 0 2px #000;
 }
 
-.modal-content .ms-u {
+.card-modal-content .ms-u {
   color: #0e68ab !important;
 }
 
-.modal-content .ms-b {
+.card-modal-content .ms-b {
   color: #150b00 !important;
 }
 
-.modal-content .ms-r {
+.card-modal-content .ms-r {
   color: #d3202a !important;
 }
 
-.modal-content .ms-g {
+.card-modal-content .ms-g {
   color: #00733e !important;
 }
 
-.modal-content .ms-c {
+.card-modal-content .ms-c {
   color: #cccacb !important;
   text-shadow: 0 0 1px #000;
 }
 
 /* Estilos para símbolos de mana numéricos (0-9) y X */
-.modal-content .ms-0,
-.modal-content .ms-1,
-.modal-content .ms-2,
-.modal-content .ms-3,
-.modal-content .ms-4,
-.modal-content .ms-5,
-.modal-content .ms-6,
-.modal-content .ms-7,
-.modal-content .ms-8,
-.modal-content .ms-9,
-.modal-content .ms-10,
-.modal-content .ms-11,
-.modal-content .ms-12,
-.modal-content .ms-13,
-.modal-content .ms-14,
-.modal-content .ms-15,
-.modal-content .ms-16,
-.modal-content .ms-17,
-.modal-content .ms-18,
-.modal-content .ms-19,
-.modal-content .ms-20,
-.modal-content .ms-x,
-.modal-content .ms-y,
-.modal-content .ms-z {
+.card-modal-content .ms-0,
+.card-modal-content .ms-1,
+.card-modal-content .ms-2,
+.card-modal-content .ms-3,
+.card-modal-content .ms-4,
+.card-modal-content .ms-5,
+.card-modal-content .ms-6,
+.card-modal-content .ms-7,
+.card-modal-content .ms-8,
+.card-modal-content .ms-9,
+.card-modal-content .ms-10,
+.card-modal-content .ms-11,
+.card-modal-content .ms-12,
+.card-modal-content .ms-13,
+.card-modal-content .ms-14,
+.card-modal-content .ms-15,
+.card-modal-content .ms-16,
+.card-modal-content .ms-17,
+.card-modal-content .ms-18,
+.card-modal-content .ms-19,
+.card-modal-content .ms-20,
+.card-modal-content .ms-x,
+.card-modal-content .ms-y,
+.card-modal-content .ms-z {
   color: #ffffff !important;
   background-color: rgb(49, 49, 49);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
@@ -427,7 +427,7 @@
     margin-bottom: 1rem;
   }
 
-  .modal-content {
+  .card-modal-content {
     width: 95%;
     max-height: 90vh;
     overflow-y: auto;
@@ -459,7 +459,7 @@
 }
 
 @media (max-width: 480px) {
-  .modal-content {
+  .card-modal-content {
     padding: 0;
     border-radius: 12px;
   }

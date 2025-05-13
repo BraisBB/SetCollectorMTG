@@ -291,8 +291,8 @@ const CardModal: React.FC<CardModalProps> = ({
   };
 
   return (
-    <div className="modal-overlay" onClick={handleOverlayClick}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+    <div className="card-modal-overlay" onClick={handleOverlayClick}>
+      <div className="card-modal-content" onClick={(e) => e.stopPropagation()}>
         {/* Botón de cierre con estilos en CSS */}
         <button 
           id="modal-close-button"

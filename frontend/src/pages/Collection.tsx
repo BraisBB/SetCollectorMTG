@@ -1,12 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api, { Deck } from '../services/apiService';
+import collectionService from '../services/collectionService';
+import authService from '../services/authService';
 import Header from '../components/Header';
 import CardGrid from '../components/CardGrid';
 import { Card } from '../components/CardGrid';
 import SearchBar from '../components/SearchBar';
 import { SearchParams } from '../components/SearchBar';
-import collectionService from '../services/collectionService';
-import authService from '../services/authService';
+import DeckList from '../components/DeckList';
 import './Collection.css';
 
 const Collection = () => {
@@ -15,7 +17,11 @@ const Collection = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<string | null>(null); // Para depuración
+  const [decks, setDecks] = useState<Deck[]>([]); // Inicializado como array vacío
+  const [decksLoading, setDecksLoading] = useState(true);
+  const [decksError, setDecksError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'cards' | 'decks'>('cards');
+  const [userId, setUserId] = useState<number | null>(null);
   const navigate = useNavigate();
 
   // Función para eliminar una carta de la vista cuando es eliminada de la colección
@@ -43,13 +49,57 @@ const Collection = () => {
     console.log('User is authenticated, proceeding to load collection');
   }, [navigate]);
 
+  // Cargar decks del usuario
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    
+    const fetchUserDecks = async () => {
+      setDecksLoading(true);
+      setDecksError(null);
+      
+      try {
+        // Obtener el ID del usuario actual desde el token JWT
+        const currentUserId = authService.getUserId();
+        if (!currentUserId) {
+          throw new Error('No se pudo obtener el ID del usuario');
+        }
+        
+        setUserId(currentUserId);
+        
+        const userDecks = await api.getUserDecks(currentUserId);
+        console.log('Received user decks:', userDecks);
+        // Asegurarse de que decks siempre sea un array
+        setDecks(Array.isArray(userDecks) ? userDecks : []);
+      } catch (err: any) {
+        console.error('Error fetching user decks:', err);
+        setDecksError('Failed to load decks. Please try again.');
+      } finally {
+        setDecksLoading(false);
+      }
+    };
+    
+    fetchUserDecks();
+  }, [isAuthenticated]);
+  
+  // Función para actualizar la lista de decks después de crear uno nuevo
+  const handleDeckCreated = async () => {
+    if (!userId) return;
+    
+    try {
+      const userDecks = await api.getUserDecks(userId);
+      // Asegurarse de que decks siempre sea un array
+      setDecks(Array.isArray(userDecks) ? userDecks : []);
+    } catch (err) {
+      console.error('Error refreshing decks:', err);
+    }
+  };
+
   useEffect(() => {
     if (!isAuthenticated) return;
 
     const fetchCollectionCards = async () => {
       setLoading(true);
       setError(null);
-      setDebugInfo(null);
       
       try {
         console.log('Fetching collection cards...');
@@ -65,8 +115,7 @@ const Collection = () => {
           setLoading(false);
           return;
         }
-        
-        setDebugInfo(`Found ${collectionData.length} cards in collection`);
+
         
         // Transformación de datos: Enfoque simplificado para evitar problemas de tipo
         let validCards: Card[] = [];
@@ -122,7 +171,6 @@ const Collection = () => {
       } catch (err: any) {
         console.error('Error fetching collection cards:', err);
         setError(`Error loading your collection: ${err.message || 'Unknown error'}`);
-        setDebugInfo(err.stack);
       } finally {
         setLoading(false);
       }
@@ -136,7 +184,6 @@ const Collection = () => {
     if (collectionCards.length === 0) return;
     
     console.log('Filtrando colección con parámetros:', searchParams);
-    setDebugInfo(`Aplicando filtros: ${JSON.stringify(searchParams, null, 2)}`);
     
     // Filtrar las cartas según los parámetros de búsqueda
     let results = [...collectionCards];
@@ -396,18 +443,6 @@ const Collection = () => {
     setFilteredCards(results);
   };
 
-  // Función auxiliar para mapear códigos de color a nombres
-  const mapColorCodeToName = (code: string): string => {
-    const colorMap: Record<string, string> = {
-      'W': 'white',
-      'U': 'blue',
-      'B': 'black',
-      'R': 'red',
-      'G': 'green',
-      'C': 'colorless'
-    };
-    return colorMap[code] || code;
-  };
 
   // Función auxiliar para determinar el color principal de la carta basado en su coste de maná
   const determineCardColor = (manaCost: string): string => {
@@ -461,12 +496,30 @@ const Collection = () => {
         <div className="collection-header">
           <h1 className="collection-title">My Collection</h1>
           <p className="collection-description">
-            View and manage all the cards in your personal collection.
+            View and manage all the cards and decks in your personal collection.
           </p>
         </div>
+        
+        {/* Tabs para cambiar entre cartas y mazos */}
+        <div className="collection-tabs">
+          <button 
+            className={`tab-button ${activeTab === 'cards' ? 'active' : ''}`}
+            onClick={() => setActiveTab('cards')}
+          >
+            My Cards
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'decks' ? 'active' : ''}`}
+            onClick={() => setActiveTab('decks')}
+          >
+            My Decks
+          </button>
+        </div>
 
-        {/* Barra de búsqueda para filtrar la colección */}
-        <SearchBar onSearch={handleSearch} />
+        {activeTab === 'cards' && (
+          <>
+            {/* Barra de búsqueda para filtrar la colección */}
+            <SearchBar onSearch={handleSearch} />
 
         {error && (
           <div className="error-message">
@@ -480,31 +533,62 @@ const Collection = () => {
           </div>
         )}
 
-        {loading && filteredCards.length === 0 ? (
-          <div className="collection-loading">
-            <div className="spinner"></div>
-            <p>Loading your collection...</p>
-          </div>
-        ) : filteredCards.length === 0 ? (
-          <div className="empty-collection">
-            <p>Your collection is empty. Start by adding cards from the home page.</p>
-            <button 
-              className="browse-cards-btn"
-              onClick={() => navigate('/')}
-            >
-              Browse Cards
-            </button>
-          </div>
-        ) : (
-          <CardGrid 
-            cards={filteredCards} 
-            loading={loading}
-            hasMore={false}
-            onLoadMore={() => {}}
-            isAuthenticated={isAuthenticated}
-            isCollectionPage={true}
-            onCardRemoved={handleCardRemoved}
-          />
+            {loading && filteredCards.length === 0 ? (
+              <div className="collection-loading">
+                <div className="spinner"></div>
+                <p>Loading your collection...</p>
+              </div>
+            ) : filteredCards.length === 0 ? (
+              <div className="empty-collection">
+                <p>Your collection is empty. Start by adding cards from the home page.</p>
+                <button 
+                  className="browse-cards-btn"
+                  onClick={() => navigate('/')}
+                >
+                  Browse Cards
+                </button>
+              </div>
+            ) : (
+              <CardGrid 
+                cards={filteredCards} 
+                loading={loading}
+                hasMore={false}
+                onLoadMore={() => {}}
+                isAuthenticated={isAuthenticated}
+                isCollectionPage={true}
+                onCardRemoved={handleCardRemoved}
+              />
+            )}
+          </>
+        )}
+        
+        {activeTab === 'decks' && (
+          <>
+            {decksError && (
+              <div className="error-message">
+                <p><strong>Error:</strong> {decksError}</p>
+                <button 
+                  className="retry-button"
+                  onClick={() => window.location.reload()}
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+            
+            {decksLoading ? (
+              <div className="collection-loading">
+                <div className="spinner"></div>
+                <p>Loading your decks...</p>
+              </div>
+            ) : (
+              <DeckList 
+                decks={Array.isArray(decks) ? decks : []} 
+                onDeckCreated={handleDeckCreated}
+                onDeckDeleted={handleDeckCreated}
+              />
+            )}
+          </>
         )}
       </main>
     </div>

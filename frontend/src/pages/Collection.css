@@ -146,6 +146,36 @@
   white-space: pre-wrap;
 }
 
+/* Estilos para las pestañas */
+.collection-tabs {
+  display: flex;
+  margin: 1.5rem 0;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.tab-button {
+  padding: 0.8rem 1.5rem;
+  font-size: 1.1rem;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-right: 1rem;
+  cursor: pointer;
+  color: #666;
+  font-family: 'Noto Sans', sans-serif;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.tab-button:hover {
+  color: #e65100;
+}
+
+.tab-button.active {
+  color: #e65100;
+  border-bottom: 3px solid #e65100;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .collection-title {
