@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -17,6 +18,9 @@ public interface CardDeckRepository extends JpaRepository<CardDeck, CardDeckId> 
     boolean existsByDeck_DeckId(Long deckId);
     int countByDeck_DeckId(Long deckId);
     void deleteByDeck_DeckId(Long deckId);
+    
+    // Obtener todas las cartas de un mazo
+    List<CardDeck> findByDeck_DeckId(Long deckId);
 
     // Métodos necesarios para las operaciones CRUD
     Optional<CardDeck> findByDeck_DeckIdAndCard_CardId(Long deckId, Long cardId);

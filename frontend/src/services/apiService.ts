@@ -1,6 +1,7 @@
 import { httpClient } from './httpClient';
 import authService from './authService';
 import { SetMtg, Card, Deck, DeckCreateDto, CardDeck, User } from './types';
+import { SearchParams } from '../components/SearchBar';
 
 // Usando el proxy configurado en vite.config.ts
 const API_URL = '/api';
@@ -26,7 +27,41 @@ const apiService = {
   // Decks
   getUserDecks: async (userId?: number): Promise<Deck[]> => {
     try {
-      // Si no se proporciona userId, obtenerlo del token
+      // Priorizar intentar con el username primero ya que parece que hay problemas con IDs
+      const altIdentifier = localStorage.getItem('user_identifier');
+      
+      if (altIdentifier) {
+        console.log(`Intentando obtener mazos con username: ${altIdentifier}`);
+        try {
+          const decks = await httpClient.get<Deck[]>(`/decks/user/byUsername/${altIdentifier}`);
+          
+          if (Array.isArray(decks) && decks.length > 0) {
+            console.log(`Éxito! Se encontraron ${decks.length} mazos con username`);
+            return decks;
+          } else {
+            console.log('No se encontraron mazos con username');
+          }
+        } catch (error) {
+          console.error(`Error al obtener mazos con username: ${altIdentifier}`, error);
+        }
+      }
+      
+      // Intentar con el endpoint de usuario actual (el más seguro para permisos)
+      try {
+        console.log(`Intentando obtener mazos con endpoint de usuario actual`);
+        const decks = await httpClient.get<Deck[]>('/decks/current-user');
+        
+        if (Array.isArray(decks) && decks.length > 0) {
+          console.log(`Éxito! Se encontraron ${decks.length} mazos con endpoint de usuario actual`);
+          return decks;
+        } else {
+          console.log('No se encontraron mazos con endpoint de usuario actual');
+        }
+      } catch (error) {
+        console.error('Error al obtener mazos con endpoint de usuario actual', error);
+      }
+      
+      // Si ninguno de los métodos anteriores funcionó y tenemos un userId, intentar con él
       if (userId === undefined) {
         const userIdFromToken = authService.getUserId();
         if (userIdFromToken === null) {
@@ -35,14 +70,8 @@ const apiService = {
         userId = userIdFromToken;
       }
       
-      // Verificar si tenemos un identificador alternativo almacenado
-      const altIdentifier = localStorage.getItem('user_identifier');
-      
-      console.log(`Solicitando mazos del usuario ${userId}${altIdentifier ? ` (identificador alternativo: ${altIdentifier})` : ''}`);
-      
-      // Intento 1: Usar userId numérico
+      console.log(`Intentando obtener mazos con ID numérico: ${userId}`);
       try {
-        console.log(`Intentando obtener mazos con ID numérico: ${userId}`);
         const decks = await httpClient.get<Deck[]>(`/decks/user/${userId}`);
         
         if (Array.isArray(decks) && decks.length > 0) {
@@ -55,44 +84,12 @@ const apiService = {
         console.error(`Error al obtener mazos con ID numérico: ${userId}`, error);
       }
       
-      // Intento 2: Usar identificador alternativo si está disponible
-      if (altIdentifier) {
-        try {
-          console.log(`Intentando obtener mazos con identificador alternativo: ${altIdentifier}`);
-          const decks = await httpClient.get<Deck[]>(`/decks/user/byUsername/${altIdentifier}`);
-          
-          if (Array.isArray(decks) && decks.length > 0) {
-            console.log(`Éxito! Se encontraron ${decks.length} mazos con identificador alternativo`);
-            return decks;
-          } else {
-            console.log('No se encontraron mazos con identificador alternativo');
-          }
-        } catch (error) {
-          console.error(`Error al obtener mazos con identificador alternativo: ${altIdentifier}`, error);
-        }
-      }
+      // Si ninguno de los métodos funciona, devolver datos simulados o array vacío
+      console.warn('Todos los intentos fallaron, devolviendo datos simulados');
       
-      // Intento 3: Usar endpoint alternativo que busque al usuario por cualquier identificador
-      try {
-        console.log(`Intentando obtener mazos con endpoint de fallback`);
-        const decks = await httpClient.get<Deck[]>('/decks/current-user');
-        
-        if (Array.isArray(decks) && decks.length > 0) {
-          console.log(`Éxito! Se encontraron ${decks.length} mazos con endpoint de fallback`);
-          return decks;
-        } else {
-          console.log('No se encontraron mazos con endpoint de fallback');
-        }
-      } catch (error) {
-        console.error('Error al obtener mazos con endpoint de fallback', error);
-      }
-      
-      // Si llegamos aquí, ningún intento funcionó
-      console.warn('Todos los intentos fallaron, devolviendo array vacío o datos simulados');
-      
-      // Devolver datos simulados en cualquier caso
+      // Siempre devolver datos simulados para un mejor desarrollo
       console.log('Devolviendo datos simulados');
-      const userIdForMocks = userId;
+      const userIdForMocks = userId || 1;
       
       return [
         {
@@ -129,11 +126,47 @@ const apiService = {
   getDeckById: async (deckId: number): Promise<Deck> => {
     try {
       console.log(`Solicitando mazo ${deckId}`);
-      const deck = await httpClient.get<Deck>(`/decks/${deckId}`);
       
-      // No actualizamos automáticamente los colores nulos
-      // Se actualizarán cuando se añadan cartas al mazo
-      return deck;
+      // Implementar sistema de reintentos
+      const MAX_RETRIES = 3;
+      let retryCount = 0;
+      let lastError = null;
+      
+      while (retryCount < MAX_RETRIES) {
+        try {
+          const deck = await httpClient.get<Deck>(`/decks/${deckId}`);
+          console.log(`Mazo ${deckId} obtenido con éxito:`, deck.deckName);
+          return deck;
+        } catch (error: any) {
+          lastError = error;
+          
+          // Si el error es 403, podría ser un problema de permisos o de que el mazo no pertenece al usuario
+          if (error.response && error.response.status === 403) {
+            console.warn(`No tienes permisos para acceder al mazo ${deckId}.`);
+            // Para errores de permisos, romper el ciclo y devolver un mazo "no encontrado"
+            break;
+          }
+          
+          // Para otros errores, intentar de nuevo después de un retraso
+          retryCount++;
+          console.log(`Reintento ${retryCount}/${MAX_RETRIES} para obtener el mazo ${deckId}...`);
+          
+          // Esperar un poco antes de reintentar (usando setTimeout con Promise)
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        }
+      }
+      
+      console.error(`Error al obtener mazo por ID después de ${MAX_RETRIES} intentos:`, lastError);
+      
+      // Mazo predeterminado para desarrollo o cuando hay errores
+      return {
+        deckId: deckId,
+        deckName: 'Mazo no encontrado',
+        gameType: 'STANDARD',
+        deckColor: '',
+        totalCards: 0,
+        userId: authService.getUserId() ?? 1
+      };
     } catch (error) {
       console.error('Error al obtener mazo por ID:', error);
       
@@ -181,20 +214,68 @@ const apiService = {
   },
 
   updateDeck: async (deckId: number, deckData: Deck): Promise<Deck> => {
-    console.log(`Actualizando mazo ${deckId}:`, deckData);
-    return httpClient.put<Deck>(`/decks/${deckId}`, deckData);
+    try {
+      console.log(`Actualizando mazo ${deckId}:`, deckData);
+      return httpClient.put<Deck>(`/decks/${deckId}`, deckData);
+    } catch (error) {
+      console.error(`Error al actualizar mazo ${deckId}:`, error);
+      throw error;
+    }
   },
 
   deleteDeck: async (deckId: number): Promise<void> => {
-    console.log(`Eliminando mazo ${deckId}`);
-    await httpClient.delete(`/decks/${deckId}`);
+    try {
+      console.log(`Eliminando mazo ${deckId}`);
+      await httpClient.delete(`/decks/${deckId}`);
+    } catch (error) {
+      console.error(`Error al eliminar mazo ${deckId}:`, error);
+      throw error;
+    }
   },
 
   // Cards in Deck
   getCardsByDeck: async (deckId: number): Promise<CardDeck[]> => {
     try {
       console.log(`Solicitando cartas del mazo ${deckId}`);
-      return httpClient.get<CardDeck[]>(`/decks/${deckId}/cards`);
+      
+      // Implementar sistema de reintentos
+      const MAX_RETRIES = 3;
+      let retryCount = 0;
+      let lastError = null;
+      
+      while (retryCount < MAX_RETRIES) {
+        try {
+          const cards = await httpClient.get<CardDeck[]>(`/decks/${deckId}/cards`);
+          console.log(`Obtenidas ${cards.length} cartas para el mazo ${deckId}`);
+          return cards;
+        } catch (error: any) {
+          lastError = error;
+          
+          // Si el error es 404, puede ser porque el endpoint no existe en el backend
+          if (error.response && error.response.status === 404) {
+            console.warn(`Endpoint /decks/${deckId}/cards no encontrado. El backend podría no tener implementado este endpoint.`);
+            // No tiene sentido reintentar si el endpoint no existe
+            return [];
+          }
+          
+          // Si el error es 403, podría ser un problema de permisos o de que el mazo no pertenece al usuario
+          if (error.response && error.response.status === 403) {
+            console.warn(`No tienes permisos para acceder al mazo ${deckId}.`);
+            // No tiene sentido reintentar para errores de permisos
+            return [];
+          }
+          
+          // Para otros errores, intentar de nuevo después de un retraso
+          retryCount++;
+          console.log(`Reintento ${retryCount}/${MAX_RETRIES} para obtener cartas del mazo ${deckId}...`);
+          
+          // Esperar un poco antes de reintentar (usando setTimeout con Promise)
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        }
+      }
+      
+      console.error(`Error al obtener cartas del mazo ${deckId} después de ${MAX_RETRIES} intentos:`, lastError);
+      return [];
     } catch (error) {
       console.error(`Error al obtener cartas del mazo ${deckId}:`, error);
       return [];
@@ -216,17 +297,27 @@ const apiService = {
   },
 
   updateCardInDeck: async (deckId: number, cardId: number, quantity: number): Promise<CardDeck> => {
-    console.log(`Actualizando cantidad de carta ${cardId} en mazo ${deckId} a ${quantity}`);
-    return httpClient.put<CardDeck>(
-      `/decks/${deckId}/cards/${cardId}`, 
-      {}, 
-      { params: { quantity } }
-    );
+    try {
+      console.log(`Actualizando cantidad de carta ${cardId} en mazo ${deckId} a ${quantity}`);
+      return httpClient.put<CardDeck>(
+        `/decks/${deckId}/cards/${cardId}`, 
+        {}, 
+        { params: { quantity } }
+      );
+    } catch (error) {
+      console.error(`Error al actualizar cantidad de carta ${cardId} en mazo ${deckId}:`, error);
+      throw error;
+    }
   },
 
   removeCardFromDeck: async (deckId: number, cardId: number): Promise<void> => {
-    console.log(`Eliminando carta ${cardId} del mazo ${deckId}`);
-    await httpClient.delete(`/decks/${deckId}/cards/${cardId}`);
+    try {
+      console.log(`Eliminando carta ${cardId} del mazo ${deckId}`);
+      await httpClient.delete(`/decks/${deckId}/cards/${cardId}`);
+    } catch (error) {
+      console.error(`Error al eliminar carta ${cardId} del mazo ${deckId}:`, error);
+      throw error;
+    }
   },
 
   // Cards
@@ -259,6 +350,33 @@ const apiService = {
       console.error(`Error updating user profile for ${username}:`, error);
       throw error;
     }
+  },
+
+  // Búsqueda de cartas
+  searchCards: async (searchParams: SearchParams): Promise<Card[]> => {
+    try {
+      console.log('Buscando cartas con parámetros:', searchParams);
+      
+      // Construir parámetros de búsqueda eliminando valores vacíos
+      const params: Record<string, string> = {};
+      if (searchParams.name) params.name = searchParams.name;
+      if (searchParams.color) params.color = searchParams.color;
+      if (searchParams.type) params.type = searchParams.type;
+      if (searchParams.rarity) params.rarity = searchParams.rarity;
+      if (searchParams.set) params.setCode = searchParams.set;
+      if (searchParams.manaCost) params.manaCost = searchParams.manaCost;
+      
+      const results = await httpClient.get<Card[]>('/cards/search', { params });
+      console.log(`Búsqueda exitosa: ${results.length} cartas encontradas`);
+      return results;
+    } catch (error) {
+      console.error('Error searching cards:', error);
+      return [];
+    }
+  },
+
+  updateCardQuantity: async (deckId: number, cardId: number, quantity: number): Promise<CardDeck> => {
+    return apiService.updateCardInDeck(deckId, cardId, quantity);
   }
 };
 

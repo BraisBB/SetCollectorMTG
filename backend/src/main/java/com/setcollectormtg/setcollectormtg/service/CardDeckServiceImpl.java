@@ -10,6 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class CardDeckServiceImpl implements CardDeckService {
@@ -163,6 +166,28 @@ public class CardDeckServiceImpl implements CardDeckService {
         return cardDeckRepository.findByDeck_DeckIdAndCard_CardId(deckId, cardId)
                 .map(CardDeck::getNCopies)
                 .orElse(0);
+    }
+
+    /**
+     * Obtiene todas las cartas asociadas a un mazo específico
+     * 
+     * @param deckId ID del mazo
+     * @return Lista de CardDeckDto con información de las cartas y sus cantidades
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<CardDeckDto> getAllCardsInDeck(Long deckId) {
+        // Verificar primero que el mazo existe
+        deckRepository.findById(deckId)
+                .orElseThrow(() -> new ResourceNotFoundException("Deck not found with id: " + deckId));
+        
+        // Obtener todas las relaciones de cartas en el mazo usando el método optimizado
+        List<CardDeck> cardDecks = cardDeckRepository.findByDeck_DeckId(deckId);
+        
+        // Convertir a DTOs
+        return cardDecks.stream()
+                .map(cardDeckMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     private void updateDeckTotalCards(Deck deck, int quantityDifference) {

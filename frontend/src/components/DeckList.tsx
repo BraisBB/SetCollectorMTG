@@ -39,7 +39,7 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
   };
 
   const handleEditDeck = (deck: Deck) => {
-    navigate(`/deck/${deck.deckId}/edit`);
+    navigate(`/deck/${deck.deckId}`);
   };
 
   const openCreateModal = () => {

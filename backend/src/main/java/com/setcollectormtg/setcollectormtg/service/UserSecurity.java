@@ -1,10 +1,18 @@
 package com.setcollectormtg.setcollectormtg.service;
 
+import com.setcollectormtg.setcollectormtg.config.AuthenticationSynchronizationFilter;
+import com.setcollectormtg.setcollectormtg.model.Deck;
+import com.setcollectormtg.setcollectormtg.model.User;
+import com.setcollectormtg.setcollectormtg.repository.DeckRepository;
+import com.setcollectormtg.setcollectormtg.repository.UserCollectionRepository;
 import com.setcollectormtg.setcollectormtg.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Component("userSecurity")
 @RequiredArgsConstructor
@@ -12,70 +20,57 @@ import org.springframework.stereotype.Component;
 public class UserSecurity {
 
     private final UserRepository userRepository;
+    private final DeckRepository deckRepository;
+    private final UserCollectionRepository collectionRepository;
 
     /**
-     * Verifica si el usuario autenticado es el propietario del recurso identificado por userId.
-     * Devuelve true solo si el usuario autenticado corresponde al userId proporcionado.
+     * Verifica si el usuario autenticado es el propietario del recurso identificado por resourceId.
+     * Detecta automáticamente el tipo de recurso (usuario, mazo o colección) y verifica la propiedad.
      *
      * @param authentication Información de autenticación de Spring Security
-     * @param userId         ID del usuario propietario del recurso
+     * @param resourceId     ID del recurso a verificar
      * @return true si el usuario autenticado es el propietario, false en caso contrario
      */
-    public boolean isOwner(Authentication authentication, Long userId) {
+    public boolean isOwner(Authentication authentication, Long resourceId) {
         try {
             if (authentication == null || !authentication.isAuthenticated()) {
                 log.debug("Autenticación nula o no autenticada");
                 return false;
             }
+
+            // Obtener el usuario sincronizado desde el atributo de la petición
+            User currentUser = getCurrentUserFromRequest();
+            if (currentUser == null) {
+                log.warn("No se pudo obtener el usuario actual de la petición");
+                return false;
+            }
             
-            String keycloakId = authentication.getName();
-            String userIdStr = userId.toString();
-            log.debug("Verificando acceso: keycloakId={}, userId={}", keycloakId, userId);
-            
-            // Verificación 1: Coincidencia exacta con el ID de Keycloak completo
-            if (keycloakId.equals(userIdStr)) {
-                log.debug("El ID coincide exactamente con el ID de Keycloak");
+            log.debug("Verificando propiedad: usuario={}, resourceId={}", 
+                     currentUser.getUserId(), resourceId);
+
+            // 1. Verificar si es el ID del propio usuario
+            if (currentUser.getUserId().equals(resourceId)) {
+                log.debug("El recurso es el propio usuario");
                 return true;
             }
-            
-            // Verificación 2: Verificar si el userIdStr es un prefijo del keycloakId
-            // Esto maneja casos como '9833' que es un prefijo de '9833ae93-7ea6-4cdc-9bea-9f5a915b933c'
-            if (keycloakId.startsWith(userIdStr)) {
-                log.debug("El ID es un prefijo del ID de Keycloak: {} es prefijo de {}", userIdStr, keycloakId);
-                return true;
-            }
-            
-            // Verificación 3: Verificar el prefijo antes del primer guión
-            // Por ejemplo, si keycloakId es '9833ae93-7ea6-4cdc-9bea-9f5a915b933c', tomar '9833ae93'
-            int dashIndex = keycloakId.indexOf('-');
-            if (dashIndex > 0) {
-                String keycloakPrefix = keycloakId.substring(0, dashIndex);
-                if (keycloakPrefix.equals(userIdStr)) {
-                    log.debug("El ID coincide con el prefijo del ID de Keycloak hasta el primer guión");
-                    return true;
-                }
-            }
-            
-            // Verificación 4: Solo primeros caracteres (para IDs numéricos cortos)
-            // Si userId es solo un número pequeño, verificar si coincide con los primeros caracteres
-            if (userIdStr.length() <= 5 && keycloakId.startsWith(userIdStr)) {
-                log.debug("El ID numérico pequeño coincide con el inicio del ID de Keycloak");
-                return true;
-            }
-            
-            // Si no coincide de ninguna manera directa, buscamos en la base de datos
-            log.debug("No hay coincidencia directa, buscando en la base de datos");
-            return userRepository.findByKeycloakId(keycloakId)
-                    .map(user -> {
-                        boolean isOwner = user.getUserId().equals(userId);
-                        log.debug("Verificación en BD: keycloakId={}, userId={}, resultado={}", 
-                                keycloakId, userId, isOwner);
+
+            // 2. Verificar si es un ID de mazo
+            return deckRepository.findById(resourceId)
+                    .map(deck -> {
+                        boolean isOwner = deck.getUser().getUserId().equals(currentUser.getUserId());
+                        log.debug("El recurso es un mazo. Propiedad: {}", isOwner);
                         return isOwner;
                     })
-                    .orElseGet(() -> {
-                        log.warn("No se encontró usuario con keycloakId={} en la base de datos", keycloakId);
-                        return false;
-                    });
+                    .orElseGet(() -> 
+                        // 3. Verificar si es un ID de colección
+                        collectionRepository.findById(resourceId)
+                            .map(collection -> {
+                                boolean isOwner = collection.getUser().getUserId().equals(currentUser.getUserId());
+                                log.debug("El recurso es una colección. Propiedad: {}", isOwner);
+                                return isOwner;
+                            })
+                            .orElse(false)
+                    );
         } catch (Exception e) {
             log.error("Error inesperado en isOwner", e);
             // En caso de error, siempre rechazar por seguridad
@@ -88,10 +83,10 @@ public class UserSecurity {
      * Permite acceso si el usuario es ADMIN o es el propietario del recurso.
      *
      * @param authentication Información de autenticación de Spring Security
-     * @param userId         ID del usuario propietario del recurso
+     * @param resourceId     ID del recurso
      * @return true si el usuario es ADMIN o propietario, false en caso contrario
      */
-    public boolean canAccessUserResource(Authentication authentication, Long userId) {
+    public boolean canAccessUserResource(Authentication authentication, Long resourceId) {
         try {
             if (authentication == null || !authentication.isAuthenticated()) {
                 return false;
@@ -102,11 +97,23 @@ public class UserSecurity {
 
             log.debug("User {} isAdmin: {}", authentication.getName(), isAdmin);
 
-            return isAdmin || isOwner(authentication, userId);
+            return isAdmin || isOwner(authentication, resourceId);
         } catch (Exception e) {
             log.error("Error inesperado en canAccessUserResource", e);
             // En caso de error, siempre rechazar por seguridad
             return false;
         }
+    }
+    
+    /**
+     * Obtiene el usuario actual desde el atributo de la petición establecido por el filtro.
+     */
+    private User getCurrentUserFromRequest() {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes != null) {
+            HttpServletRequest request = attributes.getRequest();
+            return (User) request.getAttribute(AuthenticationSynchronizationFilter.USER_ATTRIBUTE);
+        }
+        return null;
     }
 }

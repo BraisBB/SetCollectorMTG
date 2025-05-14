@@ -47,6 +47,11 @@ const App: React.FC = () => {
             <DeckEditor />
           </ProtectedRoute>
         } />
+        <Route path="/deck/:deckId/edit" element={
+          <ProtectedRoute>
+            <DeckEditor />
+          </ProtectedRoute>
+        } />
         {/* Ruta para About Us */}
         <Route path="/about" element={<Home />} />
         {/* Ruta para cualquier otra URL no definida */}

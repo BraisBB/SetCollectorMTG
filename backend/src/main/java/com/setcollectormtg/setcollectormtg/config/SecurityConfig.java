@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.configurers.HeadersCon
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -34,13 +35,21 @@ public class SecurityConfig {
      * Convierte los roles de Keycloak presentes en el JWT a autoridades de Spring Security.
      */
     private final KeycloakRoleConverter keycloakRoleConverter;
+    
+    /**
+     * Filtro que sincroniza el usuario de Keycloak con nuestra base de datos.
+     */
+    private final AuthenticationSynchronizationFilter authSyncFilter;
 
     /**
-     * Inyección del conversor de roles de Keycloak.
+     * Inyección del conversor de roles de Keycloak y el filtro de sincronización.
      * @param keycloakRoleConverter conversor de roles personalizado
+     * @param authSyncFilter filtro de sincronización de autenticación
      */
-    public SecurityConfig(KeycloakRoleConverter keycloakRoleConverter) {
+    public SecurityConfig(KeycloakRoleConverter keycloakRoleConverter, 
+                         AuthenticationSynchronizationFilter authSyncFilter) {
         this.keycloakRoleConverter = keycloakRoleConverter;
+        this.authSyncFilter = authSyncFilter;
     }
 
     /**
@@ -50,6 +59,7 @@ public class SecurityConfig {
      * - Define endpoints públicos y protegidos
      * - Configura la política de sesión como STATELESS
      * - Integra OAuth2 Resource Server con JWT y conversión de roles
+     * - Añade el filtro de sincronización de autenticación
      *
      * @param http objeto de configuración de seguridad HTTP
      * @return SecurityFilterChain configurado
@@ -85,6 +95,7 @@ public class SecurityConfig {
                 .headers(headers -> headers
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
                 )
+                .addFilterAfter(authSyncFilter, BasicAuthenticationFilter.class) // Añadir filtro de sincronización
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter())

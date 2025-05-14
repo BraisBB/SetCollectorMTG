@@ -4,7 +4,7 @@ import com.setcollectormtg.setcollectormtg.dto.UserCollectionDto;
 import com.setcollectormtg.setcollectormtg.dto.UserCollectionCardDto;
 import com.setcollectormtg.setcollectormtg.service.UserCollectionService;
 import com.setcollectormtg.setcollectormtg.service.UserCollectionCardService;
-import com.setcollectormtg.setcollectormtg.service.UserService;
+import com.setcollectormtg.setcollectormtg.service.AuthService;
 import com.setcollectormtg.setcollectormtg.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,32 +24,14 @@ public class UserCollectionController {
 
     private final UserCollectionService userCollectionService;
     private final UserCollectionCardService userCollectionCardService;
-    private final UserService userService;
-
-    private User getCurrentUser(Authentication authentication) {
-        try {
-            if (authentication == null || !authentication.isAuthenticated()) {
-                log.error("Autenticación nula o usuario no autenticado");
-                throw new IllegalStateException("Usuario no autenticado");
-            }
-            
-            Jwt jwt = (Jwt) authentication.getPrincipal();
-            log.debug("Obteniendo usuario actual con subject: {}", jwt.getSubject());
-            
-            User syncedUser = userService.synchronizeUser(jwt);
-            log.debug("Usuario sincronizado: id={}, keycloakId={}", 
-                    syncedUser.getUserId(), syncedUser.getKeycloakId());
-            
-            return syncedUser;
-        } catch (Exception e) {
-            log.error("Error al obtener el usuario actual", e);
-            throw new IllegalStateException("Error al obtener el usuario actual: " + e.getMessage(), e);
-        }
-    }
+    private final AuthService authService;
 
     @PostMapping
     @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<UserCollectionDto> createCollection(@RequestBody UserCollectionDto collectionDto) {
+        // Asegurar que la colección pertenece al usuario actual
+        collectionDto.setUserId(authService.getCurrentUserId());
+        
         UserCollectionDto created = userCollectionService.createCollection(collectionDto);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
@@ -58,25 +39,33 @@ public class UserCollectionController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #id)")
     public ResponseEntity<UserCollectionDto> getCollectionById(@PathVariable Long id) {
+        log.debug("Obteniendo colección con ID: {}", id);
         return ResponseEntity.ok(userCollectionService.getCollectionById(id));
     }
 
     @GetMapping("/user/{userId}")
     @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #userId)")
     public ResponseEntity<UserCollectionDto> getCollectionByUserId(@PathVariable Long userId) {
+        log.debug("Obteniendo colección para usuario con ID: {}", userId);
         return ResponseEntity.ok(userCollectionService.getCollectionByUserId(userId));
     }
 
     @GetMapping("/user/current")
     @PreAuthorize("hasAuthority('USER')")
-    public ResponseEntity<UserCollectionDto> getCurrentUserCollection(Authentication authentication) {
+    public ResponseEntity<UserCollectionDto> getCurrentUserCollection() {
         try {
             log.debug("Iniciando solicitud para obtener colección del usuario actual");
-            User user = getCurrentUser(authentication);
-            log.debug("Usuario obtenido con ID: {}", user.getUserId());
+            User currentUser = authService.getCurrentUser();
             
-            UserCollectionDto collection = userCollectionService.getCollectionByUserId(user.getUserId());
-            log.debug("Colección obtenida para usuario {}: {}", user.getUserId(), 
+            if (currentUser == null) {
+                log.warn("No se pudo obtener el usuario actual");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            
+            log.debug("Usuario obtenido con ID: {}", currentUser.getUserId());
+            
+            UserCollectionDto collection = userCollectionService.getCollectionByUserId(currentUser.getUserId());
+            log.debug("Colección obtenida para usuario {}: {}", currentUser.getUserId(), 
                     collection != null ? collection.getCollectionId() : "nula");
                     
             return ResponseEntity.ok(collection);
@@ -88,7 +77,9 @@ public class UserCollectionController {
 
     @GetMapping("/{id}/cards")
     @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #id)")
-    public ResponseEntity<List<UserCollectionCardDto>> getCollectionCards(@PathVariable Long id) {
+    public ResponseEntity<List<UserCollectionCardDto>> getCollectionCards(@PathVariable Long id, Authentication authentication) {
+        log.debug("Usuario {} solicitando cartas de la colección {}", 
+                authentication != null ? authentication.getName() : "anónimo", id);
         List<UserCollectionCardDto> cards = userCollectionCardService.getCardsByCollectionId(id);
         return ResponseEntity.ok(cards);
     }

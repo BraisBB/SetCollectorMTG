@@ -3,17 +3,32 @@ package com.setcollectormtg.setcollectormtg.controller;
 import com.setcollectormtg.setcollectormtg.dto.CardDeckDto;
 import com.setcollectormtg.setcollectormtg.service.CardDeckService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/decks/{deckId}/cards")
 @RequiredArgsConstructor
+@Slf4j
 public class CardDeckController {
 
     private final CardDeckService cardDeckService;
+
+    @GetMapping
+    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #deckId) or hasRole('ADMIN')")
+    public ResponseEntity<List<CardDeckDto>> getAllCardsInDeck(
+            @PathVariable Long deckId, 
+            Authentication authentication) {
+        log.debug("Usuario {} solicitando cartas del mazo {}", 
+                authentication != null ? authentication.getName() : "anónimo", deckId);
+        return ResponseEntity.ok(cardDeckService.getAllCardsInDeck(deckId));
+    }
 
     @PostMapping("/{cardId}")
     @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #deckId)")

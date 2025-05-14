@@ -3,6 +3,8 @@ package com.setcollectormtg.setcollectormtg.controller;
 import com.setcollectormtg.setcollectormtg.dto.DeckCreateDto;
 import com.setcollectormtg.setcollectormtg.dto.DeckDto;
 import com.setcollectormtg.setcollectormtg.service.DeckService;
+import com.setcollectormtg.setcollectormtg.service.AuthService;
+import com.setcollectormtg.setcollectormtg.model.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,8 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -26,6 +26,7 @@ import java.util.List;
 public class DeckController {
 
     private final DeckService deckService;
+    private final AuthService authService;
 
     @GetMapping
     @PreAuthorize("hasAuthority('ADMIN')")
@@ -35,7 +36,9 @@ public class DeckController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #id)")
-    public ResponseEntity<DeckDto> getDeckById(@PathVariable Long id) {
+    public ResponseEntity<DeckDto> getDeckById(@PathVariable Long id, Authentication authentication) {
+        log.info("Usuario {} solicitando mazo con ID: {}", 
+                authentication != null ? authentication.getName() : "anónimo", id);
         return ResponseEntity.ok(deckService.getDeckById(id));
     }
 
@@ -58,18 +61,16 @@ public class DeckController {
     public ResponseEntity<List<DeckDto>> getDecksForCurrentUser() {
         log.info("Solicitando mazos para el usuario autenticado actualmente");
         
-        // Obtener el usuario autenticado
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
-            log.warn("No hay autenticación válida para obtener el usuario actual");
-            return ResponseEntity.ok(List.of());
+        User currentUser = authService.getCurrentUser();
+        if (currentUser == null) {
+            log.warn("No se pudo obtener el usuario actual");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         
-        Jwt jwt = (Jwt) authentication.getPrincipal();
-        String keycloakId = jwt.getSubject();
-        log.info("Usuario autenticado con keycloakId: {}", keycloakId);
+        log.info("Usuario autenticado con ID: {}, keycloakId: {}", 
+                currentUser.getUserId(), currentUser.getKeycloakId());
         
-        return ResponseEntity.ok(deckService.getDecksByKeycloakId(keycloakId));
+        return ResponseEntity.ok(deckService.getDecksByUser(currentUser.getUserId()));
     }
 
     @GetMapping("/user/{userId}/paged")
@@ -81,6 +82,7 @@ public class DeckController {
     @PostMapping
     @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<DeckDto> createDeck(@Valid @RequestBody DeckCreateDto deckCreateDto) {
+        // No es necesario obtener el usuario del token JWT, el servicio lo hará automáticamente
         DeckDto createdDeck = deckService.createDeck(deckCreateDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdDeck);
     }
