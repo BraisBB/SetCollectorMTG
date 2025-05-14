@@ -1,322 +1,131 @@
-import axios from 'axios';
-import authService from './authService';
+import { httpClient } from './httpClient';
+import { API_BASE_URL } from './config';
+import { UserCollectionCard, UserCollection } from './types';
 
-const API_BASE_URL = 'http://localhost:8080';
-
-export interface UserCollectionCard {
-  cardId: number;
-  collectionId: number;
-  nCopies: number;
-  card?: any; // Para contener los detalles completos de la carta
-}
-
-interface UserCollection {
-  collectionId: number;
-  userId: number;
-  name: string;
-}
-
-export const collectionService = {
-  // Obtener la información de una carta en la colección del usuario
-  getCardInCollection: async (cardId: number): Promise<number> => {
+// Servicio para gestionar la colección de cartas del usuario
+class CollectionService {
+  /**
+   * Obtiene la cantidad de una carta en la colección del usuario
+   */
+  async getCardInCollection(cardId: number): Promise<number> {
     try {
-      const token = authService.getToken();
-      if (!token) {
-        console.error('getCardInCollection: No authentication token available');
-        return 0;
-      }
-
-      console.log(`Requesting card ${cardId} collection info with token: ${token.substring(0, 15)}...`);
-
-      const response = await axios.get<number>(
-        `${API_BASE_URL}/collection/cards/${cardId}/quantity`, 
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-      console.log(`Card ${cardId} quantity response:`, response.data);
-      return response.data;
-    } catch (error: any) {
-      console.error(`Error fetching card ${cardId} in collection:`, error);
-      if (error.response) {
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
-        
-        // Si el error es 401 o 403, podría ser un problema de autenticación
-        if (error.response.status === 401 || error.response.status === 403) {
-          console.warn('Authentication issue detected, checking token validity');
-          if (!authService.isAuthenticated()) {
-            console.error('Token is invalid or expired');
-          }
-        }
-      }
+      console.log(`Solicitando cantidad de carta ${cardId} en colección`);
+      const quantity = await httpClient.get<number>(`/collection/cards/${cardId}/quantity`);
+      console.log(`Cantidad de carta ${cardId} recibida: ${quantity}`);
+      return quantity;
+    } catch (error) {
+      console.error(`Error al obtener información de la carta ${cardId} en la colección:`, error);
       // Si la carta no existe en la colección, devolvemos 0
       return 0;
     }
-  },
+  }
 
-  // Añadir una carta a la colección
-  addCardToCollection: async (cardId: number, quantity: number): Promise<UserCollectionCard> => {
+  /**
+   * Añade una carta a la colección del usuario
+   */
+  async addCardToCollection(cardId: number, quantity: number): Promise<UserCollectionCard> {
     try {
-      const token = authService.getToken();
-      if (!token) {
-        console.error('addCardToCollection: No authentication token available');
-        throw new Error('No authentication token available');
-      }
-
-      console.log(`Adding card ${cardId} to collection (${quantity} copies) with token: ${token.substring(0, 15)}...`);
-
-      const response = await axios.post<UserCollectionCard>(
-        `${API_BASE_URL}/collection/cards/${cardId}?quantity=${quantity}`,
-        {},
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
+      console.log(`Añadiendo carta ${cardId} a la colección (${quantity} copias)`);
+      const result = await httpClient.post<UserCollectionCard>(
+        `/collection/cards/${cardId}`,
+        {}, // Cuerpo vacío, ya que usamos el parámetro quantity
+        { params: { quantity } } // Usar params de axios para añadir ?quantity=X
       );
-      
-      console.log(`Successfully added card ${cardId} to collection:`, response.data);
-      return response.data;
-    } catch (error: any) {
-      console.error(`Error adding card ${cardId} to collection:`, error);
-      if (error.response) {
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
-        
-        if (error.response.status === 401) {
-          throw new Error('Authentication failed. Please login again.');
-        }
-      }
+      console.log(`Carta ${cardId} añadida correctamente:`, result);
+      return result;
+    } catch (error) {
+      console.error(`Error al añadir carta ${cardId} a la colección:`, error);
       throw error;
     }
-  },
+  }
 
-  // Actualizar la cantidad de una carta en la colección
-  updateCardQuantity: async (cardId: number, quantity: number): Promise<UserCollectionCard> => {
+  /**
+   * Actualiza la cantidad de una carta en la colección
+   */
+  async updateCardQuantity(cardId: number, quantity: number): Promise<UserCollectionCard> {
     try {
-      const token = authService.getToken();
-      if (!token) {
-        console.error('updateCardQuantity: No authentication token available');
-        throw new Error('No authentication token available');
-      }
-
-      console.log(`Updating card ${cardId} quantity to ${quantity} with token: ${token.substring(0, 15)}...`);
-
-      const response = await axios.put<UserCollectionCard>(
-        `${API_BASE_URL}/collection/cards/${cardId}?quantity=${quantity}`,
-        {},
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
+      console.log(`Actualizando cantidad de carta ${cardId} a ${quantity}`);
+      const result = await httpClient.put<UserCollectionCard>(
+        `/collection/cards/${cardId}`,
+        {}, // Cuerpo vacío
+        { params: { quantity } } // Usar params para ?quantity=X
       );
-      
-      console.log(`Successfully updated card ${cardId} quantity:`, response.data);
-      return response.data;
-    } catch (error: any) {
-      console.error(`Error updating card ${cardId} quantity:`, error);
-      if (error.response) {
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
-        
-        if (error.response.status === 401) {
-          throw new Error('Authentication failed. Please login again.');
-        }
-      }
+      console.log(`Cantidad de carta ${cardId} actualizada a ${quantity}`);
+      return result;
+    } catch (error) {
+      console.error(`Error al actualizar cantidad de carta ${cardId}:`, error);
       throw error;
     }
-  },
+  }
 
-  // Eliminar una carta de la colección
-  removeCardFromCollection: async (cardId: number): Promise<void> => {
+  /**
+   * Elimina una carta de la colección
+   */
+  async removeCardFromCollection(cardId: number): Promise<void> {
     try {
-      const token = authService.getToken();
-      if (!token) {
-        console.error('removeCardFromCollection: No authentication token available');
-        throw new Error('No authentication token available');
-      }
-
-      console.log(`Removing card ${cardId} from collection with token: ${token.substring(0, 15)}...`);
-
-      await axios.delete(
-        `${API_BASE_URL}/collection/cards/${cardId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-      
-      console.log(`Successfully removed card ${cardId} from collection`);
-    } catch (error: any) {
-      console.error(`Error removing card ${cardId} from collection:`, error);
-      if (error.response) {
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
-        
-        if (error.response.status === 401) {
-          throw new Error('Authentication failed. Please login again.');
-        }
-      }
+      console.log(`Eliminando carta ${cardId} de la colección`);
+      await httpClient.delete(`/collection/cards/${cardId}`);
+      console.log(`Carta ${cardId} eliminada correctamente`);
+    } catch (error) {
+      console.error(`Error al eliminar carta ${cardId} de la colección:`, error);
       throw error;
     }
-  },
+  }
 
-  // Obtener todas las cartas de la colección del usuario
-  getUserCollectionCards: async (): Promise<any[]> => {
+  /**
+   * Obtiene todas las cartas de la colección del usuario actual
+   */
+  async getUserCollectionCards(): Promise<UserCollectionCard[]> {
     try {
-      // Obtener el token de autenticación
-      const token = authService.getToken();
-      if (!token) {
-        console.error('getUserCollectionCards: No authentication token available');
-        throw new Error('No authentication token available');
-      }
-
-      console.log('Authentication token for collection request:', token ? `${token.substring(0, 15)}...` : 'Not found');
-
+      console.log('Solicitando colección del usuario actual');
       // Primero, obtener la colección del usuario actual
-      console.log('Requesting current user collection');
-      const userCollectionResponse = await axios.get<UserCollection>(
-        `${API_BASE_URL}/collections/user/current`, 
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      
-      const collectionId = userCollectionResponse.data.collectionId;
-      console.log('Found collection ID:', collectionId);
+      const userCollection = await httpClient.get<UserCollection>(`/collections/user/current`);
+      console.log(`Información de colección recibida: ${userCollection.collectionId}`);
       
       // Luego obtener todas las cartas de esa colección
-      console.log(`Requesting all cards for collection ${collectionId}`);
-      const response = await axios.get<any[]>(
-        `${API_BASE_URL}/collections/${collectionId}/cards`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      console.log(`Solicitando cartas para colección ${userCollection.collectionId}`);
+      const cards = await httpClient.get<UserCollectionCard[]>(`/collections/${userCollection.collectionId}/cards`);
+      console.log(`${cards.length} cartas recibidas`);
       
-      const collectionCards = response.data;
-      console.log('Collection cards response:', collectionCards);
-
-      // Si las cartas no contienen una propiedad "card", ajustamos el formato
-      // para mantener consistencia con la interfaz esperada
-      if (collectionCards.length > 0 && !collectionCards[0].card) {
-        console.log('Transforming flat format response to nested format');
-        console.log('First item in response:', JSON.stringify(collectionCards[0], null, 2));
+      // Verificar la estructura de datos recibida para depuración
+      if (cards.length > 0) {
+        console.log('Ejemplo de la primera carta recibida:', JSON.stringify(cards[0], null, 2));
         
-        const transformedCards = collectionCards.map(item => {
-          // Verificar si tenemos todos los datos necesarios
-          if (!item.manaValue || item.manaValue === undefined) {
-            console.log(`Carta ${item.cardName} no tiene manaValue definido`);
+        // Verificar si las URLs de Scryfall son correctas
+        cards.forEach((card, index) => {
+          if (card.cardName) {
+            console.log(`Carta ${index}: ${card.cardName}, imageUrl: ${card.cardImageUrl || 'NO TIENE IMAGEN'}`);
             
-            // Intentar calcular manaValue a partir de manaCost
-            if (item.manaCost) {
-              console.log(`  Intentando calcular manaValue a partir de manaCost: ${item.manaCost}`);
+            // Si no tiene imagen o la URL es inválida, asignar URL por defecto
+            if (!card.cardImageUrl || 
+                card.cardImageUrl === 'null' || 
+                card.cardImageUrl === 'undefined') {
               
-              // Extraer todos los valores numéricos del coste de maná
-              const numericMatches = item.manaCost.match(/\{(\d+)\}/g) || [];
-              const colorMatches = item.manaCost.match(/\{([WUBRG])\}/g) || [];
-              
-              let totalValue = 0;
-              
-              // Sumar todos los valores numéricos
-              numericMatches.forEach((match: string) => {
-                const value = parseInt(match.replace(/[\{\}]/g, ''), 10);
-                totalValue += value;
-                console.log(`    Sumando valor numérico: ${value}`);
-              });
-              
-              // Cada símbolo de color cuenta como 1
-              totalValue += colorMatches.length;
-              console.log(`    Sumando ${colorMatches.length} símbolos de color`);
-              
-              // Si no se pudo calcular, asignar un valor por defecto basado en el nombre de la carta
-              if (totalValue === 0) {
-                // Valores conocidos para cartas específicas
-                if (item.cardName === 'Muldrotha, the Gravetide') {
-                  totalValue = 6; // {3}{B}{G}{U}
-                  console.log(`    Asignando valor conocido para ${item.cardName}: ${totalValue}`);
-                } else if (item.cardName === 'Sire of Seven Deaths') {
-                  totalValue = 4; // Valor estimado
-                  console.log(`    Asignando valor estimado para ${item.cardName}: ${totalValue}`);
-                } else if (item.cardName === 'Dreadwing Scavenger') {
-                  totalValue = 3; // Valor estimado
-                  console.log(`    Asignando valor estimado para ${item.cardName}: ${totalValue}`);
-                } else if (item.cardName === 'Wardens of the Cycle') {
-                  totalValue = 5; // Valor estimado
-                  console.log(`    Asignando valor estimado para ${item.cardName}: ${totalValue}`);
-                }
+              // Intentar generar URL alternativa basada en el ID de la carta
+              console.log(`Asignando imagen por defecto a carta ${card.cardName}`);
+              card.cardImageUrl = `https://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=${card.cardId}&type=card`;
+            } 
+            // Si la URL es de Scryfall, verificar que tenga el formato correcto
+            else if (card.cardImageUrl.includes('api.scryfall.com/cards/')) {
+              if (!card.cardImageUrl.includes('?format=image')) {
+                // Agregar parámetro format=image si no lo tiene
+                console.log(`Corrigiendo URL de Scryfall para ${card.cardName}`);
+                card.cardImageUrl = `${card.cardImageUrl}${card.cardImageUrl.includes('?') ? '&' : '?'}format=image`;
               }
-              
-              item.manaValue = totalValue;
-              console.log(`  Calculado manaValue=${item.manaValue} para ${item.cardName}`);
-            } else {
-              // Si no hay manaCost, asignar un valor por defecto
-              console.log(`  No hay manaCost para ${item.cardName}, asignando valor por defecto`);
-              item.manaValue = 0;
             }
+          } else {
+            console.log(`Carta ${index}: No tiene nombre de carta`);
           }
-          
-          // Crear un objeto "card" a partir de los datos planos
-          const transformedItem = {
-            collectionId: item.collectionId,
-            cardId: item.cardId,
-            nCopies: item.ncopies || 1, // Usar ncopies si está disponible
-            card: {
-              cardId: item.cardId,
-              name: item.cardName,
-              imageUrl: item.cardImageUrl,
-              cardType: item.cardType,
-              rarity: item.rarity,
-              manaCost: item.manaCost,
-              manaValue: item.manaValue,
-              oracleText: item.oracleText,
-              setId: item.setId || item.collectionId
-            }
-          };
-          
-          console.log(`Transformed card ${item.cardName}: manaValue=${transformedItem.card.manaValue}, manaCost=${transformedItem.card.manaCost}`);
-          return transformedItem;
         });
-        
-        console.log(`Transformed ${transformedCards.length} cards`);
-        return transformedCards;
       }
       
-      return collectionCards;
-    } catch (error: any) {
-      console.error('Error fetching user collection cards:', error);
-      
-      if (error.response) {
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
-        
-        if (error.response.status === 401) {
-          console.error('Authentication token is invalid or expired');
-          // Redirigir al login podría ser una buena idea aquí
-          // window.location.href = '/login';
-        }
-      } else if (error.request) {
-        console.error('No response received from server');
-      } else {
-        console.error('Error setting up request:', error.message);
-      }
-      
+      return cards;
+    } catch (error) {
+      console.error('Error al obtener las cartas de la colección:', error);
+      // En caso de error, devolver un array vacío para evitar problemas en la UI
       return [];
     }
   }
-};
+}
 
-export default collectionService; 
+export const collectionService = new CollectionService(); 

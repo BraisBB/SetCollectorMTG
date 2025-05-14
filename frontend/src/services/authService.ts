@@ -1,41 +1,14 @@
 import axios from 'axios';
-
-// Configuración de Keycloak desde el backend
-const KEYCLOAK_URL = 'http://localhost:8181';
-const REALM = 'setcollector-realm';
-const CLIENT_ID = 'setcollector-app';
-const CLIENT_SECRET = 'IiAm00pAe5U3Np4rUjRZPUIg0c7zWwB1';
-const API_URL = 'http://localhost:8080';
-
-export interface LoginCredentials {
-  username: string;
-  password: string;
-}
-
-export interface AuthTokens {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
-  refresh_expires_in: number;
-  token_type: string;
-}
-
-interface UserInfo {
-  username: string;
-  email?: string;
-  firstName?: string;
-  lastName?: string;
-}
+import { KEYCLOAK_CONFIG } from './config';
+import { LoginCredentials, AuthTokens, User } from './types';
 
 class AuthService {
-  private accessToken: string | null = null;
-  private refreshToken: string | null = null;
-  private expiresAt: number = 0;
-  private knownUsernames: Map<string, string> = new Map(); // Mapa de usernames normalizados a exactos
+  // Gestión de nombres de usuario
+  private knownUsernames: Map<string, string> = new Map();
 
   constructor() {
-    // Cargar nombres de usuario conocidos
     this.loadKnownUsernames();
+    this.initAuth();
   }
 
   /**
@@ -66,34 +39,6 @@ class AuthService {
   }
 
   /**
-   * Intenta obtener el formato exacto del nombre de usuario
-   * Esta función simula una consulta al backend para obtener el formato exacto
-   */
-  async getExactUsername(username: string): Promise<string | null> {
-    // Primero verificamos si ya conocemos el formato exacto
-    const normalizedUsername = username.toLowerCase();
-    const knownUsername = this.knownUsernames.get(normalizedUsername);
-    
-    if (knownUsername) {
-      return knownUsername;
-    }
-    
-    // Si no lo conocemos, intentamos una consulta directa a Keycloak
-    // Nota: Esto es una simulación, ya que no podemos consultar directamente a Keycloak
-    // En un escenario real, esto sería un endpoint en el backend
-    
-    // Para simular, vamos a verificar si hay alguna coincidencia parcial en los nombres conocidos
-    // Esto no es una solución real, pero servirá para demostrar el concepto
-    for (const [key, value] of this.knownUsernames.entries()) {
-      if (key.includes(normalizedUsername) || normalizedUsername.includes(key)) {
-        return value;
-      }
-    }
-    
-    return null; // No encontramos coincidencias
-  }
-
-  /**
    * Registra un nuevo nombre de usuario conocido
    */
   registerKnownUsername(exactUsername: string): void {
@@ -103,38 +48,37 @@ class AuthService {
   }
 
   /**
+   * Intenta obtener el formato exacto del nombre de usuario
+   */
+  async getExactUsername(username: string): Promise<string | null> {
+    const normalizedUsername = username.toLowerCase();
+    return this.knownUsernames.get(normalizedUsername) || null;
+  }
+
+  /**
    * Realiza el login del usuario usando las credenciales proporcionadas
    */
   async login(credentials: LoginCredentials): Promise<boolean> {
     try {
-      // Primero verificamos si conocemos el formato exacto del nombre de usuario
+      // Verificamos si conocemos el formato exacto del nombre de usuario
       const exactUsername = await this.getExactUsername(credentials.username);
       
       // Si conocemos el formato exacto y no coincide, rechazamos el intento
       if (exactUsername && exactUsername !== credentials.username) {
-        console.warn('Username format mismatch');
-        // Solo almacenamos un indicador de que hubo un error de formato, no el nombre exacto
         localStorage.setItem('format_error', 'true');
         return false;
       }
       
       const params = new URLSearchParams();
-      params.append('client_id', CLIENT_ID);
-      params.append('client_secret', CLIENT_SECRET);
+      params.append('client_id', KEYCLOAK_CONFIG.CLIENT_ID);
+      params.append('client_secret', KEYCLOAK_CONFIG.CLIENT_SECRET);
       params.append('grant_type', 'password');
       params.append('username', credentials.username);
       params.append('password', credentials.password);
       params.append('scope', 'openid profile email');
 
-      console.log('Attempting login with:', {
-        url: `${KEYCLOAK_URL}/realms/${REALM}/protocol/openid-connect/token`,
-        client_id: CLIENT_ID,
-        username: credentials.username,
-        client_secret: CLIENT_SECRET.substring(0, 4) + '...' // Only showing first 4 characters for security
-      });
-
       const response = await axios.post<AuthTokens>(
-        `${KEYCLOAK_URL}/realms/${REALM}/protocol/openid-connect/token`,
+        `${KEYCLOAK_CONFIG.URL}/realms/${KEYCLOAK_CONFIG.REALM}/protocol/openid-connect/token`,
         params,
         {
           headers: {
@@ -143,50 +87,16 @@ class AuthService {
           },
         }
       );
-
-      console.log('Login successful:', {
-        access_token: response.data.access_token.substring(0, 10) + '...',
-        expires_in: response.data.expires_in
-      });
       
-      // Si el login fue exitoso, registrar el formato exacto del nombre de usuario
+      // Registro el formato exacto y limpio indicadores de error
       this.registerKnownUsername(credentials.username);
-      
-      // Limpiar cualquier indicador de error de formato
       localStorage.removeItem('format_error');
       
+      // Guardo la sesión
       this.setSession(response.data);
       return true;
     } catch (error: any) {
-      console.error('Login failed:', {
-        error: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        headers: error.response?.headers
-      });
-      
-      // Si el error es 401 (Unauthorized), intentamos obtener el formato exacto
-      // Esto simula una consulta al backend para verificar si existe un usuario con ese nombre
-      // pero con un formato diferente
-      if (error.response?.status === 401) {
-        try {
-          // Consultar al backend para verificar si existe un usuario con ese nombre
-          // pero con un formato diferente
-          const response = await axios.get<UserInfo[]>(`${API_URL}/users?username=${credentials.username.toLowerCase()}`);
-          
-          if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-            const userInfo = response.data[0];
-            if (userInfo && userInfo.username && userInfo.username !== credentials.username) {
-              // Solo almacenamos un indicador de que hubo un error de formato, no el nombre exacto
-              localStorage.setItem('format_error', 'true');
-              this.registerKnownUsername(userInfo.username);
-            }
-          }
-        } catch (e) {
-          console.error('Error checking username after failed login:', e);
-        }
-      }
-      
+      console.error('Login failed:', error.message);
       return false;
     }
   }
@@ -199,25 +109,19 @@ class AuthService {
   }
 
   /**
-   * Obtiene el último formato exacto de nombre de usuario que se intentó usar
-   * Por seguridad, solo indica si hay un error de formato, no devuelve el nombre exacto
-   */
-  getLastExactUsername(): string | null {
-    return this.hasFormatError() ? 'format_error' : null;
-  }
-
-  /**
    * Cierra la sesión del usuario actual
    */
   async logout(): Promise<void> {
-    if (this.refreshToken) {
+    const refreshToken = localStorage.getItem('refresh_token');
+    
+    if (refreshToken) {
       try {
         const params = new URLSearchParams();
-        params.append('client_id', CLIENT_ID);
-        params.append('refresh_token', this.refreshToken);
+        params.append('client_id', KEYCLOAK_CONFIG.CLIENT_ID);
+        params.append('refresh_token', refreshToken);
 
         await axios.post(
-          `${KEYCLOAK_URL}/realms/${REALM}/protocol/openid-connect/logout`,
+          `${KEYCLOAK_CONFIG.URL}/realms/${KEYCLOAK_CONFIG.REALM}/protocol/openid-connect/logout`,
           params,
           {
             headers: {
@@ -230,104 +134,74 @@ class AuthService {
       }
     }
     
-    // Remove username from localStorage
-    localStorage.removeItem('username');
-    
     this.clearSession();
   }
 
   /**
-   * Guarda los tokens en el localStorage y en la memoria
+   * Guarda los tokens en el localStorage
    */
   private setSession(authResult: AuthTokens): void {
-    this.accessToken = authResult.access_token;
-    this.refreshToken = authResult.refresh_token;
-    this.expiresAt = Date.now() + authResult.expires_in * 1000;
+    const expiresAt = Date.now() + authResult.expires_in * 1000;
     
-    // Guardar en localStorage
     localStorage.setItem('access_token', authResult.access_token);
     localStorage.setItem('refresh_token', authResult.refresh_token);
-    localStorage.setItem('expires_at', this.expiresAt.toString());
-    
-    // Configurar el token por defecto para las solicitudes de axios
-    axios.defaults.headers.common['Authorization'] = `Bearer ${authResult.access_token}`;
+    localStorage.setItem('expires_at', expiresAt.toString());
   }
 
   /**
-   * Limpia la sesión actual
+   * Elimina los tokens del localStorage
    */
   private clearSession(): void {
-    this.accessToken = null;
-    this.refreshToken = null;
-    this.expiresAt = 0;
-    
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('expires_at');
-    
-    delete axios.defaults.headers.common['Authorization'];
+    localStorage.removeItem('username');
   }
 
   /**
    * Verifica si el usuario está autenticado
    */
   isAuthenticated(): boolean {
-    const token = this.getToken();
-    const expiresAt = this.getExpiresAt();
-    
-    // Se requiere token y que no haya expirado
-    if (!token || Date.now() >= expiresAt) {
-      console.log('Authentication check failed: ', !token ? 'No token' : 'Token expired');
-      return false;
-    }
-    
-    return true;
+    const expiresAt = localStorage.getItem('expires_at');
+    return !!expiresAt && Date.now() < parseInt(expiresAt, 10);
   }
 
   /**
-   * Obtiene el token de acceso actual
+   * Obtiene el token de acceso
    */
   getToken(): string | null {
-    // Siempre verificar localStorage primero para obtener el token más reciente
-    const localToken = localStorage.getItem('access_token');
-    
-    // Actualizar el token en memoria si existe en localStorage
-    if (localToken) {
-      this.accessToken = localToken;
-    }
-    
-    return this.accessToken;
+    return localStorage.getItem('access_token');
   }
 
   /**
-   * Verifica si el token está próximo a expirar (menos de 5 minutos)
+   * Verifica si el token está a punto de expirar
    */
   isTokenExpiringSoon(): boolean {
-    const expiresAt = this.getExpiresAt();
-    const fiveMinutesFromNow = Date.now() + (5 * 60 * 1000); // 5 minutos en milisegundos
+    const expiresAt = localStorage.getItem('expires_at');
+    if (!expiresAt) return false;
     
-    return expiresAt > 0 && expiresAt < fiveMinutesFromNow;
+    // Consideramos que expira pronto si queda menos de 5 minutos
+    return Date.now() > parseInt(expiresAt, 10) - 5 * 60 * 1000;
   }
 
   /**
-   * Intenta refrescar el token antes de que expire
+   * Refresca el token si es necesario
    */
   async refreshTokenIfNeeded(): Promise<boolean> {
-    if (!this.refreshToken || !this.isTokenExpiringSoon()) {
-      return false;
-    }
+    if (!this.isTokenExpiringSoon()) return true;
+    
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (!refreshToken) return false;
     
     try {
       const params = new URLSearchParams();
-      params.append('client_id', CLIENT_ID);
-      params.append('client_secret', CLIENT_SECRET);
+      params.append('client_id', KEYCLOAK_CONFIG.CLIENT_ID);
+      params.append('client_secret', KEYCLOAK_CONFIG.CLIENT_SECRET);
       params.append('grant_type', 'refresh_token');
-      params.append('refresh_token', this.refreshToken);
-      
-      console.log('Attempting to refresh token');
+      params.append('refresh_token', refreshToken);
       
       const response = await axios.post<AuthTokens>(
-        `${KEYCLOAK_URL}/realms/${REALM}/protocol/openid-connect/token`,
+        `${KEYCLOAK_CONFIG.URL}/realms/${KEYCLOAK_CONFIG.REALM}/protocol/openid-connect/token`,
         params,
         {
           headers: {
@@ -336,123 +210,63 @@ class AuthService {
         }
       );
       
-      console.log('Token refresh successful');
       this.setSession(response.data);
       return true;
     } catch (error) {
       console.error('Error refreshing token:', error);
-      if (this.isAuthenticated()) {
-        // Si aún tenemos un token válido, seguimos
-        return true;
-      }
-      // Si no pudimos refrescar el token y ya no es válido, limpiamos la sesión
       this.clearSession();
       return false;
     }
   }
 
   /**
-   * Obtiene el tiempo de expiración del token
-   */
-  getExpiresAt(): number {
-    // Siempre verificar localStorage primero
-    const storedExpiresAt = localStorage.getItem('expires_at');
-    if (storedExpiresAt) {
-      this.expiresAt = parseInt(storedExpiresAt, 10);
-    }
-    
-    return this.expiresAt;
-  }
-
-  /**
-   * Obtiene el ID del usuario actual desde el token JWT
+   * Obtiene el ID del usuario del token JWT
    */
   getUserId(): number | null {
-    const token = this.getToken();
-    if (!token) {
-      return null;
-    }
-    
+    const token = localStorage.getItem('access_token');
+    if (!token) return null;
+
     try {
-      // Decodificar el token JWT (formato: header.payload.signature)
-      const parts = token.split('.');
-      if (parts.length !== 3) {
-        console.error('Invalid token format');
-        return null;
-      }
+      const payload = JSON.parse(atob(token.split('.')[1]));
       
-      // Decodificar el token JWT
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-      
-      const payload = JSON.parse(jsonPayload);
-      console.log('JWT payload:', payload);
-      
-      // Obtener el ID del usuario del token (sub)
+      // Intentar diferentes propiedades donde puede estar el ID
       if (payload.sub) {
-        console.log('Found sub in token:', payload.sub);
-        return payload.sub; // Usar el UUID completo
+        return parseInt(payload.sub, 10);
+      }
+      if (payload.user_id) {
+        return parseInt(payload.user_id, 10);
       }
       
-      console.warn('No sub found in token payload');
       return null;
     } catch (error) {
-      console.error('Error decoding JWT token:', error);
-      console.warn('Could not determine user ID due to error, returning null');
+      console.error('Error parsing token:', error);
       return null;
     }
   }
 
   /**
-   * Inicializa el servicio de autenticación al cargar la aplicación
+   * Inicializa la autenticación
    */
   initAuth(): void {
-    // Cargar token del localStorage
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      console.log('Found token in localStorage, initializing auth service');
-      this.accessToken = token;
-      
-      // Configurar el token en los encabezados de axios
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
-      // Cargar refresh_token y expires_at
-      this.refreshToken = localStorage.getItem('refresh_token');
-      const expiresAt = localStorage.getItem('expires_at');
-      this.expiresAt = expiresAt ? parseInt(expiresAt, 10) : 0;
-      
-      // Verificar si el token es válido
-      if (this.isAuthenticated()) {
-        console.log('Token is valid, authentication initialized');
-        
-        // Intentar refrescar el token si está próximo a expirar
-        if (this.isTokenExpiringSoon()) {
-          console.log('Token is expiring soon, will attempt refresh');
-          this.refreshTokenIfNeeded().then(success => {
-            if (success) {
-              console.log('Token refreshed successfully during initialization');
-            } else {
-              console.warn('Failed to refresh token during initialization');
-            }
-          });
-        }
-      } else {
-        console.warn('Found token in localStorage but it is invalid or expired');
-        this.clearSession();
+    // Verificamos si hay token y si está expirado
+    if (this.isAuthenticated()) {
+      // Si el token está a punto de expirar, lo refrescamos
+      if (this.isTokenExpiringSoon()) {
+        this.refreshTokenIfNeeded().catch(() => {
+          console.error('Failed to refresh token during init');
+        });
       }
     } else {
-      console.log('No authentication token found in localStorage');
+      // Si no hay token válido, limpiamos la sesión
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        this.clearSession();
+      }
     }
-    
-    // Cargar nombres de usuario conocidos
-    this.loadKnownUsernames();
   }
-  
+
   /**
-   * Precarga un nombre de usuario conocido (para pruebas)
+   * Precarga un nombre de usuario exacto (útil para testing)
    */
   preloadKnownUsername(exactUsername: string): void {
     this.registerKnownUsername(exactUsername);
@@ -460,8 +274,4 @@ class AuthService {
 }
 
 const authService = new AuthService();
-
-// Precargamos el nombre de usuario "Brais" para pruebas
-authService.preloadKnownUsername('Brais');
-
 export default authService;

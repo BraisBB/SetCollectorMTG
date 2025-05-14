@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api, { Deck } from '../services/apiService';
-import collectionService from '../services/collectionService';
-import authService from '../services/authService';
+import { apiService, authService, collectionService } from '../services';
+import { Card as ApiCard, Deck, UserCollectionCard } from '../services/types';
 import Header from '../components/Header';
 import CardGrid from '../components/CardGrid';
 import { Card } from '../components/CardGrid';
@@ -66,7 +65,7 @@ const Collection = () => {
         
         setUserId(currentUserId);
         
-        const userDecks = await api.getUserDecks(currentUserId);
+        const userDecks = await apiService.getUserDecks(currentUserId);
         console.log('Received user decks:', userDecks);
         // Asegurarse de que decks siempre sea un array
         setDecks(Array.isArray(userDecks) ? userDecks : []);
@@ -86,7 +85,7 @@ const Collection = () => {
     if (!userId) return;
     
     try {
-      const userDecks = await api.getUserDecks(userId);
+      const userDecks = await apiService.getUserDecks(userId);
       // Asegurarse de que decks siempre sea un array
       setDecks(Array.isArray(userDecks) ? userDecks : []);
     } catch (err) {
@@ -116,7 +115,6 @@ const Collection = () => {
           return;
         }
 
-        
         // Transformación de datos: Enfoque simplificado para evitar problemas de tipo
         let validCards: Card[] = [];
         
@@ -124,42 +122,46 @@ const Collection = () => {
           try {
             console.log('Processing item:', item);
             
-            let cardData: Card | null = null;
+            // Las cartas vienen en formato plano, sin objeto card anidado
+            // La estructura es { collectionId, cardId, cardName, cardImageUrl, cardType, manaCost, rarity, ncopies }
             
-            // Verificar si los datos vienen en formato anidado o plano
-            if (item.card) {
-              // Formato anidado
-              cardData = {
-                id: item.card.cardId?.toString() || '0',
-                name: item.card.name || 'Unknown',
-                imageUrl: item.card.imageUrl || 'https://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=0&type=card',
-                type: item.card.cardType || 'Unknown',
-                rarity: item.card.rarity || 'common',
-                set: (item.card.setId?.toString() || '0'),
-                color: determineCardColor(item.card.manaCost || ''),
-                manaValue: item.card.manaValue,
-                manaCost: item.card.manaCost,
-                collectionCount: item.nCopies || 1
-              };
-            } else {
-              // Formato plano (cardName, cardImageUrl, etc.)
-              cardData = {
-                id: item.cardId?.toString() || '0',
-                name: item.cardName || `Card ${item.cardId}`,
-                imageUrl: item.cardImageUrl || 'https://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=0&type=card',
-                type: item.cardType || 'Unknown',
-                rarity: item.rarity || 'common',
-                set: item.collectionId?.toString() || '0',
-                color: determineCardColor(item.manaCost || ''),
-                manaValue: item.manaValue,
-                manaCost: item.manaCost,
-                collectionCount: item.ncopies || 1
-              };
+            // Usar la URL de imagen proporcionada por el servidor directamente si es de Scryfall
+            let imageUrl = item.cardImageUrl; // Usamos cardImageUrl en lugar de imageUrl
+            
+            // Verificar si la URL es de Scryfall - si lo es, mantenerla tal cual
+            const isScryfallUrl = imageUrl && imageUrl.includes('api.scryfall.com/cards/');
+            
+            // Si no hay URL o es inválida, usar URL de respaldo basada en cardId
+            if (!imageUrl || imageUrl === 'null' || imageUrl === 'undefined') {
+              imageUrl = `https://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=${item.cardId}&type=card`;
+              console.log(`Usando URL de respaldo Gatherer para ${item.cardName}: ${imageUrl}`);
+            } else if (isScryfallUrl) {
+              console.log(`Usando URL de Scryfall original para ${item.cardName}: ${imageUrl}`);
             }
             
-            if (cardData) {
-              validCards.push(cardData);
+            // Formato adaptado para CardGrid
+            const cardData: Card = {
+              id: item.cardId.toString(),
+              name: item.cardName || 'Unknown Card',
+              imageUrl: imageUrl,
+              type: item.cardType || 'Unknown',
+              rarity: item.rarity || 'common',
+              set: item.collectionId?.toString() || '0',
+              color: determineCardColor(item.manaCost || ''),
+              manaValue: calculateManaValue(item.manaCost || ''),
+              manaCost: item.manaCost || '',
+              collectionCount: item.ncopies || 1
+            };
+            
+            // Verificar que la URL es válida para visualización
+            try {
+              if (imageUrl) new URL(imageUrl);
+            } catch (e) {
+              console.error(`URL inválida para carta ${cardData.name}: ${cardData.imageUrl}`);
+              cardData.imageUrl = `https://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=${item.cardId}&type=card`;
             }
+            
+            validCards.push(cardData);
           } catch (error) {
             console.error('Error transforming card data:', error, item);
           }
@@ -443,7 +445,6 @@ const Collection = () => {
     setFilteredCards(results);
   };
 
-
   // Función auxiliar para determinar el color principal de la carta basado en su coste de maná
   const determineCardColor = (manaCost: string): string => {
     console.log(`Determinando color para manaCost: ${manaCost}`);
@@ -487,6 +488,26 @@ const Collection = () => {
     
     console.log(`  Un solo color encontrado: ${foundColors[0]}`);
     return foundColors[0];
+  }
+
+  // Función para calcular el valor de maná a partir del coste
+  function calculateManaValue(manaCost: string): number {
+    if (!manaCost) return 0;
+    
+    let value = 0;
+    
+    // Contar símbolos de color ({W}, {U}, etc.) como 1
+    const colorSymbols = manaCost.match(/\{[WUBRGC]\}/g) || [];
+    value += colorSymbols.length;
+    
+    // Sumar valores numéricos ({1}, {2}, etc.)
+    const numericSymbols = manaCost.match(/\{(\d+)\}/g) || [];
+    for (const symbol of numericSymbols) {
+      const number = parseInt(symbol.replace(/[{}]/g, ''), 10);
+      if (!isNaN(number)) value += number;
+    }
+    
+    return value;
   }
   
     return (

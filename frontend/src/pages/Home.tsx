@@ -92,15 +92,35 @@ const Home = () => {
       setHasMoreCards(totalResults > PAGE_SIZE);
       
       // Transformar los datos recibidos al formato esperado por CardGrid
-      const cards: Card[] = pagedResults.map((card: CardResponse) => ({
-        id: card.cardId.toString(),
-        name: card.name,
-        imageUrl: card.imageUrl || 'https://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=0&type=card', // Imagen por defecto
-        type: card.cardType,
-        rarity: card.rarity,
-        set: card.setId.toString(), 
-        color: determineCardColor(card.manaCost || '')
-      }));
+      const cards: Card[] = pagedResults.map((card: CardResponse) => {
+        // Validar y asegurar que tenemos una URL de imagen válida
+        let imageUrl = card.imageUrl;
+        
+        // Si no hay URL o es inválida, usar URL de respaldo de Gatherer
+        if (!imageUrl || imageUrl === 'null' || imageUrl === 'undefined') {
+          imageUrl = `https://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=${card.cardId}&type=card`;
+          console.log(`Usando URL de respaldo para ${card.name}: ${imageUrl}`);
+        }
+        
+        // Verificar que la URL es válida
+        try {
+          new URL(imageUrl);
+        } catch (e) {
+          console.error(`URL inválida para carta ${card.name}: ${imageUrl}`);
+          imageUrl = `https://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=${card.cardId}&type=card`;
+        }
+        
+        return {
+          id: card.cardId.toString(),
+          name: card.name,
+          imageUrl: imageUrl,
+          type: card.cardType,
+          rarity: card.rarity,
+          set: card.setId.toString(), 
+          color: determineCardColor(card.manaCost || ''),
+          manaCost: card.manaCost
+        };
+      });
       
       setSearchResults(cards);
       setCurrentPage(0);
@@ -133,15 +153,35 @@ const Home = () => {
       const nextPageItems = allCards.slice(startIndex, endIndex);
       
       // Transformar los datos
-      const newCards: Card[] = nextPageItems.map((card: CardResponse) => ({
-        id: card.cardId.toString(),
-        name: card.name,
-        imageUrl: card.imageUrl || 'https://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=0&type=card',
-        type: card.cardType,
-        rarity: card.rarity,
-        set: card.setId.toString(),
-        color: determineCardColor(card.manaCost || '')
-      }));
+      const newCards: Card[] = nextPageItems.map((card: CardResponse) => {
+        // Validar y asegurar que tenemos una URL de imagen válida
+        let imageUrl = card.imageUrl;
+        
+        // Si no hay URL o es inválida, usar URL de respaldo de Gatherer
+        if (!imageUrl || imageUrl === 'null' || imageUrl === 'undefined') {
+          imageUrl = `https://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=${card.cardId}&type=card`;
+          console.log(`Usando URL de respaldo para ${card.name}: ${imageUrl}`);
+        }
+        
+        // Verificar que la URL es válida
+        try {
+          new URL(imageUrl);
+        } catch (e) {
+          console.error(`URL inválida para carta ${card.name}: ${imageUrl}`);
+          imageUrl = `https://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=${card.cardId}&type=card`;
+        }
+        
+        return {
+          id: card.cardId.toString(),
+          name: card.name,
+          imageUrl: imageUrl,
+          type: card.cardType,
+          rarity: card.rarity,
+          set: card.setId.toString(),
+          color: determineCardColor(card.manaCost || ''),
+          manaCost: card.manaCost
+        };
+      });
       
       // Actualizar el estado
       setSearchResults(prev => [...prev, ...newCards]);

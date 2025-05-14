@@ -1,146 +1,49 @@
-import axios from 'axios';
+import { httpClient } from './httpClient';
 import authService from './authService';
+import { SetMtg, Card, Deck, DeckCreateDto, CardDeck, User } from './types';
 
 // Usando el proxy configurado en vite.config.ts
 const API_URL = '/api';
 
-export interface SetMtg {
-  setId: number;
-  name: string;
-  setCode: string;
-  totalCards: number;
-  releaseDate: string;
-}
-
-export interface Card {
-  cardId: number;
-  name: string;
-  rarity: string;
-  manaValue: number;
-  manaCost: string;
-  cardType: string;
-  imageUrl: string;
-  setId: number;
-}
-
-export interface User {
-  username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-}
-
-export interface Deck {
-  deckId: number;
-  deckName: string;
-  gameType: string; // STANDARD, COMMANDER, etc.
-  deckColor: string;
-  totalCards: number;
-  userId: number;
-}
-
-export interface CardDeck {
-  deckId: number;
-  cardId: number;
-  nCopies: number;
-  cardName: string;
-  cardImageUrl: string;
-  cardType: string;
-  manaCost: string;
-}
-
-export interface DeckCreateDto {
-  deckName: string;
-  gameType: string;
-  deckColor: string;
-}
-
-const api = {
+// Servicio para operaciones de la API
+const apiService = {
   // Sets
   getAllSets: async (): Promise<SetMtg[]> => {
-    const response = await axios.get<SetMtg[]>(`${API_URL}/sets`);
-    return response.data;
+    console.log('Solicitando todos los sets');
+    return httpClient.get<SetMtg[]>('/sets');
   },
 
   getSetById: async (id: number): Promise<SetMtg> => {
-    const response = await axios.get<SetMtg>(`${API_URL}/sets/${id}`);
-    return response.data;
+    console.log(`Solicitando set ${id}`);
+    return httpClient.get<SetMtg>(`/sets/${id}`);
   },
 
   getCardsBySet: async (setId: number): Promise<Card[]> => {
-    const response = await axios.get<Card[]>(`${API_URL}/sets/${setId}/cards`);
-    return response.data;
+    console.log(`Solicitando cartas del set ${setId}`);
+    return httpClient.get<Card[]>(`/sets/${setId}/cards`);
   },
 
   // Decks
   getUserDecks: async (userId?: number): Promise<Deck[]> => {
     try {
-      const token = authService.getToken();
-      if (!token) {
-        console.error('getUserDecks: No authentication token available');
-        throw new Error('No authentication token available');
-      }
-      
-      // Si no se proporciona userId, intentamos obtenerlo del token JWT
+      // Si no se proporciona userId, obtenerlo del token
       if (userId === undefined) {
         const userIdFromToken = authService.getUserId();
         if (userIdFromToken === null) {
-          console.error('getUserDecks: Could not determine user ID');
-          throw new Error('Could not determine user ID');
+          throw new Error('No se pudo determinar el ID del usuario');
         }
         userId = userIdFromToken;
       }
       
-      console.log(`Requesting user decks for user ${userId} with token: ${token.substring(0, 15)}...`);
-      
-      // Según el código del backend, la ruta correcta es:
-      // DeckController: @RequestMapping("/decks")
-      // Método: @GetMapping("/user/{userId}")
-      // La ruta completa en el backend es: /decks/user/{userId}
-      // Pero necesitamos usar el proxy de Vite, que mapea /api a http://localhost:8080
-      const url = `/api/decks/user/${userId}`;
-      console.log(`Requesting user decks with URL: ${url}`);
-      
-      const response = await axios.get<Deck[]>(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
-        }
-      });
-      
-      console.log(`Successfully retrieved ${response.data.length} decks for user ${userId}`);
-      return response.data;
+      console.log(`Solicitando mazos del usuario ${userId}`);
+      return httpClient.get<Deck[]>(`/decks/user/${userId}`);
     } catch (error: any) {
-      // Intentamos obtener el userId para los datos simulados
-      let userIdForMocks = userId;
-      if (userIdForMocks === undefined) {
-        userIdForMocks = authService.getUserId() || 1; // Usamos 1 como fallback
-      }
+      console.error(`Error al obtener mazos del usuario:`, error);
       
-      console.error(`Error fetching decks for user ${userIdForMocks}:`, error);
+      // Datos simulados para desarrollo
+      const userIdForMocks = userId ?? authService.getUserId() ?? 1;
       
-      if (error.response) {
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
-        
-        // Si el error es 401 o 403, podría ser un problema de autenticación
-        if (error.response.status === 401 || error.response.status === 403) {
-          console.warn('Authentication issue detected, checking token validity');
-          if (!authService.isAuthenticated()) {
-            console.error('Token is invalid or expired');
-          }
-        }
-      } else if (error.request) {
-        console.error('No response received from server');
-      } else {
-        console.error('Error setting up request:', error.message);
-      }
-      
-      console.warn('Returning mock data for development');
-      
-      // Datos simulados para desarrollo con estilos consistentes con la aplicación
-      // Usando la fuente Palatino para títulos y Noto Sans para elementos interactivos
-      const mockDecks: Deck[] = [
+      return [
         {
           deckId: 1,
           deckName: 'Mazo Azul',
@@ -166,211 +69,139 @@ const api = {
           userId: userIdForMocks
         }
       ];
-      
-      return mockDecks;
     }
   },
 
   getDeckById: async (deckId: number): Promise<Deck> => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
-    
     try {
-      const response = await axios.get<Deck>(`${API_URL}/decks/${deckId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      return response.data;
+      console.log(`Solicitando mazo ${deckId}`);
+      return httpClient.get<Deck>(`/decks/${deckId}`);
     } catch (error) {
-      console.error('Error en getDeckById:', error);
-      // Devolver un mazo vacío para desarrollo
+      console.error('Error al obtener mazo por ID:', error);
+      
+      // Mazo predeterminado para desarrollo
       return {
         deckId: deckId,
         deckName: 'Mazo no encontrado',
         gameType: 'STANDARD',
         deckColor: 'U',
         totalCards: 0,
-        userId: 1
+        userId: authService.getUserId() ?? 1
       };
     }
   },
 
   createDeck: async (deckData: DeckCreateDto): Promise<Deck> => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
-    
     try {
-      const response = await axios.post<Deck>(`${API_URL}/decks`, deckData, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      return response.data;
+      // Asegurarse de que el userId está establecido
+      const userId = authService.getUserId();
+      if (userId === null) {
+        throw new Error('No se pudo determinar el ID del usuario');
+      }
+      
+      // Crear objeto completo para enviar al backend
+      const deckToCreate = {
+        ...deckData,
+        userId
+      };
+      
+      console.log('Creando nuevo mazo:', deckToCreate);
+      return httpClient.post<Deck>('/decks', deckToCreate);
     } catch (error) {
-      console.error('Error creating deck:', error);
-      // Simulamos una respuesta exitosa para desarrollo
+      console.error('Error al crear mazo:', error);
+      
+      // Simular respuesta para desarrollo
       return {
-        deckId: Math.floor(Math.random() * 1000) + 10, // ID aleatorio para simular
+        deckId: Math.floor(Math.random() * 1000) + 10,
         deckName: deckData.deckName,
         gameType: deckData.gameType,
         deckColor: deckData.deckColor,
         totalCards: 0,
-        userId: authService.getUserId() || 1
+        userId: authService.getUserId() ?? 1
       };
     }
   },
 
   updateDeck: async (deckId: number, deckData: Deck): Promise<Deck> => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
-    
-    const response = await axios.put<Deck>(`${API_URL}/decks/${deckId}`, deckData, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    return response.data;
+    console.log(`Actualizando mazo ${deckId}:`, deckData);
+    return httpClient.put<Deck>(`/decks/${deckId}`, deckData);
   },
 
   deleteDeck: async (deckId: number): Promise<void> => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
-    
-    await axios.delete(`${API_URL}/decks/${deckId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+    console.log(`Eliminando mazo ${deckId}`);
+    await httpClient.delete(`/decks/${deckId}`);
   },
 
   // Cards in Deck
-  getCardsInDeck: async (deckId: number): Promise<CardDeck[]> => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      throw new Error('No authentication token found');
+  getCardsByDeck: async (deckId: number): Promise<CardDeck[]> => {
+    try {
+      console.log(`Solicitando cartas del mazo ${deckId}`);
+      return httpClient.get<CardDeck[]>(`/decks/${deckId}/cards`);
+    } catch (error) {
+      console.error(`Error al obtener cartas del mazo ${deckId}:`, error);
+      return [];
     }
-    
-    const response = await axios.get<CardDeck[]>(`${API_URL}/decks/${deckId}/cards`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    return response.data;
   },
 
   addCardToDeck: async (deckId: number, cardId: number, quantity: number = 1): Promise<CardDeck> => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      throw new Error('No authentication token found');
+    try {
+      console.log(`Añadiendo carta ${cardId} al mazo ${deckId} (${quantity} copias)`);
+      return httpClient.post<CardDeck>(
+        `/decks/${deckId}/cards/${cardId}`, 
+        {}, 
+        { params: { quantity } }
+      );
+    } catch (error) {
+      console.error(`Error al añadir carta ${cardId} al mazo ${deckId}:`, error);
+      throw error;
     }
-    
-    const response = await axios.post<CardDeck>(`${API_URL}/decks/${deckId}/cards/${cardId}?quantity=${quantity}`, {}, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    return response.data;
   },
 
-  updateCardQuantity: async (deckId: number, cardId: number, quantity: number): Promise<CardDeck> => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
-    
-    const response = await axios.put<CardDeck>(`${API_URL}/decks/${deckId}/cards/${cardId}?quantity=${quantity}`, {}, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    return response.data;
+  updateCardInDeck: async (deckId: number, cardId: number, quantity: number): Promise<CardDeck> => {
+    console.log(`Actualizando cantidad de carta ${cardId} en mazo ${deckId} a ${quantity}`);
+    return httpClient.put<CardDeck>(
+      `/decks/${deckId}/cards/${cardId}`, 
+      {}, 
+      { params: { quantity } }
+    );
   },
 
   removeCardFromDeck: async (deckId: number, cardId: number): Promise<void> => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
-    
-    await axios.delete(`${API_URL}/decks/${deckId}/cards/${cardId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+    console.log(`Eliminando carta ${cardId} del mazo ${deckId}`);
+    await httpClient.delete(`/decks/${deckId}/cards/${cardId}`);
   },
 
   // Cards
   getAllCards: async (): Promise<Card[]> => {
-    const response = await axios.get<Card[]>(`${API_URL}/cards`);
-    return response.data;
+    console.log('Solicitando todas las cartas');
+    return httpClient.get<Card[]>('/cards');
   },
 
   getCardById: async (id: number): Promise<Card> => {
-    const response = await axios.get<Card>(`${API_URL}/cards/${id}`);
-    return response.data;
+    console.log(`Solicitando carta ${id}`);
+    return httpClient.get<Card>(`/cards/${id}`);
   },
 
   // Users
-  getUserProfile: async (username: string): Promise<User> => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
-    
+  getUserByUsername: async (username: string): Promise<User> => {
     try {
-      const response = await axios.get<User>(`${API_URL}/users/username/${username}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      return response.data;
+      console.log(`Solicitando usuario ${username}`);
+      return httpClient.get<User>(`/users/username/${username}`);
     } catch (error) {
-      console.error('Error in getUserProfile API call:', error);
-      // Simulamos datos para desarrollo mientras el backend se completa
-      return {
-        username: username,
-        email: `${username.toLowerCase()}@example.com`,
-        firstName: username,
-        lastName: 'User'
-      };
+      console.error(`Error getting user by username ${username}:`, error);
+      throw error;
     }
   },
 
   updateUserProfile: async (username: string, userData: Partial<User>): Promise<User> => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
-    
     try {
-      const response = await axios.put<User>(`${API_URL}/users/username/${username}`, userData, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      return response.data;
+      console.log(`Actualizando perfil del usuario ${username}:`, userData);
+      return httpClient.put<User>(`/users/username/${username}`, userData);
     } catch (error) {
-      console.error('Error in updateUserProfile API call:', error);
-      // Simulamos una respuesta exitosa para desarrollo mientras el backend se completa
-      return {
-        username: username,
-        email: userData.email || `${username.toLowerCase()}@example.com`,
-        firstName: userData.firstName || username,
-        lastName: userData.lastName || 'User'
-      };
+      console.error(`Error updating user profile for ${username}:`, error);
+      throw error;
     }
   }
 };
 
-export default api;
+export default apiService;

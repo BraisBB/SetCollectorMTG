@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './CardModal.css';
-import axios from 'axios';
-import { collectionService } from '../services/collectionService';
-
-const API_BASE_URL = 'http://localhost:8080';
+import { httpClient } from '../services/httpClient';
+import { collectionService } from '../services';
+import { Card as CardType } from '../services/types';
 
 export interface Card {
   cardId: number;
@@ -78,8 +77,8 @@ const CardModal: React.FC<CardModalProps> = ({
   useEffect(() => {
     const fetchSets = async () => {
       try {
-        const response = await axios.get<SetInfo[]>(`${API_BASE_URL}/sets`);
-        setSets(response.data);
+        const sets = await httpClient.get<SetInfo[]>('sets');
+        setSets(sets);
       } catch (error) {
         console.error('Error fetching sets:', error);
       }
@@ -97,12 +96,12 @@ const CardModal: React.FC<CardModalProps> = ({
       const fetchCardData = async () => {
         try {
           console.log(`Fetching card details for ID: ${card.cardId}`);
-          const response = await axios.get<Card>(`${API_BASE_URL}/cards/${card.cardId}`);
-          console.log('Fetched card data:', response.data);
+          const cardDetails = await httpClient.get<Card>(`cards/${card.cardId}`);
+          console.log('Fetched card data:', cardDetails);
           
           // Mezclamos los datos de la carta que ya tenemos con los detalles adicionales
           const mergedData = {
-            ...response.data,
+            ...cardDetails,
             // Si la carta ya tiene información sobre la cantidad en la colección, la conservamos
             collectionCount: card.collectionCount
           };
@@ -326,8 +325,57 @@ const CardModal: React.FC<CardModalProps> = ({
                   className="modal-image"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    target.src = '/placeholder-card.jpg';
-                    target.classList.add('image-error');
+                    console.log(`Error cargando imagen para ${displayCard.name}: ${displayCard.imageUrl}`);
+                    
+                    // Si la URL original era de Scryfall, verificar su formato
+                    const originalSrc = displayCard.imageUrl;
+                    if (originalSrc.includes('api.scryfall.com/cards/')) {
+                      // Verificar si es una URL de Scryfall mal formada
+                      if (originalSrc.includes('&type=card') && !originalSrc.includes('?format=image')) {
+                        console.log('URL de Scryfall incorrecta');
+                      } else {
+                        // Es una URL de Scryfall válida pero que falló por otra razón - posible problema de CORS
+                        console.log('URL de Scryfall válida pero falló la carga, posible problema de CORS');
+                        
+                        // Extraer el ID de Scryfall de la URL
+                        const scryfallIdMatch = originalSrc.match(/\/cards\/([^/?]+)/);
+                        if (scryfallIdMatch && scryfallIdMatch[1]) {
+                          const scryfallId = scryfallIdMatch[1];
+                          // Intentar con el formato alternativo de URL de Scryfall
+                          const correctedUrl = `https://cards.scryfall.io/normal/front/${scryfallId[0]}/${scryfallId}.jpg`;
+                          console.log(`Intentando URL alternativa de Scryfall: ${correctedUrl}`);
+                          target.src = correctedUrl;
+                          // Si esta URL alternativa también falla, entonces pasar al respaldo
+                          target.onerror = () => {
+                            const backupUrl = `https://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=${displayCard.cardId || 0}&type=card`;
+                            console.log(`URL alternativa fallida, usando respaldo Gatherer: ${backupUrl}`);
+                            target.src = backupUrl;
+                            
+                            // Si el respaldo también falla, usar un placeholder genérico
+                            target.onerror = () => {
+                              console.log('Respaldo Gatherer fallido, usando placeholder genérico');
+                              target.src = 'https://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=0&type=card';
+                              target.classList.add('image-error');
+                              target.onerror = null; // Prevenir bucle infinito
+                            };
+                          };
+                          return;
+                        }
+                      }
+                    }
+                    
+                    // Si no es una URL de Scryfall o no pudimos extraer el ID, usar respaldo de Gatherer
+                    const backupUrl = `https://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=${displayCard.cardId || 0}&type=card`;
+                    console.log(`Usando URL de respaldo: ${backupUrl}`);
+                    target.src = backupUrl;
+                    
+                    // Si la imagen de respaldo también falla, usar placeholder genérico
+                    target.onerror = () => {
+                      console.log(`Error en URL de respaldo, usando placeholder genérico`);
+                      target.src = 'https://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=0&type=card';
+                      target.classList.add('image-error');
+                      target.onerror = null; // Prevenir bucle infinito
+                    };
                   }}
                 />
               ) : (

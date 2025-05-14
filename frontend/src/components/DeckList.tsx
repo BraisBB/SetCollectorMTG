@@ -1,14 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api, { Deck } from '../services/apiService';
-import { authService } from '../services/auth';
+import { apiService, authService } from '../services';
+import { Deck, DeckCreateDto } from '../services/types';
 import './DeckList.css';
-
-interface DeckCreateDto {
-  deckName: string;
-  gameType: string;
-  deckColor: string;
-}
 
 interface DeckListProps {
   decks: Deck[];
@@ -33,7 +27,7 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
   
   const handleDelete = async (deckId: number) => {
     try {
-      await api.deleteDeck(deckId);
+      await apiService.deleteDeck(deckId);
       onDeckDeleted();
     } catch (error) {
       if (error instanceof Error) {
@@ -81,7 +75,7 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
         throw new Error('User ID not found');
       }
       
-      await api.createDeck({
+      await apiService.createDeck({
         ...newDeck
       });
       
