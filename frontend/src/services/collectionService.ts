@@ -1,5 +1,4 @@
 import { httpClient } from './httpClient';
-import { API_BASE_URL } from './config';
 import { UserCollectionCard, UserCollection } from './types';
 
 // Servicio para gestionar la colección de cartas del usuario

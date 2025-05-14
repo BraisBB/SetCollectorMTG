@@ -10,6 +10,7 @@ import com.setcollectormtg.setcollectormtg.repository.CardDeckRepository;
 import com.setcollectormtg.setcollectormtg.repository.DeckRepository;
 import com.setcollectormtg.setcollectormtg.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -19,9 +20,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DeckServiceImpl implements DeckService {
 
     private final DeckRepository deckRepository;
@@ -137,6 +140,24 @@ public class DeckServiceImpl implements DeckService {
     @Override
     @Transactional(readOnly = true)
     public List<DeckDto> getDecksByUser(Long userId) {
+        // Intentar tratar el userId como un posible ID de Keycloak (String)
+        String userIdStr = userId.toString();
+        log.debug("Buscando mazos para ID: {}", userIdStr);
+        
+        // Primero verificamos si es un ID de Keycloak
+        Optional<User> userByKeycloak = userRepository.findByKeycloakId(userIdStr);
+        
+        if (userByKeycloak.isPresent()) {
+            // Si encontramos al usuario por su ID de Keycloak, usamos su ID interno
+            Long internalUserId = userByKeycloak.get().getUserId();
+            log.debug("Usuario encontrado por ID de Keycloak: {}. Usando ID interno: {}", userIdStr, internalUserId);
+            return deckRepository.findByUser_UserId(internalUserId).stream()
+                    .map(deckMapper::toDto)
+                    .toList();
+        }
+        
+        // Si no es un ID de Keycloak, intentamos el comportamiento normal por userId
+        log.debug("Usuario no encontrado por ID de Keycloak, buscando por ID interno: {}", userId);
         return deckRepository.findByUser_UserId(userId).stream()
                 .map(deckMapper::toDto)
                 .toList();
@@ -151,6 +172,15 @@ public class DeckServiceImpl implements DeckService {
     @Override
     @Transactional(readOnly = true)
     public Page<DeckDto> getDecksByUserPaged(Long userId, Pageable pageable) {
+        // Similar a getDecksByUser, pero para paginación
+        String userIdStr = userId.toString();
+        Optional<User> userByKeycloak = userRepository.findByKeycloakId(userIdStr);
+        
+        if (userByKeycloak.isPresent()) {
+            Long internalUserId = userByKeycloak.get().getUserId();
+            return deckRepository.findByUser_UserId(internalUserId, pageable).map(deckMapper::toDto);
+        }
+        
         return deckRepository.findByUser_UserId(userId, pageable).map(deckMapper::toDto);
     }
 }

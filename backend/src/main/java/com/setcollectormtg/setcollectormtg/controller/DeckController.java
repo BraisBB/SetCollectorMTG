@@ -5,6 +5,7 @@ import com.setcollectormtg.setcollectormtg.dto.DeckDto;
 import com.setcollectormtg.setcollectormtg.service.DeckService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/decks")
 @RequiredArgsConstructor
+@Slf4j
 public class DeckController {
 
     private final DeckService deckService;
@@ -36,6 +38,7 @@ public class DeckController {
     @GetMapping("/user/{userId}")
     @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #userId)")
     public ResponseEntity<List<DeckDto>> getDecksByUser(@PathVariable Long userId) {
+        log.debug("Solicitando mazos para usuario con ID: {}", userId);
         return ResponseEntity.ok(deckService.getDecksByUser(userId));
     }
 

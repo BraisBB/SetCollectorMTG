@@ -7,6 +7,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -35,11 +36,13 @@ public class GlobalExceptionHandler {
             ResourceNotFoundException ex, 
             WebRequest request) {
         
+        log.error("Recurso no encontrado: {}", ex.getMessage(), ex);
+        
         ErrorResponse error = ErrorResponse.builder()
                 .code("NOT_FOUND")
                 .message(ex.getMessage())
                 .timestamp(LocalDateTime.now())
-                .path(request.getDescription(false))
+                .path(request.getDescription(false).replace("uri=", ""))
                 .status(HttpStatus.NOT_FOUND.value())
                 .build();
         
@@ -59,6 +62,8 @@ public class GlobalExceptionHandler {
             MethodArgumentNotValidException ex,
             WebRequest request) {
         
+        log.error("Error de validación: {}", ex.getMessage(), ex);
+        
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(error ->
             errors.put(error.getField(), error.getDefaultMessage())
@@ -69,7 +74,7 @@ public class GlobalExceptionHandler {
                 .message("Validation error")
                 .errors(errors)
                 .timestamp(LocalDateTime.now())
-                .path(request.getDescription(false))
+                .path(request.getDescription(false).replace("uri=", ""))
                 .status(HttpStatus.BAD_REQUEST.value())
                 .build();
 
@@ -80,6 +85,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleConstraintViolationException(
             ConstraintViolationException ex,
             WebRequest request) {
+        
+        log.error("Error de validación de restricciones: {}", ex.getMessage(), ex);
         
         Map<String, String> errors = new HashMap<>();
         ex.getConstraintViolations().forEach(violation -> {
@@ -93,7 +100,7 @@ public class GlobalExceptionHandler {
                 .message("Constraint validation error")
                 .errors(errors)
                 .timestamp(LocalDateTime.now())
-                .path(request.getDescription(false))
+                .path(request.getDescription(false).replace("uri=", ""))
                 .status(HttpStatus.BAD_REQUEST.value())
                 .build();
 
@@ -105,21 +112,47 @@ public class GlobalExceptionHandler {
             AccessDeniedException ex,
             WebRequest request) {
         
+        log.error("Acceso denegado: {}", ex.getMessage(), ex);
+        
         ErrorResponse error = ErrorResponse.builder()
                 .code("ACCESS_DENIED")
                 .message("You don't have permission to perform this action")
                 .timestamp(LocalDateTime.now())
-                .path(request.getDescription(false))
+                .path(request.getDescription(false).replace("uri=", ""))
                 .status(HttpStatus.FORBIDDEN.value())
                 .build();
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+    
+    /**
+     * Maneja excepciones de autenticación
+     */
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationException(
+            AuthenticationException ex,
+            WebRequest request) {
+        
+        log.error("Error de autenticación: {}", ex.getMessage(), ex);
+        
+        ErrorResponse error = ErrorResponse.builder()
+                .code("AUTHENTICATION_ERROR")
+                .message("Authentication failed")
+                .details(ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .path(request.getDescription(false).replace("uri=", ""))
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(
             DataIntegrityViolationException ex,
             WebRequest request) {
+        
+        log.error("Error de integridad de datos: {}", ex.getMessage(), ex);
         
         String message = "Data integrity error";
         String details = ex.getMostSpecificCause().getMessage();
@@ -133,7 +166,7 @@ public class GlobalExceptionHandler {
                 .message(message)
                 .details(details)
                 .timestamp(LocalDateTime.now())
-                .path(request.getDescription(false))
+                .path(request.getDescription(false).replace("uri=", ""))
                 .status(HttpStatus.BAD_REQUEST.value())
                 .build();
 
@@ -145,6 +178,8 @@ public class GlobalExceptionHandler {
             MethodArgumentTypeMismatchException ex,
             WebRequest request) {
         
+        log.error("Error de tipo de argumento: {}", ex.getMessage(), ex);
+        
         String message = String.format("Parameter '%s' with value '%s' could not be converted to type %s", 
             ex.getName(), ex.getValue(), ex.getRequiredType().getSimpleName());
 
@@ -152,7 +187,7 @@ public class GlobalExceptionHandler {
                 .code("TYPE_MISMATCH")
                 .message(message)
                 .timestamp(LocalDateTime.now())
-                .path(request.getDescription(false))
+                .path(request.getDescription(false).replace("uri=", ""))
                 .status(HttpStatus.BAD_REQUEST.value())
                 .build();
 
@@ -164,11 +199,34 @@ public class GlobalExceptionHandler {
             IllegalArgumentException ex,
             WebRequest request) {
         
+        log.error("Argumento ilegal: {}", ex.getMessage(), ex);
+        
         ErrorResponse error = ErrorResponse.builder()
                 .code("ILLEGAL_ARGUMENT")
                 .message(ex.getMessage())
                 .timestamp(LocalDateTime.now())
-                .path(request.getDescription(false))
+                .path(request.getDescription(false).replace("uri=", ""))
+                .status(HttpStatus.BAD_REQUEST.value())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+    
+    /**
+     * Maneja excepciones de estado ilegal (reglas de negocio)
+     */
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalStateException(
+            IllegalStateException ex,
+            WebRequest request) {
+        
+        log.error("Estado ilegal: {}", ex.getMessage(), ex);
+        
+        ErrorResponse error = ErrorResponse.builder()
+                .code("ILLEGAL_STATE")
+                .message(ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .path(request.getDescription(false).replace("uri=", ""))
                 .status(HttpStatus.BAD_REQUEST.value())
                 .build();
 
@@ -180,14 +238,14 @@ public class GlobalExceptionHandler {
             Exception ex,
             WebRequest request) {
         
-        log.error("Unexpected error", ex);
+        log.error("Error inesperado: {}", ex.getMessage(), ex);
         
         ErrorResponse error = ErrorResponse.builder()
                 .code("INTERNAL_ERROR")
                 .message("An internal error has occurred")
                 .details(ex.getMessage())
                 .timestamp(LocalDateTime.now())
-                .path(request.getDescription(false))
+                .path(request.getDescription(false).replace("uri=", ""))
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .build();
 
