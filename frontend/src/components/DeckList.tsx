@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService, authService } from '../services';
 import { Deck, DeckCreateDto } from '../services/types';
@@ -8,9 +8,17 @@ interface DeckListProps {
   decks: Deck[];
   onDeckCreated: () => void;
   onDeckDeleted: () => void;
+  showCreateModal?: boolean;
+  setShowCreateModal?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted }) => {
+const DeckList: React.FC<DeckListProps> = ({ 
+  decks, 
+  onDeckCreated, 
+  onDeckDeleted,
+  showCreateModal = false,
+  setShowCreateModal
+}) => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newDeck, setNewDeck] = useState<DeckCreateDto>({
@@ -20,6 +28,21 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Usamos useEffect para sincronizar el estado externo con el interno
+  useEffect(() => {
+    // Si showCreateModal es proporcionado desde las props, usamos ese
+    if (setShowCreateModal !== undefined) {
+      console.log("DeckList: detectado cambio en showCreateModal a:", showCreateModal);
+      if (showCreateModal && !isModalOpen) {
+        console.log("DeckList: abriendo modal desde props");
+        openCreateModal();
+      } else if (!showCreateModal && isModalOpen) {
+        console.log("DeckList: cerrando modal desde props");
+        closeModal();
+      }
+    }
+  }, [showCreateModal]);
 
   const handleDeckClick = (deckId: number) => {
     navigate(`/deck/${deckId}`);
@@ -43,8 +66,12 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
   };
 
   const openCreateModal = () => {
-    console.log("Abriendo modal para crear mazo");
+    console.log("DeckList: Abriendo modal para crear mazo");
     setIsModalOpen(true);
+    // Si hay un setShowCreateModal desde props, lo actualizamos también
+    if (setShowCreateModal) {
+      setShowCreateModal(true);
+    }
     setError(null);
     setNewDeck({
       deckName: '',
@@ -54,8 +81,12 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
   };
 
   const closeModal = () => {
-    console.log("Cerrando modal");
+    console.log("DeckList: Cerrando modal");
     setIsModalOpen(false);
+    // Si hay un setShowCreateModal desde props, lo actualizamos también
+    if (setShowCreateModal) {
+      setShowCreateModal(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -68,37 +99,37 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Formulario enviado, evitando comportamiento por defecto");
+    console.log("DeckList: Formulario enviado, evitando comportamiento por defecto");
     setLoading(true);
     setError(null);
     
     try {
       // Validación de campos obligatorios
       if (!newDeck.deckName?.trim()) {
-        console.warn("Error de validación: Nombre de mazo vacío");
+        console.warn("DeckList: Error de validación: Nombre de mazo vacío");
         setError('El nombre del mazo es obligatorio');
         setLoading(false);
         return;
       }
       
-      console.log("Validación de formulario completada correctamente");
+      console.log("DeckList: Validación de formulario completada correctamente");
       
       // Obtener ID de usuario
       const userId = authService.getUserIdentifier();
-      console.log("ID de usuario autenticado:", userId);
+      console.log("DeckList: ID de usuario autenticado:", userId);
       
       if (!userId) {
-        console.error("Error: No se pudo obtener el ID de usuario");
+        console.error("DeckList: Error: No se pudo obtener el ID de usuario");
         throw new Error('No se pudo determinar el ID del usuario');
       }
       
       // Asegurarnos que gameType sea un valor válido
       if (newDeck.gameType !== 'STANDARD' && newDeck.gameType !== 'COMMANDER') {
-        console.warn(`Tipo de mazo no reconocido: ${newDeck.gameType}, usando STANDARD por defecto`);
+        console.warn(`DeckList: Tipo de mazo no reconocido: ${newDeck.gameType}, usando STANDARD por defecto`);
         newDeck.gameType = 'STANDARD';
       }
       
-      console.log("Enviando petición al API:", {
+      console.log("DeckList: Enviando petición al API:", {
         deckName: newDeck.deckName,
         gameType: newDeck.gameType,
         deckColor: newDeck.deckColor
@@ -109,10 +140,13 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
           ...newDeck
         });
         
-        console.log("Mazo creado con éxito:", createdDeck);
+        console.log("DeckList: Mazo creado con éxito:", createdDeck);
         
         // Cerrar modal y resetear formulario
         setIsModalOpen(false);
+        if (setShowCreateModal) {
+          setShowCreateModal(false);
+        }
         setNewDeck({
           deckName: '',
           gameType: 'STANDARD',
@@ -120,13 +154,13 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
         });
         
         // Notificar al componente padre
-        console.log("Notificando creación exitosa al componente padre");
+        console.log("DeckList: Notificando creación exitosa al componente padre");
         onDeckCreated();
       } catch (apiError: any) {
-        console.error("Error específico de la API al crear mazo:", apiError);
+        console.error("DeckList: Error específico de la API al crear mazo:", apiError);
         if (apiError.response) {
-          console.error("Datos de respuesta:", apiError.response.data);
-          console.error("Estado HTTP:", apiError.response.status);
+          console.error("DeckList: Datos de respuesta:", apiError.response.data);
+          console.error("DeckList: Estado HTTP:", apiError.response.status);
           setError(`Error del servidor: ${apiError.response.data?.message || apiError.response.statusText || 'Error desconocido'}`);
         } else {
           setError(`Error de red: ${apiError.message || 'No se pudo conectar con el servidor'}`);
@@ -134,7 +168,7 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
         throw apiError; // Propagar para el catch general
       }
     } catch (error: any) {
-      console.error('Error general al crear mazo:', error);
+      console.error('DeckList: Error general al crear mazo:', error);
       
       if (!error.handledAlready) {
         if (error instanceof Error) {
@@ -155,7 +189,7 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
         <button 
           className="create-deck-button" 
           onClick={() => {
-            console.log("Botón para crear mazo clickeado");
+            console.log("DeckList: Botón para crear mazo clickeado");
             openCreateModal();
           }}
           style={{ 
@@ -174,7 +208,7 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
           <p>You don't have any decks yet. Create your first deck to start building!</p>
           <button 
             onClick={() => {
-              console.log("Botón alternativo para crear mazo clickeado");
+              console.log("DeckList: Botón alternativo para crear mazo clickeado");
               openCreateModal();
             }}
             className="create-deck-button"
@@ -201,7 +235,7 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
                 <span className="deck-type">{deck.gameType}</span>
                 <span className="deck-color">
                   {deck.deckColor === null || deck.deckColor === '' ? 
-                    'Sin color (añade cartas)' : 
+                    'No color (add cards)' : 
                     deck.deckColor}
                 </span>
                 <span className="card-count">{deck.totalCards} cards</span>
@@ -232,7 +266,7 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
       )}
       
       {/* Modal para crear nuevo deck */}
-      {isModalOpen && (
+      {(isModalOpen || showCreateModal) && (
         <div 
           className="modal-overlay" 
           onClick={(e) => {
@@ -284,7 +318,10 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
               </div>
             )}
             
-            <form id="create-deck-form" onSubmit={handleSubmit}>
+            <form id="create-deck-form" onSubmit={(e) => {
+              console.log("DeckList: Evento onSubmit del formulario capturado");
+              handleSubmit(e);
+            }}>
               <div className="form-group" style={{ marginBottom: '1.5rem' }}>
                 <label 
                   htmlFor="deckName"
@@ -367,6 +404,7 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    console.log("DeckList: Botón Cancel clickeado");
                     closeModal();
                   }}
                   disabled={loading}
@@ -387,6 +425,11 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
                   type="submit" 
                   className="create-button"
                   disabled={loading}
+                  onClick={(e) => {
+                    console.log("DeckList: Botón Create Deck (submit) clickeado");
+                    // No necesitamos llamar a handleSubmit aquí ya que es un botón de tipo submit
+                    // y el formulario ya tiene un controlador onSubmit
+                  }}
                   style={{
                     padding: '0.8rem 1.5rem',
                     borderRadius: '4px',

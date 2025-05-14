@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService, authService, collectionService } from '../services';
-import { Card as ApiCard, Deck, UserCollectionCard } from '../services/types';
+import { Card as ApiCard, Deck, UserCollectionCard, DeckCreateDto } from '../services/types';
 import Header from '../components/Header';
 import CardGrid from '../components/CardGrid';
 import { Card } from '../components/CardGrid';
@@ -21,6 +21,14 @@ const Collection = () => {
   const [decksError, setDecksError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'cards' | 'decks'>('cards');
   const [userId, setUserId] = useState<number | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createDeckLoading, setCreateDeckLoading] = useState(false);
+  const [createDeckError, setCreateDeckError] = useState<string | null>(null);
+  const [newDeck, setNewDeck] = useState<DeckCreateDto>({
+    deckName: '',
+    gameType: 'STANDARD',
+    deckColor: ''
+  });
   const navigate = useNavigate();
 
   // Función para eliminar una carta de la vista cuando es eliminada de la colección
@@ -79,14 +87,104 @@ const Collection = () => {
     fetchUserDecks();
   }, [isAuthenticated]);
   
+  // Función para abrir el modal de creación de mazos
+  const openCreateModal = () => {
+    console.log("Collection: Intentando abrir modal de creación de mazo");
+    setActiveTab('decks');
+    setShowCreateModal(true);
+    setCreateDeckError(null);
+    setNewDeck({
+      deckName: '',
+      gameType: 'STANDARD',
+      deckColor: ''
+    });
+    console.log("Collection: Estado showCreateModal establecido a true");
+  };
+
+  // Función para cerrar el modal
+  const closeModal = () => {
+    console.log("Collection: Cerrando modal de creación");
+    setShowCreateModal(false);
+  };
+
+  // Manejador para cambios en el formulario
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setNewDeck(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Función para crear un nuevo mazo
+  const handleCreateDeck = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Collection: Formulario de creación de mazo enviado");
+    setCreateDeckLoading(true);
+    setCreateDeckError(null);
+
+    try {
+      // Validación de campos obligatorios
+      if (!newDeck.deckName?.trim()) {
+        console.warn("Collection: Error de validación: Nombre de mazo vacío");
+        setCreateDeckError('Deck name is required');
+        setCreateDeckLoading(false);
+        return;
+      }
+
+      console.log("Collection: Validación de formulario completada correctamente");
+      
+      // Obtener ID de usuario
+      const userId = authService.getUserIdentifier();
+      console.log("Collection: ID de usuario autenticado:", userId);
+      
+      if (!userId) {
+        console.error("Collection: Error: No se pudo obtener el ID de usuario");
+        throw new Error('Could not determine user ID');
+      }
+      
+      // Asegurarnos que gameType sea un valor válido
+      if (newDeck.gameType !== 'STANDARD' && newDeck.gameType !== 'COMMANDER') {
+        console.warn(`Collection: Tipo de mazo no reconocido: ${newDeck.gameType}, usando STANDARD por defecto`);
+        newDeck.gameType = 'STANDARD';
+      }
+      
+      console.log("Collection: Enviando petición al API:", newDeck);
+
+      const createdDeck = await apiService.createDeck({
+        ...newDeck
+      });
+      
+      console.log("Collection: Mazo creado con éxito:", createdDeck);
+      
+      // Cerrar modal y resetear formulario
+      setShowCreateModal(false);
+      setNewDeck({
+        deckName: '',
+        gameType: 'STANDARD',
+        deckColor: ''
+      });
+      
+      // Actualizar la lista de mazos
+      handleDeckCreated();
+    } catch (error: any) {
+      console.error("Collection: Error al crear mazo:", error);
+      setCreateDeckError(error.message || 'Error creating deck');
+    } finally {
+      setCreateDeckLoading(false);
+    }
+  };
+
   // Función para actualizar la lista de decks después de crear uno nuevo
   const handleDeckCreated = async () => {
-    if (!userId) return;
-    
+    console.log("Collection: Ejecutando handleDeckCreated");
     try {
-      const userDecks = await apiService.getUserDecks(userId);
+      const userDecks = await apiService.getUserDecks();
+      console.log("Collection: Mazos obtenidos:", userDecks);
       // Asegurarse de que decks siempre sea un array
       setDecks(Array.isArray(userDecks) ? userDecks : []);
+      // Cerrar el modal después de crear con éxito
+      setShowCreateModal(false);
     } catch (err) {
       console.error('Error refreshing decks:', err);
     }
@@ -508,8 +606,8 @@ const Collection = () => {
     
     return value;
   }
-  
-    return (
+
+  return (
     <div className="collection-container">
       <Header />
       <main className="container collection-main">
@@ -584,6 +682,29 @@ const Collection = () => {
         
         {activeTab === 'decks' && (
           <>
+            <div className="decks-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h2>My Decks</h2>
+              <button 
+                className="create-deck-button" 
+                onClick={() => {
+                  console.log("Collection: Botón 'Create Deck' en header clickeado");
+                  openCreateModal();
+                }}
+                style={{ 
+                  padding: '0.6rem 1.2rem',
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  backgroundColor: '#e65100',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px'
+                }}
+              >
+                Create Deck +
+              </button>
+            </div>
+
             {decksError && (
               <div className="error-message">
                 <p><strong>Error:</strong> {decksError}</p>
@@ -599,7 +720,7 @@ const Collection = () => {
             {decksLoading ? (
               <div className="collection-loading">
                 <div className="spinner"></div>
-                <p>Cargando tus mazos...</p>
+                <p>Loading your decks...</p>
               </div>
             ) : (
               <>
@@ -611,15 +732,15 @@ const Collection = () => {
                   />
                 ) : (
                   <div className="empty-collection">
-                    <p>No tienes mazos creados. ¡Crea tu primer mazo para empezar!</p>
+                    <p>You don't have any decks yet. Create your first deck to start building!</p>
                     <button 
                       className="browse-cards-btn"
                       onClick={() => {
-                        const deckTab = document.querySelector('.tab-button:nth-child(2)');
-                        if (deckTab) (deckTab as HTMLElement).click();
+                        console.log("Collection: Botón 'Create Deck' clickeado");
+                        openCreateModal();
                       }}
                     >
-                      Crear Mazo
+                      Create Deck
                     </button>
                   </div>
                 )}
@@ -628,6 +749,184 @@ const Collection = () => {
           </>
         )}
       </main>
+      
+      {/* Modal para crear nuevo deck */}
+      {showCreateModal && (
+        <div 
+          className="modal-overlay" 
+          onClick={(e) => {
+            e.stopPropagation();
+            closeModal();
+          }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999
+          }}
+        >
+          <div 
+            className="modal-content" 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: '#494949',
+              borderRadius: '8px',
+              padding: '2rem',
+              width: '90%',
+              maxWidth: '500px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+              color: '#ffffff',
+              zIndex: 10000,
+              position: 'relative'
+            }}
+          >
+            <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Create New Deck</h2>
+            
+            {createDeckError && (
+              <div 
+                className="error-message"
+                style={{
+                  backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                  border: '1px solid rgba(220, 53, 69, 0.3)',
+                  color: '#dc3545',
+                  padding: '0.8rem',
+                  borderRadius: '4px',
+                  marginBottom: '1.5rem'
+                }}
+              >
+                {createDeckError}
+              </div>
+            )}
+            
+            <form id="create-deck-form" onSubmit={handleCreateDeck}>
+              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <label 
+                  htmlFor="deckName"
+                  style={{ 
+                    display: 'block', 
+                    marginBottom: '0.5rem',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Deck Name
+                </label>
+                <input
+                  type="text"
+                  id="deckName"
+                  name="deckName"
+                  value={newDeck.deckName}
+                  onChange={handleInputChange}
+                  placeholder="Enter deck name"
+                  disabled={createDeckLoading}
+                  minLength={3}
+                  maxLength={50}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.8rem',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '1rem',
+                    backgroundColor: '#ffffff',
+                    color: '#333'
+                  }}
+                />
+              </div>
+              
+              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <label 
+                  htmlFor="gameType"
+                  style={{ 
+                    display: 'block', 
+                    marginBottom: '0.5rem',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Game Type
+                </label>
+                <select
+                  id="gameType"
+                  name="gameType"
+                  value={newDeck.gameType}
+                  onChange={handleInputChange}
+                  disabled={createDeckLoading}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.8rem',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '1rem',
+                    backgroundColor: '#ffffff',
+                    color: '#333'
+                  }}
+                >
+                  <option value="STANDARD">Standard</option>
+                  <option value="COMMANDER">Commander</option>
+                </select>
+              </div>
+              
+              <div 
+                className="form-actions"
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '1rem',
+                  marginTop: '2rem'
+                }}
+              >
+                <button 
+                  type="button" 
+                  className="cancel-button" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log("Collection: Botón Cancelar clickeado");
+                    closeModal();
+                  }}
+                  disabled={createDeckLoading}
+                  style={{
+                    padding: '0.8rem 1.5rem',
+                    borderRadius: '4px',
+                    fontSize: '1rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    backgroundColor: 'transparent',
+                    border: '1px solid #ddd',
+                    color: '#ddd'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="create-button"
+                  disabled={createDeckLoading}
+                  style={{
+                    padding: '0.8rem 1.5rem',
+                    borderRadius: '4px',
+                    fontSize: '1rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    backgroundColor: '#e65100',
+                    color: 'white',
+                    border: 'none',
+                    minWidth: '120px'
+                  }}
+                >
+                  {createDeckLoading ? 'Creating...' : 'Create Deck'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
