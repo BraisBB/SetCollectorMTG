@@ -18,6 +18,7 @@ public class CardDeckServiceImpl implements CardDeckService {
     private final DeckRepository deckRepository;
     private final CardRepository cardRepository;
     private final CardDeckMapper cardDeckMapper;
+    private final DeckService deckService;
 
     /**
      * Agrega una carta a un mazo, validando reglas de formato (límite de copias y total de cartas).
@@ -58,7 +59,12 @@ public class CardDeckServiceImpl implements CardDeckService {
 
         updateDeckTotalCards(deck, quantity);
 
-        return cardDeckMapper.toDto(cardDeckRepository.save(cardDeck));
+        CardDeckDto result = cardDeckMapper.toDto(cardDeckRepository.save(cardDeck));
+        
+        // Actualizar el color del mazo basado en las cartas que contiene
+        deckService.updateDeckColor(deckId);
+        
+        return result;
     }
 
     /**
@@ -74,29 +80,51 @@ public class CardDeckServiceImpl implements CardDeckService {
     @Transactional
     public CardDeckDto updateCardQuantity(Long deckId, Long cardId, Integer newQuantity) {
         if (newQuantity <= 0) {
-            throw new IllegalArgumentException("Quantity must be greater than 0");
+            removeCardFromDeck(deckId, cardId);
+            // Crear un DTO para mantener la interfaz, aunque la carta ya se eliminó
+            CardDeckDto dto = new CardDeckDto();
+            dto.setDeckId(deckId);
+            dto.setCardId(cardId);
+            dto.setNCopies(0);
+            return dto;
         }
+
+        Deck deck = deckRepository.findById(deckId)
+                .orElseThrow(() -> new ResourceNotFoundException("Deck not found with id: " + deckId));
 
         CardDeck cardDeck = cardDeckRepository.findByDeck_DeckIdAndCard_CardId(deckId, cardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Card not found in deck"));
 
-        GameType gameType = cardDeck.getDeck().getGameType();
+        GameType gameType = deck.getGameType();
         
-        // Validar el nuevo número de copias según el formato
-        validateCardCopies(deckId, cardId, newQuantity, gameType);
+        // Verificar límite de copias según el formato
+        if (newQuantity > gameType.getMaxCopies()) {
+            throw new IllegalStateException(
+                String.format("Format %s only allows %d copies of the same card", 
+                    gameType.getName(), gameType.getMaxCopies())
+            );
+        }
 
-        // Validar el nuevo total de cartas según el formato
-        int difference = newQuantity - cardDeck.getNCopies();
-        validateTotalCards(cardDeck.getDeck(), difference, gameType);
+        // Calcular la diferencia para actualizar el total de cartas del mazo
+        int quantityDifference = newQuantity - cardDeck.getNCopies();
+        
+        // Verificar límite total de cartas según el formato
+        validateTotalCards(deck, quantityDifference, gameType);
 
-        updateDeckTotalCards(cardDeck.getDeck(), difference);
+        // Actualizar cantidad de copias y total de cartas del mazo
         cardDeck.setNCopies(newQuantity);
+        updateDeckTotalCards(deck, quantityDifference);
+
+        CardDeckDto result = cardDeckMapper.toDto(cardDeckRepository.save(cardDeck));
         
-        return cardDeckMapper.toDto(cardDeckRepository.save(cardDeck));
+        // Actualizar el color del mazo basado en las cartas que contiene
+        deckService.updateDeckColor(deckId);
+        
+        return result;
     }
 
     /**
-     * Elimina una carta de un mazo y actualiza el contador total de cartas.
+     * Elimina una carta de un mazo, actualizando el contador total de cartas del mazo.
      * Lanza excepción si la carta no existe en el mazo.
      *
      * @param deckId ID del mazo
@@ -108,10 +136,17 @@ public class CardDeckServiceImpl implements CardDeckService {
         CardDeck cardDeck = cardDeckRepository.findByDeck_DeckIdAndCard_CardId(deckId, cardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Card not found in deck"));
 
-        // Actualizar contador total (restar las copias)
-        updateDeckTotalCards(cardDeck.getDeck(), -cardDeck.getNCopies());
+        Deck deck = cardDeck.getDeck();
+        
+        // Actualizar total de cartas en el mazo
+        int quantityToRemove = -cardDeck.getNCopies(); // Negativo porque estamos reduciendo
+        updateDeckTotalCards(deck, quantityToRemove);
 
+        // Eliminar la carta del mazo
         cardDeckRepository.delete(cardDeck);
+        
+        // Actualizar el color del mazo basado en las cartas que contiene
+        deckService.updateDeckColor(deckId);
     }
 
     @Override

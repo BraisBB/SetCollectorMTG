@@ -27,7 +27,7 @@ public class Deck {
     @Column(name = "game_type", nullable = false)
     private GameType gameType;
 
-    @Column(name = "deck_color", nullable = false, length = 30)
+    @Column(name = "deck_color", nullable = true, length = 30)
     private String deckColor;
 
     @Column(name = "total_cards", columnDefinition = "integer default 0")

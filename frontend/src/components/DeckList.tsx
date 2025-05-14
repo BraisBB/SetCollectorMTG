@@ -16,7 +16,7 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
   const [newDeck, setNewDeck] = useState<DeckCreateDto>({
     deckName: '',
     gameType: 'STANDARD',
-    deckColor: 'multicolor' // Valor por defecto, se actualizará según las cartas añadidas
+    deckColor: '' // Sin valor predeterminado
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -48,7 +48,7 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
     setNewDeck({
       deckName: '',
       gameType: 'STANDARD',
-      deckColor: 'multicolor'
+      deckColor: ''
     });
   };
 
@@ -83,7 +83,7 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
       setNewDeck({
         deckName: '',
         gameType: 'STANDARD',
-        deckColor: 'multicolor'
+        deckColor: ''
       });
       onDeckCreated();
     } catch (error) {
@@ -123,19 +123,29 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
               <h3>{deck.deckName}</h3>
               <div className="deck-info">
                 <span className="deck-type">{deck.gameType}</span>
-                <span className="deck-color">{deck.deckColor}</span>
+                <span className="deck-color">
+                  {deck.deckColor === null || deck.deckColor === '' ? 
+                    'Sin color (añade cartas)' : 
+                    deck.deckColor}
+                </span>
                 <span className="card-count">{deck.totalCards} cards</span>
               </div>
               <div className="deck-actions">
                 <button 
                   className="edit-button" 
-                  onClick={() => handleEditDeck(deck)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditDeck(deck);
+                  }}
                 >
                   Edit
                 </button>
                 <button 
                   className="delete-button" 
-                  onClick={() => handleDelete(deck.deckId)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(deck.deckId);
+                  }}
                 >
                   Delete
                 </button>

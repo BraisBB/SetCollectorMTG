@@ -35,47 +35,105 @@ const apiService = {
         userId = userIdFromToken;
       }
       
-      console.log(`Solicitando mazos del usuario ${userId}`);
-      return httpClient.get<Deck[]>(`/decks/user/${userId}`);
-    } catch (error: any) {
-      console.error(`Error al obtener mazos del usuario:`, error);
+      // Verificar si tenemos un identificador alternativo almacenado
+      const altIdentifier = localStorage.getItem('user_identifier');
       
-      // Datos simulados para desarrollo
-      const userIdForMocks = userId ?? authService.getUserId() ?? 1;
+      console.log(`Solicitando mazos del usuario ${userId}${altIdentifier ? ` (identificador alternativo: ${altIdentifier})` : ''}`);
+      
+      // Intento 1: Usar userId numérico
+      try {
+        console.log(`Intentando obtener mazos con ID numérico: ${userId}`);
+        const decks = await httpClient.get<Deck[]>(`/decks/user/${userId}`);
+        
+        if (Array.isArray(decks) && decks.length > 0) {
+          console.log(`Éxito! Se encontraron ${decks.length} mazos con ID numérico`);
+          return decks;
+        } else {
+          console.log('No se encontraron mazos con ID numérico');
+        }
+      } catch (error) {
+        console.error(`Error al obtener mazos con ID numérico: ${userId}`, error);
+      }
+      
+      // Intento 2: Usar identificador alternativo si está disponible
+      if (altIdentifier) {
+        try {
+          console.log(`Intentando obtener mazos con identificador alternativo: ${altIdentifier}`);
+          const decks = await httpClient.get<Deck[]>(`/decks/user/byUsername/${altIdentifier}`);
+          
+          if (Array.isArray(decks) && decks.length > 0) {
+            console.log(`Éxito! Se encontraron ${decks.length} mazos con identificador alternativo`);
+            return decks;
+          } else {
+            console.log('No se encontraron mazos con identificador alternativo');
+          }
+        } catch (error) {
+          console.error(`Error al obtener mazos con identificador alternativo: ${altIdentifier}`, error);
+        }
+      }
+      
+      // Intento 3: Usar endpoint alternativo que busque al usuario por cualquier identificador
+      try {
+        console.log(`Intentando obtener mazos con endpoint de fallback`);
+        const decks = await httpClient.get<Deck[]>('/decks/current-user');
+        
+        if (Array.isArray(decks) && decks.length > 0) {
+          console.log(`Éxito! Se encontraron ${decks.length} mazos con endpoint de fallback`);
+          return decks;
+        } else {
+          console.log('No se encontraron mazos con endpoint de fallback');
+        }
+      } catch (error) {
+        console.error('Error al obtener mazos con endpoint de fallback', error);
+      }
+      
+      // Si llegamos aquí, ningún intento funcionó
+      console.warn('Todos los intentos fallaron, devolviendo array vacío o datos simulados');
+      
+      // Devolver datos simulados en cualquier caso
+      console.log('Devolviendo datos simulados');
+      const userIdForMocks = userId;
       
       return [
         {
           deckId: 1,
-          deckName: 'Mazo Azul',
+          deckName: 'Mazo Azul (simulado)',
           gameType: 'STANDARD',
-          deckColor: 'U',
+          deckColor: 'blue',
           totalCards: 60,
           userId: userIdForMocks
         },
         {
           deckId: 2,
-          deckName: 'Mazo Rojo',
+          deckName: 'Mazo Rojo (simulado)',
           gameType: 'COMMANDER',
-          deckColor: 'R',
+          deckColor: 'red',
           totalCards: 100,
           userId: userIdForMocks
         },
         {
           deckId: 3,
-          deckName: 'Mazo Verde',
+          deckName: 'Mazo Verde (simulado)',
           gameType: 'MODERN',
-          deckColor: 'G',
+          deckColor: 'green',
           totalCards: 60,
           userId: userIdForMocks
         }
       ];
+    } catch (error: any) {
+      console.error(`Error al obtener mazos del usuario:`, error);
+      return [];
     }
   },
 
   getDeckById: async (deckId: number): Promise<Deck> => {
     try {
       console.log(`Solicitando mazo ${deckId}`);
-      return httpClient.get<Deck>(`/decks/${deckId}`);
+      const deck = await httpClient.get<Deck>(`/decks/${deckId}`);
+      
+      // No actualizamos automáticamente los colores nulos
+      // Se actualizarán cuando se añadan cartas al mazo
+      return deck;
     } catch (error) {
       console.error('Error al obtener mazo por ID:', error);
       
@@ -84,7 +142,7 @@ const apiService = {
         deckId: deckId,
         deckName: 'Mazo no encontrado',
         gameType: 'STANDARD',
-        deckColor: 'U',
+        deckColor: '',
         totalCards: 0,
         userId: authService.getUserId() ?? 1
       };

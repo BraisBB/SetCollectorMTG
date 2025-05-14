@@ -19,7 +19,6 @@ public class DeckDto {
     @NotNull(message = "The game type is mandatory")
     private GameType gameType;
 
-    @NotBlank(message = "The deck color is mandatory")
     private String deckColor;
 
     private Integer totalCards;

@@ -16,6 +16,5 @@ public class DeckCreateDto {
     @NotNull(message = "Game type is required")
     private GameType gameType;
 
-    @NotBlank(message = "Deck color is required")
     private String deckColor;
 }

@@ -228,20 +228,81 @@ class AuthService {
 
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
+      console.log("Token payload completo:", payload);
       
-      // Intentar diferentes propiedades donde puede estar el ID
-      if (payload.sub) {
-        return parseInt(payload.sub, 10);
-      }
-      if (payload.user_id) {
-        return parseInt(payload.user_id, 10);
+      // Extraer identificador de la mejor fuente disponible
+      let userId = null;
+      
+      // Prioridad 1: preferred_username o username exacto si existe
+      if (payload.preferred_username) {
+        console.log("Usando preferred_username como identificador:", payload.preferred_username);
+        userId = payload.preferred_username;
+      } else if (payload.username) {
+        console.log("Usando username como identificador:", payload.username);
+        userId = payload.username;
       }
       
-      return null;
+      // Prioridad 2: Identificadores numéricos del token
+      else if (payload.sub) {
+        console.log("Usando subject (sub) como identificador:", payload.sub);
+        userId = payload.sub;
+        // Intentar convertir a número si parece numérico
+        if (!isNaN(parseInt(payload.sub, 10))) {
+          userId = parseInt(payload.sub, 10);
+        }
+      } else if (payload.user_id) {
+        console.log("Usando user_id como identificador:", payload.user_id);
+        userId = payload.user_id;
+        // Intentar convertir a número si parece numérico
+        if (!isNaN(parseInt(payload.user_id, 10))) {
+          userId = parseInt(payload.user_id, 10);
+        }
+      }
+      
+      // Prioridad 3: Fallback a otros campos que puedan contener el ID
+      else if (payload.id) {
+        console.log("Usando id como identificador:", payload.id);
+        userId = payload.id;
+      } else if (payload.email) {
+        console.log("Usando email como identificador:", payload.email);
+        userId = payload.email;
+      }
+      
+      // Caso de no encontrar un ID apropiado
+      if (userId === null) {
+        console.error("No se pudo identificar un ID de usuario en el token:", payload);
+        return null;
+      }
+      
+      // Si hemos llegado a una cadena no numérica, devolver como está para que el backend lo maneje
+      if (typeof userId === 'string' && isNaN(parseInt(userId, 10))) {
+        console.log("Devolviendo identificador no numérico:", userId);
+        localStorage.setItem('user_identifier', userId);
+        // Para mantener compatibilidad con el código que espera un número, usaremos un hash simple
+        return this.hashStringToNumber(userId);
+      }
+      
+      // En caso de ID numérico, convertir y devolver
+      console.log("Devolviendo ID numérico:", userId);
+      return typeof userId === 'number' ? userId : parseInt(userId, 10);
     } catch (error) {
       console.error('Error parsing token:', error);
       return null;
     }
+  }
+  
+  /**
+   * Genera un hash numérico básico a partir de una cadena
+   * Para casos donde necesitamos un ID numérico pero solo tenemos una cadena
+   */
+  private hashStringToNumber(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convertir a entero de 32 bits
+    }
+    return Math.abs(hash); // Devolver valor absoluto para asegurar número positivo
   }
 
   /**

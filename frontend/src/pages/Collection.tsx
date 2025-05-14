@@ -600,14 +600,31 @@ const Collection = () => {
             {decksLoading ? (
               <div className="collection-loading">
                 <div className="spinner"></div>
-                <p>Loading your decks...</p>
+                <p>Cargando tus mazos...</p>
               </div>
             ) : (
-              <DeckList 
-                decks={Array.isArray(decks) ? decks : []} 
-                onDeckCreated={handleDeckCreated}
-                onDeckDeleted={handleDeckCreated}
-              />
+              <>
+                {Array.isArray(decks) && decks.length > 0 ? (
+                  <DeckList 
+                    decks={decks} 
+                    onDeckCreated={handleDeckCreated}
+                    onDeckDeleted={handleDeckCreated}
+                  />
+                ) : (
+                  <div className="empty-collection">
+                    <p>No tienes mazos creados. ¡Crea tu primer mazo para empezar!</p>
+                    <button 
+                      className="browse-cards-btn"
+                      onClick={() => {
+                        const deckTab = document.querySelector('.tab-button:nth-child(2)');
+                        if (deckTab) (deckTab as HTMLElement).click();
+                      }}
+                    >
+                      Crear Mazo
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}

@@ -4,6 +4,7 @@ import com.setcollectormtg.setcollectormtg.dto.DeckCreateDto;
 import com.setcollectormtg.setcollectormtg.dto.DeckDto;
 import com.setcollectormtg.setcollectormtg.exception.ResourceNotFoundException;
 import com.setcollectormtg.setcollectormtg.mapper.DeckMapper;
+import com.setcollectormtg.setcollectormtg.model.CardDeck;
 import com.setcollectormtg.setcollectormtg.model.Deck;
 import com.setcollectormtg.setcollectormtg.model.User;
 import com.setcollectormtg.setcollectormtg.repository.CardDeckRepository;
@@ -75,6 +76,10 @@ public class DeckServiceImpl implements DeckService {
 
         Deck deck = deckMapper.toEntity(deckCreateDto, user);
         deck.setTotalCards(0); // Inicializar contador de cartas
+        
+        // No asignar color por defecto, dejar el valor NULL
+        // El color se actualizará automáticamente cuando se agreguen cartas
+        
         Deck savedDeck = deckRepository.save(deck);
         return deckMapper.toDto(savedDeck);
     }
@@ -142,25 +147,47 @@ public class DeckServiceImpl implements DeckService {
     public List<DeckDto> getDecksByUser(Long userId) {
         // Intentar tratar el userId como un posible ID de Keycloak (String)
         String userIdStr = userId.toString();
-        log.debug("Buscando mazos para ID: {}", userIdStr);
+        log.info("Buscando mazos para ID: {}", userIdStr);
+        
+        // Verificar existencia de usuarios en la base de datos
+        log.info("Total de usuarios en la base de datos: {}", userRepository.count());
         
         // Primero verificamos si es un ID de Keycloak
         Optional<User> userByKeycloak = userRepository.findByKeycloakId(userIdStr);
         
         if (userByKeycloak.isPresent()) {
             // Si encontramos al usuario por su ID de Keycloak, usamos su ID interno
-            Long internalUserId = userByKeycloak.get().getUserId();
-            log.debug("Usuario encontrado por ID de Keycloak: {}. Usando ID interno: {}", userIdStr, internalUserId);
-            return deckRepository.findByUser_UserId(internalUserId).stream()
+            User user = userByKeycloak.get();
+            Long internalUserId = user.getUserId();
+            log.info("Usuario encontrado por ID de Keycloak: {}. Usando ID interno: {}, Username: {}", userIdStr, internalUserId, user.getUsername());
+            
+            // Buscar mazos por ID de usuario interno
+            List<Deck> decks = deckRepository.findByUser_UserId(internalUserId);
+            log.info("Se encontraron {} mazos para el usuario con ID interno {}", decks.size(), internalUserId);
+            
+            return decks.stream()
                     .map(deckMapper::toDto)
                     .toList();
         }
         
-        // Si no es un ID de Keycloak, intentamos el comportamiento normal por userId
-        log.debug("Usuario no encontrado por ID de Keycloak, buscando por ID interno: {}", userId);
-        return deckRepository.findByUser_UserId(userId).stream()
-                .map(deckMapper::toDto)
-                .toList();
+        // Si no es un ID de Keycloak, verificamos si existe un usuario con ese ID interno
+        Optional<User> userById = userRepository.findById(userId);
+        if (userById.isPresent()) {
+            User user = userById.get();
+            log.info("Usuario encontrado por ID interno: {}, Username: {}, KeycloakId: {}", userId, user.getUsername(), user.getKeycloakId());
+            
+            // Buscar mazos por ID de usuario interno
+            List<Deck> decks = deckRepository.findByUser_UserId(userId);
+            log.info("Se encontraron {} mazos para el usuario con ID interno {}", decks.size(), userId);
+            
+            return decks.stream()
+                    .map(deckMapper::toDto)
+                    .toList();
+        }
+        
+        // Ninguna búsqueda tuvo éxito, usuario no encontrado
+        log.warn("Usuario no encontrado por ID de Keycloak ni por ID interno: {}", userId);
+        return List.of(); // Devolver lista vacía
     }
 
     @Override
@@ -182,5 +209,127 @@ public class DeckServiceImpl implements DeckService {
         }
         
         return deckRepository.findByUser_UserId(userId, pageable).map(deckMapper::toDto);
+    }
+    
+    /**
+     * Analiza las cartas en un mazo y determina su color automáticamente
+     * basado en los símbolos de mana de las cartas.
+     * 
+     * @param deckId ID del mazo a actualizar
+     * @return DTO del mazo con el color actualizado
+     */
+    @Override
+    @Transactional
+    public DeckDto updateDeckColor(Long deckId) {
+        Deck deck = deckRepository.findById(deckId)
+                .orElseThrow(() -> new ResourceNotFoundException("Deck not found with id: " + deckId));
+        
+        // Si el mazo no tiene cartas, mantener el color como NULL
+        if (deck.getCardDecks().isEmpty()) {
+            log.info("El mazo con ID {} no tiene cartas, manteniendo color como NULL", deckId);
+            deck.setDeckColor(null);
+            return deckMapper.toDto(deckRepository.save(deck));
+        }
+        
+        // Mapeamos los símbolos de mana a colores
+        boolean hasWhite = false;
+        boolean hasBlue = false;
+        boolean hasBlack = false;
+        boolean hasRed = false;
+        boolean hasGreen = false;
+        
+        // Analizamos todas las cartas en el mazo
+        for (CardDeck cardDeck : deck.getCardDecks()) {
+            String manaCost = cardDeck.getCard().getManaCost();
+            if (manaCost == null) continue;
+            
+            // Buscar símbolos de color en el coste de maná
+            if (manaCost.contains("{W}")) hasWhite = true;
+            if (manaCost.contains("{U}")) hasBlue = true;
+            if (manaCost.contains("{B}")) hasBlack = true;
+            if (manaCost.contains("{R}")) hasRed = true;
+            if (manaCost.contains("{G}")) hasGreen = true;
+        }
+        
+        // Contar cuántos colores diferentes hay
+        int colorCount = 0;
+        if (hasWhite) colorCount++;
+        if (hasBlue) colorCount++;
+        if (hasBlack) colorCount++;
+        if (hasRed) colorCount++;
+        if (hasGreen) colorCount++;
+        
+        // Determinar el color del mazo
+        StringBuilder deckColor = new StringBuilder();
+        
+        if (colorCount == 0) {
+            deck.setDeckColor("colorless");
+        } else if (colorCount > 2) {
+            deck.setDeckColor("multicolor");
+        } else {
+            // Para 1 o 2 colores, especificamos cuáles son
+            if (hasWhite) deckColor.append("white ");
+            if (hasBlue) deckColor.append("blue ");
+            if (hasBlack) deckColor.append("black ");
+            if (hasRed) deckColor.append("red ");
+            if (hasGreen) deckColor.append("green ");
+            // Eliminar el espacio final si existe
+            if (deckColor.length() > 0 && deckColor.charAt(deckColor.length() - 1) == ' ') {
+                deckColor.deleteCharAt(deckColor.length() - 1);
+            }
+            deck.setDeckColor(deckColor.toString());
+        }
+        
+        log.info("Actualizando color del mazo con ID {}: {}", deckId, deck.getDeckColor());
+        
+        return deckMapper.toDto(deckRepository.save(deck));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DeckDto> getDecksByUsername(String username) {
+        log.info("Buscando mazos para usuario con username: {}", username);
+        
+        Optional<User> userByUsername = userRepository.findByUsername(username);
+        
+        if (userByUsername.isPresent()) {
+            User user = userByUsername.get();
+            log.info("Usuario encontrado por username: {}, ID: {}, KeycloakId: {}", 
+                    username, user.getUserId(), user.getKeycloakId());
+            
+            List<Deck> decks = deckRepository.findByUser_UserId(user.getUserId());
+            log.info("Se encontraron {} mazos para el usuario con username {}", decks.size(), username);
+            
+            return decks.stream()
+                    .map(deckMapper::toDto)
+                    .toList();
+        }
+        
+        log.warn("No se encontró usuario con username: {}", username);
+        return List.of();
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<DeckDto> getDecksByKeycloakId(String keycloakId) {
+        log.info("Buscando mazos para usuario con keycloakId: {}", keycloakId);
+        
+        Optional<User> userByKeycloak = userRepository.findByKeycloakId(keycloakId);
+        
+        if (userByKeycloak.isPresent()) {
+            User user = userByKeycloak.get();
+            log.info("Usuario encontrado por keycloakId: {}, ID: {}, Username: {}", 
+                    keycloakId, user.getUserId(), user.getUsername());
+            
+            List<Deck> decks = deckRepository.findByUser_UserId(user.getUserId());
+            log.info("Se encontraron {} mazos para el usuario con keycloakId {}", decks.size(), keycloakId);
+            
+            return decks.stream()
+                    .map(deckMapper::toDto)
+                    .toList();
+        }
+        
+        log.warn("No se encontró usuario con keycloakId: {}", keycloakId);
+        return List.of();
     }
 }
