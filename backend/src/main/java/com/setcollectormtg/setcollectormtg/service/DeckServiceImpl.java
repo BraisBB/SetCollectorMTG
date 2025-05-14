@@ -59,29 +59,64 @@ public class DeckServiceImpl implements DeckService {
     @Override
     @Transactional
     public DeckDto createDeck(DeckCreateDto deckCreateDto) {
-        // Obtener el usuario autenticado
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Jwt jwt = (Jwt) authentication.getPrincipal();
-        String keycloakId = jwt.getSubject();
+        try {
+            log.debug("Iniciando proceso de creación de mazo: {}", deckCreateDto);
+            
+            // Obtener el usuario autenticado
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated()) {
+                log.error("Intento de crear mazo sin autenticación");
+                throw new IllegalStateException("User authentication required");
+            }
+            
+            if (!(authentication.getPrincipal() instanceof Jwt)) {
+                log.error("Principal no es un JWT: {}", authentication.getPrincipal().getClass().getName());
+                throw new IllegalStateException("JWT authentication required");
+            }
+            
+            Jwt jwt = (Jwt) authentication.getPrincipal();
+            String keycloakId = jwt.getSubject();
+            log.debug("ID de Keycloak del usuario autenticado: {}", keycloakId);
 
-        // Buscar el usuario por su keycloakId
-        User user = userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+            // Buscar el usuario por su keycloakId
+            User user = userRepository.findByKeycloakId(keycloakId)
+                    .orElseThrow(() -> {
+                        log.error("No se encontró usuario con keycloakId: {}", keycloakId);
+                        return new ResourceNotFoundException("Usuario no encontrado con keycloakId: " + keycloakId);
+                    });
+            
+            log.debug("Usuario encontrado: ID={}, username={}", user.getUserId(), user.getUsername());
 
-        // Verificar si ya existe un deck con el mismo nombre para este usuario
-        if (deckRepository.existsByDeckNameAndUser_UserId(deckCreateDto.getDeckName(), user.getUserId())) {
-            throw new IllegalArgumentException(
-                    "Deck with name '" + deckCreateDto.getDeckName() + "' already exists for this user");
+            // Verificar si ya existe un deck con el mismo nombre para este usuario
+            if (deckRepository.existsByDeckNameAndUser_UserId(deckCreateDto.getDeckName(), user.getUserId())) {
+                log.warn("Ya existe un mazo con nombre '{}' para el usuario {}", 
+                        deckCreateDto.getDeckName(), user.getUsername());
+                throw new IllegalArgumentException(
+                        "Deck with name '" + deckCreateDto.getDeckName() + "' already exists for this user");
+            }
+
+            // Si gameType es null, establecer valor por defecto
+            if (deckCreateDto.getGameType() == null) {
+                log.debug("GameType no especificado, usando STANDARD por defecto");
+                deckCreateDto.setGameType("STANDARD");
+            }
+            
+            log.debug("Creando entidad Deck desde DTO");
+            Deck deck = deckMapper.toEntity(deckCreateDto, user);
+            deck.setTotalCards(0); // Inicializar contador de cartas
+            
+            // No asignar color por defecto, dejar el valor NULL
+            // El color se actualizará automáticamente cuando se agreguen cartas
+            
+            log.debug("Guardando mazo en la base de datos");
+            Deck savedDeck = deckRepository.save(deck);
+            log.info("Mazo creado exitosamente con ID: {}", savedDeck.getDeckId());
+            
+            return deckMapper.toDto(savedDeck);
+        } catch (Exception e) {
+            log.error("Error al crear mazo: {}", e.getMessage(), e);
+            throw e;
         }
-
-        Deck deck = deckMapper.toEntity(deckCreateDto, user);
-        deck.setTotalCards(0); // Inicializar contador de cartas
-        
-        // No asignar color por defecto, dejar el valor NULL
-        // El color se actualizará automáticamente cuando se agreguen cartas
-        
-        Deck savedDeck = deckRepository.save(deck);
-        return deckMapper.toDto(savedDeck);
     }
 
     /**

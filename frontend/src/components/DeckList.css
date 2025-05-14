@@ -190,6 +190,8 @@
   max-width: 500px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   color: #ffffff;
+  z-index: 1001;
+  position: relative;
 }
 
 .modal-content h2 {
@@ -239,6 +241,13 @@
   margin-top: 2rem;
 }
 
+.form-actions button {
+  position: relative;
+  z-index: 1002;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
 .cancel-button,
 .create-button {
   padding: 0.8rem 1.5rem;
@@ -264,26 +273,30 @@
   background-color: #e65100;
   color: white;
   border: none;
+  font-weight: 500;
+  min-width: 100px;
+  position: relative;
+  z-index: 10;
 }
 
 .create-button:hover {
   background-color: #ff8f00;
 }
 
-.create-button:disabled,
-.cancel-button:disabled {
-  opacity: 0.6;
+.create-button:disabled {
+  background-color: #ccc;
   cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .error-message {
   background-color: rgba(220, 53, 69, 0.1);
-  border: 1px solid #dc3545;
-  color: #ff6b6b;
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  color: #dc3545;
   padding: 0.8rem;
-  margin-bottom: 1.5rem;
   border-radius: 4px;
-  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
   font-family: 'Noto Sans', sans-serif;
 }
 

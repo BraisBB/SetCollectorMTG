@@ -1,5 +1,7 @@
 package com.setcollectormtg.setcollectormtg.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.setcollectormtg.setcollectormtg.enums.GameType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -17,4 +19,25 @@ public class DeckCreateDto {
     private GameType gameType;
 
     private String deckColor;
+    
+    /**
+     * Permite establecer gameType tanto desde un enum como desde un String
+     * para facilitar la deserialización desde JSON
+     */
+    @JsonSetter("gameType")
+    public void setGameType(Object gameType) {
+        if (gameType instanceof GameType) {
+            this.gameType = (GameType) gameType;
+        } else if (gameType instanceof String) {
+            try {
+                this.gameType = GameType.valueOf((String) gameType);
+            } catch (IllegalArgumentException e) {
+                // Si no es un valor válido, establecer STANDARD como valor por defecto
+                this.gameType = GameType.STANDARD;
+            }
+        } else {
+            // Valor por defecto
+            this.gameType = GameType.STANDARD;
+        }
+    }
 }

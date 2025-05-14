@@ -56,25 +56,24 @@ const Collection = () => {
       setDecksLoading(true);
       setDecksError(null);
       
-      try {
-        // Obtener el ID del usuario actual desde el token JWT
-        const currentUserId = authService.getUserId();
-        if (!currentUserId) {
-          throw new Error('No se pudo obtener el ID del usuario');
+      if (isAuthenticated) {
+        try {
+          const userId = authService.getUserIdentifier();
+          console.log("Fetching decks for user:", userId);
+          const userDecks = await apiService.getUserDecks();
+          console.log("Received user decks:", userDecks);
+          setDecks(Array.isArray(userDecks) ? userDecks : []);
+        } catch (error) {
+          console.error("Error fetching user decks:", error);
+          setDecksError('Failed to load decks. Please try again.');
+          setDecks([]);
         }
-        
-        setUserId(currentUserId);
-        
-        const userDecks = await apiService.getUserDecks(currentUserId);
-        console.log('Received user decks:', userDecks);
-        // Asegurarse de que decks siempre sea un array
-        setDecks(Array.isArray(userDecks) ? userDecks : []);
-      } catch (err: any) {
-        console.error('Error fetching user decks:', err);
-        setDecksError('Failed to load decks. Please try again.');
-      } finally {
-        setDecksLoading(false);
+      } else {
+        console.warn("User not authenticated, cannot fetch decks");
+        setDecks([]);
       }
+      
+      setDecksLoading(false);
     };
     
     fetchUserDecks();

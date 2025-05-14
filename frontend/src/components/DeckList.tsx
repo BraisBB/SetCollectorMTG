@@ -43,6 +43,7 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
   };
 
   const openCreateModal = () => {
+    console.log("Abriendo modal para crear mazo");
     setIsModalOpen(true);
     setError(null);
     setNewDeck({
@@ -53,6 +54,7 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
   };
 
   const closeModal = () => {
+    console.log("Cerrando modal");
     setIsModalOpen(false);
   };
 
@@ -66,33 +68,80 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Formulario enviado, evitando comportamiento por defecto");
     setLoading(true);
     setError(null);
     
     try {
-      const userId = authService.getUserId();
-      if (!userId) {
-        throw new Error('User ID not found');
+      // Validación de campos obligatorios
+      if (!newDeck.deckName?.trim()) {
+        console.warn("Error de validación: Nombre de mazo vacío");
+        setError('El nombre del mazo es obligatorio');
+        setLoading(false);
+        return;
       }
       
-      await apiService.createDeck({
-        ...newDeck
+      console.log("Validación de formulario completada correctamente");
+      
+      // Obtener ID de usuario
+      const userId = authService.getUserIdentifier();
+      console.log("ID de usuario autenticado:", userId);
+      
+      if (!userId) {
+        console.error("Error: No se pudo obtener el ID de usuario");
+        throw new Error('No se pudo determinar el ID del usuario');
+      }
+      
+      // Asegurarnos que gameType sea un valor válido
+      if (newDeck.gameType !== 'STANDARD' && newDeck.gameType !== 'COMMANDER') {
+        console.warn(`Tipo de mazo no reconocido: ${newDeck.gameType}, usando STANDARD por defecto`);
+        newDeck.gameType = 'STANDARD';
+      }
+      
+      console.log("Enviando petición al API:", {
+        deckName: newDeck.deckName,
+        gameType: newDeck.gameType,
+        deckColor: newDeck.deckColor
       });
       
-      setIsModalOpen(false);
-      setNewDeck({
-        deckName: '',
-        gameType: 'STANDARD',
-        deckColor: ''
-      });
-      onDeckCreated();
-    } catch (error) {
-      if (error instanceof Error) {
-        console.error('Error creating deck:', error.message);
-        setError(error.message);
-      } else {
-        console.error('Unknown error creating deck');
-        setError('Failed to create deck. Please try again.');
+      try {
+        const createdDeck = await apiService.createDeck({
+          ...newDeck
+        });
+        
+        console.log("Mazo creado con éxito:", createdDeck);
+        
+        // Cerrar modal y resetear formulario
+        setIsModalOpen(false);
+        setNewDeck({
+          deckName: '',
+          gameType: 'STANDARD',
+          deckColor: ''
+        });
+        
+        // Notificar al componente padre
+        console.log("Notificando creación exitosa al componente padre");
+        onDeckCreated();
+      } catch (apiError: any) {
+        console.error("Error específico de la API al crear mazo:", apiError);
+        if (apiError.response) {
+          console.error("Datos de respuesta:", apiError.response.data);
+          console.error("Estado HTTP:", apiError.response.status);
+          setError(`Error del servidor: ${apiError.response.data?.message || apiError.response.statusText || 'Error desconocido'}`);
+        } else {
+          setError(`Error de red: ${apiError.message || 'No se pudo conectar con el servidor'}`);
+        }
+        throw apiError; // Propagar para el catch general
+      }
+    } catch (error: any) {
+      console.error('Error general al crear mazo:', error);
+      
+      if (!error.handledAlready) {
+        if (error instanceof Error) {
+          setError(error.message);
+        } else {
+          setError('Error desconocido al crear el mazo');
+        }
       }
     } finally {
       setLoading(false);
@@ -103,14 +152,41 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
     <div className="deck-list-container">
       <div className="deck-list-header">
         <h2>My Decks</h2>
-        <button className="create-deck-button" onClick={openCreateModal}>
-          Create Deck
+        <button 
+          className="create-deck-button" 
+          onClick={() => {
+            console.log("Botón para crear mazo clickeado");
+            openCreateModal();
+          }}
+          style={{ 
+            padding: '0.8rem 1.5rem',
+            fontSize: '1.1rem',
+            fontWeight: 'bold',
+            cursor: 'pointer'
+          }}
+        >
+          Create Deck +
         </button>
       </div>
       
       {decks.length === 0 ? (
         <div className="no-decks-message">
           <p>You don't have any decks yet. Create your first deck to start building!</p>
+          <button 
+            onClick={() => {
+              console.log("Botón alternativo para crear mazo clickeado");
+              openCreateModal();
+            }}
+            className="create-deck-button"
+            style={{ 
+              marginTop: '1rem',
+              padding: '1rem 2rem',
+              fontSize: '1.2rem',
+              display: 'inline-block'
+            }}
+          >
+            Create Your First Deck
+          </button>
         </div>
       ) : (
         <div className="decks-grid">
@@ -157,15 +233,69 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
       
       {/* Modal para crear nuevo deck */}
       {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h2>Create New Deck</h2>
+        <div 
+          className="modal-overlay" 
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999
+          }}
+        >
+          <div 
+            className="modal-content" 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: '#494949',
+              borderRadius: '8px',
+              padding: '2rem',
+              width: '90%',
+              maxWidth: '500px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+              color: '#ffffff',
+              zIndex: 10000,
+              position: 'relative'
+            }}
+          >
+            <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Create New Deck</h2>
             
-            {error && <div className="error-message">{error}</div>}
+            {error && (
+              <div 
+                className="error-message"
+                style={{
+                  backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                  border: '1px solid rgba(220, 53, 69, 0.3)',
+                  color: '#dc3545',
+                  padding: '0.8rem',
+                  borderRadius: '4px',
+                  marginBottom: '1.5rem'
+                }}
+              >
+                {error}
+              </div>
+            )}
             
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label htmlFor="deckName">Deck Name</label>
+            <form id="create-deck-form" onSubmit={handleSubmit}>
+              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <label 
+                  htmlFor="deckName"
+                  style={{ 
+                    display: 'block', 
+                    marginBottom: '0.5rem',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Deck Name
+                </label>
                 <input
                   type="text"
                   id="deckName"
@@ -174,29 +304,82 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
                   onChange={handleInputChange}
                   placeholder="Enter deck name"
                   disabled={loading}
+                  minLength={3}
+                  maxLength={50}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.8rem',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '1rem',
+                    backgroundColor: '#ffffff',
+                    color: '#333'
+                  }}
                 />
               </div>
               
-              <div className="form-group">
-                <label htmlFor="gameType">Game Type</label>
+              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <label 
+                  htmlFor="gameType"
+                  style={{ 
+                    display: 'block', 
+                    marginBottom: '0.5rem',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Game Type
+                </label>
                 <select
                   id="gameType"
                   name="gameType"
                   value={newDeck.gameType}
                   onChange={handleInputChange}
                   disabled={loading}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.8rem',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '1rem',
+                    backgroundColor: '#ffffff',
+                    color: '#333'
+                  }}
                 >
                   <option value="STANDARD">Standard</option>
                   <option value="COMMANDER">Commander</option>
                 </select>
               </div>
               
-              <div className="form-actions">
+              <div 
+                className="form-actions"
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '1rem',
+                  marginTop: '2rem'
+                }}
+              >
                 <button 
                   type="button" 
                   className="cancel-button" 
-                  onClick={closeModal}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeModal();
+                  }}
                   disabled={loading}
+                  style={{
+                    padding: '0.8rem 1.5rem',
+                    borderRadius: '4px',
+                    fontSize: '1rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    backgroundColor: 'transparent',
+                    border: '1px solid #ddd',
+                    color: '#ddd'
+                  }}
                 >
                   Cancel
                 </button>
@@ -204,6 +387,17 @@ const DeckList: React.FC<DeckListProps> = ({ decks, onDeckCreated, onDeckDeleted
                   type="submit" 
                   className="create-button"
                   disabled={loading}
+                  style={{
+                    padding: '0.8rem 1.5rem',
+                    borderRadius: '4px',
+                    fontSize: '1rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    backgroundColor: '#e65100',
+                    color: 'white',
+                    border: 'none',
+                    minWidth: '120px'
+                  }}
                 >
                   {loading ? 'Creating...' : 'Create Deck'}
                 </button>

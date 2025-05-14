@@ -81,7 +81,7 @@ httpClient.interceptors.response.use(
           console.log('Error 403: Verificando si podemos resolver usando ID alternativo...');
           
           // Si hay un userId en el config, podríamos estar usando un ID numérico incorrecto
-          const userId = authService.getUserId();
+          const userId = authService.getUserIdentifier();
           const username = localStorage.getItem('user_identifier');
           
           if (username && userId && url.includes(`/user/${userId}`)) {

@@ -138,7 +138,79 @@ class AuthService {
   }
 
   /**
-   * Guarda los tokens en el localStorage
+   * Obtiene el ID del usuario del token JWT
+   * Para interacciones con la API, preferimos usar username
+   */
+  getUserIdentifier(): string | null {
+    // Preferimos usar el username como identificador principal para la API
+    const username = localStorage.getItem('username');
+    if (username) {
+      return username;
+    }
+    
+    // Si por alguna razón no tenemos el username, intentamos con keycloakId como fallback
+    const keycloakId = localStorage.getItem('user_keycloak_id');
+    if (keycloakId) {
+      return keycloakId;
+    }
+    
+    // Último recurso: intentar extraerlo del token
+    const token = localStorage.getItem('access_token');
+    if (!token) return null;
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      
+      // Extraer identificadores por orden de preferencia
+      if (payload.preferred_username) {
+        localStorage.setItem('username', payload.preferred_username);
+        return payload.preferred_username;
+      }
+      
+      if (payload.sub) {
+        localStorage.setItem('user_keycloak_id', payload.sub);
+        return payload.sub;
+      }
+      
+      console.warn("No se encontró ningún identificador adecuado en el token");
+      return null;
+    } catch (error) {
+      console.error("Error al decodificar token o extraer identificador:", error);
+      return null;
+    }
+  }
+  
+  /**
+   * Obtiene el ID de Keycloak del usuario (UUID)
+   * Para operaciones internas que requieren específicamente el UUID de Keycloak
+   */
+  getKeycloakId(): string | null {
+    // Primero intentar desde localStorage
+    const keycloakId = localStorage.getItem('user_keycloak_id');
+    if (keycloakId) {
+      return keycloakId;
+    }
+    
+    // Intentar extraerlo del token
+    const token = localStorage.getItem('access_token');
+    if (!token) return null;
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.sub) {
+        localStorage.setItem('user_keycloak_id', payload.sub);
+        return payload.sub;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("Error al extraer keycloakId:", error);
+      return null;
+    }
+  }
+  
+  /**
+   * Guarda los tokens en el localStorage y extrae información del usuario
    */
   private setSession(authResult: AuthTokens): void {
     const expiresAt = Date.now() + authResult.expires_in * 1000;
@@ -146,8 +218,35 @@ class AuthService {
     localStorage.setItem('access_token', authResult.access_token);
     localStorage.setItem('refresh_token', authResult.refresh_token);
     localStorage.setItem('expires_at', expiresAt.toString());
+    
+    // Decodificar el token para obtener información del usuario
+    try {
+      const payload = JSON.parse(atob(authResult.access_token.split('.')[1]));
+      console.log("Token payload:", payload);
+      
+      // Guardar todos los identificadores disponibles
+      if (payload.preferred_username) {
+        localStorage.setItem('username', payload.preferred_username);
+        console.log("Username guardado:", payload.preferred_username);
+      }
+      
+      if (payload.name) {
+        localStorage.setItem('display_name', payload.name);
+      }
+      
+      if (payload.sub) {
+        localStorage.setItem('user_keycloak_id', payload.sub);
+        console.log("Keycloak ID guardado:", payload.sub);
+      }
+      
+      if (payload.email) {
+        localStorage.setItem('email', payload.email);
+      }
+    } catch (error) {
+      console.error('Error al decodificar el token:', error);
+    }
   }
-
+  
   /**
    * Elimina los tokens del localStorage
    */
@@ -156,6 +255,10 @@ class AuthService {
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('expires_at');
     localStorage.removeItem('username');
+    localStorage.removeItem('user_keycloak_id');
+    localStorage.removeItem('display_name');
+    localStorage.removeItem('email');
+    localStorage.removeItem('user_internal_id');
   }
 
   /**
@@ -217,92 +320,6 @@ class AuthService {
       this.clearSession();
       return false;
     }
-  }
-
-  /**
-   * Obtiene el ID del usuario del token JWT
-   */
-  getUserId(): number | null {
-    const token = localStorage.getItem('access_token');
-    if (!token) return null;
-
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      console.log("Token payload completo:", payload);
-      
-      // Extraer identificador de la mejor fuente disponible
-      let userId = null;
-      
-      // Prioridad 1: preferred_username o username exacto si existe
-      if (payload.preferred_username) {
-        console.log("Usando preferred_username como identificador:", payload.preferred_username);
-        userId = payload.preferred_username;
-      } else if (payload.username) {
-        console.log("Usando username como identificador:", payload.username);
-        userId = payload.username;
-      }
-      
-      // Prioridad 2: Identificadores numéricos del token
-      else if (payload.sub) {
-        console.log("Usando subject (sub) como identificador:", payload.sub);
-        userId = payload.sub;
-        // Intentar convertir a número si parece numérico
-        if (!isNaN(parseInt(payload.sub, 10))) {
-          userId = parseInt(payload.sub, 10);
-        }
-      } else if (payload.user_id) {
-        console.log("Usando user_id como identificador:", payload.user_id);
-        userId = payload.user_id;
-        // Intentar convertir a número si parece numérico
-        if (!isNaN(parseInt(payload.user_id, 10))) {
-          userId = parseInt(payload.user_id, 10);
-        }
-      }
-      
-      // Prioridad 3: Fallback a otros campos que puedan contener el ID
-      else if (payload.id) {
-        console.log("Usando id como identificador:", payload.id);
-        userId = payload.id;
-      } else if (payload.email) {
-        console.log("Usando email como identificador:", payload.email);
-        userId = payload.email;
-      }
-      
-      // Caso de no encontrar un ID apropiado
-      if (userId === null) {
-        console.error("No se pudo identificar un ID de usuario en el token:", payload);
-        return null;
-      }
-      
-      // Si hemos llegado a una cadena no numérica, devolver como está para que el backend lo maneje
-      if (typeof userId === 'string' && isNaN(parseInt(userId, 10))) {
-        console.log("Devolviendo identificador no numérico:", userId);
-        localStorage.setItem('user_identifier', userId);
-        // Para mantener compatibilidad con el código que espera un número, usaremos un hash simple
-        return this.hashStringToNumber(userId);
-      }
-      
-      // En caso de ID numérico, convertir y devolver
-      console.log("Devolviendo ID numérico:", userId);
-      return typeof userId === 'number' ? userId : parseInt(userId, 10);
-    } catch (error) {
-      console.error('Error parsing token:', error);
-      return null;
-    }
-  }
-  
-  /**
-   * Genera un hash numérico básico a partir de una cadena
-   * Para casos donde necesitamos un ID numérico pero solo tenemos una cadena
-   */
-  private hashStringToNumber(str: string): number {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convertir a entero de 32 bits
-    }
-    return Math.abs(hash); // Devolver valor absoluto para asegurar número positivo
   }
 
   /**

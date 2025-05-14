@@ -14,6 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -56,6 +59,32 @@ public class DeckController {
         return ResponseEntity.ok(deckService.getDecksByUsername(username));
     }
     
+    @GetMapping("/user/keycloak/{keycloakId}")
+    @PreAuthorize("hasAuthority('USER')")
+    public ResponseEntity<List<DeckDto>> getDecksByKeycloakId(@PathVariable String keycloakId, Authentication authentication) {
+        log.debug("Usuario {} solicitando mazos para usuario con keycloakId: {}", 
+                authentication != null ? authentication.getName() : "anónimo", keycloakId);
+        
+        // Verificar si el usuario está intentando acceder a sus propios mazos
+        // o si está intentando acceder a los de otro usuario
+        if (authentication != null && authentication.getPrincipal() instanceof Jwt) {
+            Jwt jwt = (Jwt) authentication.getPrincipal();
+            String authKeycloakId = jwt.getSubject();
+            
+            if (authKeycloakId.equals(keycloakId)) {
+                log.debug("Usuario accediendo a sus propios mazos con keycloakId: {}", keycloakId);
+            } else {
+                log.warn("Intento de acceso a mazos de otro usuario. Auth keycloakId: {}, Requested keycloakId: {}", 
+                        authKeycloakId, keycloakId);
+                // Solo permitimos acceder a los mazos propios
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(List.of());
+            }
+        }
+        
+        return ResponseEntity.ok(deckService.getDecksByKeycloakId(keycloakId));
+    }
+    
     @GetMapping("/current-user")
     @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<List<DeckDto>> getDecksForCurrentUser() {
@@ -82,9 +111,35 @@ public class DeckController {
     @PostMapping
     @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<DeckDto> createDeck(@Valid @RequestBody DeckCreateDto deckCreateDto) {
-        // No es necesario obtener el usuario del token JWT, el servicio lo hará automáticamente
-        DeckDto createdDeck = deckService.createDeck(deckCreateDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdDeck);
+        try {
+            log.info("Solicitud de creación de mazo recibida: {}", deckCreateDto);
+            
+            // Validar explícitamente que el DTO es correcto
+            if (deckCreateDto.getDeckName() == null || deckCreateDto.getDeckName().trim().isEmpty()) {
+                log.warn("Intento de crear mazo con nombre vacío");
+                return ResponseEntity.badRequest().build();
+            }
+            
+            if (deckCreateDto.getGameType() == null) {
+                log.warn("Tipo de juego no especificado en la solicitud, usando STANDARD");
+                // Establecer valor por defecto
+                deckCreateDto.setGameType("STANDARD");
+            }
+            
+            // Obtener el usuario autenticado para registrar quién realiza la acción
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            log.info("Usuario {} intentando crear un mazo", 
+                    authentication != null ? authentication.getName() : "anónimo");
+            
+            // No es necesario obtener el usuario del token JWT, el servicio lo hará automáticamente
+            DeckDto createdDeck = deckService.createDeck(deckCreateDto);
+            log.info("Mazo creado exitosamente con ID: {}", createdDeck.getDeckId());
+            
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdDeck);
+        } catch (Exception e) {
+            log.error("Error al crear mazo: {}", e.getMessage(), e);
+            throw e; // Re-lanzar para que el manejador global de errores lo procese
+        }
     }
 
     @PutMapping("/{id}")
