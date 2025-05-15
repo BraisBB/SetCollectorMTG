@@ -32,7 +32,7 @@ interface CardModalProps {
   onClose: () => void;
   isAuthenticated?: boolean;
   isCollectionPage?: boolean; // Indica si estamos en la página de colección
-  onCardRemoved?: (cardId: number) => void; // Callback cuando una carta es completamente eliminada
+  onCardRemoved?: (cardId: number) => void; // Callback when a card is completely removed
 }
 
 const CardModal: React.FC<CardModalProps> = ({ 
@@ -292,7 +292,7 @@ const CardModal: React.FC<CardModalProps> = ({
   return (
     <div className="card-modal-overlay" onClick={handleOverlayClick}>
       <div className="card-modal-content" onClick={(e) => e.stopPropagation()}>
-        {/* Botón de cierre con estilos en CSS */}
+        {/* Close button with CSS styles */}
         <button 
           id="modal-close-button"
           type="button"

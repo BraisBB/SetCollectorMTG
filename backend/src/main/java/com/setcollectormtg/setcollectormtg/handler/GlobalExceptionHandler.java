@@ -36,7 +36,7 @@ public class GlobalExceptionHandler {
             ResourceNotFoundException ex, 
             WebRequest request) {
         
-        log.error("Recurso no encontrado: {}", ex.getMessage(), ex);
+        log.error("Resource not found: {}", ex.getMessage(), ex);
         
         ErrorResponse error = ErrorResponse.builder()
                 .code("NOT_FOUND")
@@ -62,7 +62,7 @@ public class GlobalExceptionHandler {
             MethodArgumentNotValidException ex,
             WebRequest request) {
         
-        log.error("Error de validación: {}", ex.getMessage(), ex);
+        log.error("Validation error: {}", ex.getMessage(), ex);
         
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(error ->
@@ -86,7 +86,7 @@ public class GlobalExceptionHandler {
             ConstraintViolationException ex,
             WebRequest request) {
         
-        log.error("Error de validación de restricciones: {}", ex.getMessage(), ex);
+        log.error("Constraint validation error: {}", ex.getMessage(), ex);
         
         Map<String, String> errors = new HashMap<>();
         ex.getConstraintViolations().forEach(violation -> {
@@ -112,7 +112,7 @@ public class GlobalExceptionHandler {
             AccessDeniedException ex,
             WebRequest request) {
         
-        log.error("Acceso denegado: {}", ex.getMessage(), ex);
+        log.error("Access denied: {}", ex.getMessage(), ex);
         
         ErrorResponse error = ErrorResponse.builder()
                 .code("ACCESS_DENIED")
@@ -133,7 +133,7 @@ public class GlobalExceptionHandler {
             AuthenticationException ex,
             WebRequest request) {
         
-        log.error("Error de autenticación: {}", ex.getMessage(), ex);
+        log.error("Authentication error: {}", ex.getMessage(), ex);
         
         ErrorResponse error = ErrorResponse.builder()
                 .code("AUTHENTICATION_ERROR")
@@ -152,7 +152,7 @@ public class GlobalExceptionHandler {
             DataIntegrityViolationException ex,
             WebRequest request) {
         
-        log.error("Error de integridad de datos: {}", ex.getMessage(), ex);
+        log.error("Data integrity error: {}", ex.getMessage(), ex);
         
         String message = "Data integrity error";
         String details = ex.getMostSpecificCause().getMessage();
@@ -178,7 +178,7 @@ public class GlobalExceptionHandler {
             MethodArgumentTypeMismatchException ex,
             WebRequest request) {
         
-        log.error("Error de tipo de argumento: {}", ex.getMessage(), ex);
+        log.error("Argument type error: {}", ex.getMessage(), ex);
         
         String message = String.format("Parameter '%s' with value '%s' could not be converted to type %s", 
             ex.getName(), ex.getValue(), ex.getRequiredType().getSimpleName());
@@ -199,7 +199,7 @@ public class GlobalExceptionHandler {
             IllegalArgumentException ex,
             WebRequest request) {
         
-        log.error("Argumento ilegal: {}", ex.getMessage(), ex);
+        log.error("Illegal argument: {}", ex.getMessage(), ex);
         
         ErrorResponse error = ErrorResponse.builder()
                 .code("ILLEGAL_ARGUMENT")
@@ -220,7 +220,7 @@ public class GlobalExceptionHandler {
             IllegalStateException ex,
             WebRequest request) {
         
-        log.error("Estado ilegal: {}", ex.getMessage(), ex);
+        log.error("Illegal state: {}", ex.getMessage(), ex);
         
         ErrorResponse error = ErrorResponse.builder()
                 .code("ILLEGAL_STATE")
@@ -238,7 +238,7 @@ public class GlobalExceptionHandler {
             Exception ex,
             WebRequest request) {
         
-        log.error("Error inesperado: {}", ex.getMessage(), ex);
+        log.error("Unexpected error: {}", ex.getMessage(), ex);
         
         ErrorResponse error = ErrorResponse.builder()
                 .code("INTERNAL_ERROR")

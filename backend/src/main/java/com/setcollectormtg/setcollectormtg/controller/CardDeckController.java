@@ -27,7 +27,14 @@ public class CardDeckController {
             Authentication authentication) {
         log.debug("Usuario {} solicitando cartas del mazo {}", 
                 authentication != null ? authentication.getName() : "anónimo", deckId);
-        return ResponseEntity.ok(cardDeckService.getAllCardsInDeck(deckId));
+        List<CardDeckDto> cards = cardDeckService.getAllCardsInDeck(deckId);
+        log.info("Retornando {} cartas para el mazo {}", cards.size(), deckId);
+        // Depurar los valores de nCopies
+        for (CardDeckDto card : cards) {
+            log.info("Carta ID: {}, Nombre: {}, nCopies: {}", 
+                    card.getCardId(), card.getCardName(), card.getNCopies());
+        }
+        return ResponseEntity.ok(cards);
     }
 
     @PostMapping("/{cardId}")

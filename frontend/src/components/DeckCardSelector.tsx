@@ -9,21 +9,28 @@ interface DeckCardSelectorProps {
   deckId: number;
   cards: CardDeck[];
   onCardsUpdated: () => void;
+  deckGameType?: string; // Add deckGameType prop
+  onEditModeChange?: (isEditMode: boolean) => void; // Add callback for edit mode changes
 }
 
-const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({ deckId, cards, onCardsUpdated }) => {
+const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({ 
+  deckId, 
+  cards, 
+  onCardsUpdated,
+  deckGameType = 'STANDARD', // Default to STANDARD if not provided 
+  onEditModeChange
+}) => {
   const navigate = useNavigate();
   const [isEditMode, setIsEditMode] = useState(false);
   const [searchResults, setSearchResults] = useState<Card[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [selectedCard, setSelectedCard] = useState<Card | null>(null);
-  const [quantity, setQuantity] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [hoveredCardId, setHoveredCardId] = useState<number | null>(null);
+  const [localQuantities, setLocalQuantities] = useState<Record<number, number>>({});
   
   // Obtener el tipo base de la carta (Creature, Instant, etc.)
   const getBaseCardType = (cardType: string): string => {
@@ -57,6 +64,16 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({ deckId, cards, onCa
     const indexB = typeOrder.indexOf(b);
     return (indexA !== -1 ? indexA : 999) - (indexB !== -1 ? indexB : 999);
   });
+
+  // Check if a card can have multiple copies based on deck format
+  const canIncreaseCardCopies = (currentCopies: number): boolean => {
+    // In Commander format, only one copy of each card is allowed
+    if (deckGameType === 'COMMANDER') {
+      return currentCopies < 1;
+    }
+    // In Standard format, up to 4 copies are allowed (except basic lands which we don't check here)
+    return currentCopies < 4;
+  };
   
   // Obtener la carta a mostrar en la imagen
   let cardToShow = null;
@@ -75,6 +92,17 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({ deckId, cards, onCa
     if (cards.length === 0) {
       setIsEditMode(true);
     }
+  }, [cards]);
+  
+  // Sincronizar cantidades locales con las del backend cuando cambian las cartas
+  useEffect(() => {
+    console.log("Actualizando cantidades locales desde props cards:", cards);
+    const initial: Record<number, number> = {};
+    cards.forEach(card => {
+      console.log(`Card ID: ${card.cardId}, Name: ${card.cardName}, nCopies: ${card.nCopies}`);
+      initial[card.cardId] = card.nCopies;
+    });
+    setLocalQuantities(initial);
   }, [cards]);
   
   // Manejar la búsqueda de cartas
@@ -101,32 +129,15 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({ deckId, cards, onCa
   };
   
   // Seleccionar una carta de los resultados de búsqueda
-  const handleCardSelect = (card: Card) => {
-    setSelectedCard(card);
-    setQuantity(1);
-  };
-  
-  // Cambiar cantidad
-  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value);
-    if (value > 0) {
-      setQuantity(value);
-    }
-  };
-  
-  // Añadir carta al mazo
-  const handleAddCard = async () => {
-    if (!selectedCard) return;
-    
+  const handleCardSelect = async (card: Card) => {
     try {
-      await apiService.addCardToDeck(deckId, selectedCard.cardId, quantity);
+      // Añadir la carta directamente al mazo con cantidad 1
+      await apiService.addCardToDeck(deckId, card.cardId, 1);
       
       // Actualizar color del mazo basado en las cartas agregadas
       await apiService.updateDeckColor(deckId);
       
-      setSuccess(`Added ${quantity}x ${selectedCard.name} to deck`);
-      setSelectedCard(null);
-      setQuantity(1);
+      setSuccess(`Added ${card.name} to deck`);
       onCardsUpdated(); // Actualizar la lista de cartas
       
       // Limpiar mensaje de éxito después de 3 segundos
@@ -135,7 +146,64 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({ deckId, cards, onCa
       }, 3000);
     } catch (err: any) {
       console.error('Error adding card to deck:', err);
-      setError(`Failed to add card: ${err.message || 'Unknown error'}`);
+      
+      // More specific error message based on response
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError(`Failed to add card: ${err.message || 'Unknown error'}`);
+      }
+    }
+  };
+  
+  // Manejar cambio de cantidad optimista con espera a la respuesta
+  const handleOptimisticQuantityChange = async (cardId: number, newQuantity: number) => {
+    if (newQuantity <= 0) return;
+    
+    // Check format restrictions before making the API call
+    const currentQuantity = localQuantities[cardId] || 1;
+    
+    // If trying to increase over format limit, show error and don't make API call
+    if (newQuantity > currentQuantity && !canIncreaseCardCopies(currentQuantity)) {
+      const formatName = deckGameType === 'COMMANDER' ? 'Commander' : 'Standard';
+      const maxCopies = deckGameType === 'COMMANDER' ? 1 : 4;
+      
+      setError(`Cannot add more copies. ${formatName} format only allows ${maxCopies} ${maxCopies === 1 ? 'copy' : 'copies'} of each card.`);
+      return;
+    }
+    
+    // Guardar valor antiguo para poder revertirlo si falla
+    const oldQuantity = localQuantities[cardId] || 1;
+    
+    // Actualizar UI inmediatamente (optimista)
+    setLocalQuantities(prev => ({ ...prev, [cardId]: newQuantity }));
+    
+    try {
+      // Realizar llamada al backend
+      await apiService.updateCardQuantity(deckId, cardId, newQuantity);
+      await apiService.updateDeckColor(deckId);
+      
+      // Refrescar datos completos del mazo
+      onCardsUpdated();
+      
+      // Clear any previous error
+      setError(null);
+    } catch (err: any) {
+      console.error('Error actualizando cantidad de carta:', err);
+      
+      // More specific error message based on response
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else if (err.message && err.message.includes('Commander')) {
+        setError('Commander format only allows 1 copy of each card.');
+      } else if (err.message && err.message.includes('Standard')) {
+        setError('Standard format only allows 4 copies of each card.');
+      } else {
+        setError('Failed to update card quantity.');
+      }
+      
+      // Revertir cambio en UI si falla la llamada al backend
+      setLocalQuantities(prev => ({ ...prev, [cardId]: oldQuantity }));
     }
   };
   
@@ -149,24 +217,6 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({ deckId, cards, onCa
     } catch (err: any) {
       console.error('Error removing card from deck:', err);
       setError(`Failed to remove card: ${err.message || 'Unknown error'}`);
-    }
-  };
-  
-  // Actualizar cantidad de una carta
-  const handleUpdateCardQuantity = async (cardId: number, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      handleRemoveCard(cardId);
-      return;
-    }
-    
-    try {
-      await apiService.updateCardQuantity(deckId, cardId, newQuantity);
-      // Actualizar color del mazo
-      await apiService.updateDeckColor(deckId);
-      onCardsUpdated(); // Actualizar la lista de cartas
-    } catch (err: any) {
-      console.error('Error updating card quantity:', err);
-      setError(`Failed to update quantity: ${err.message || 'Unknown error'}`);
     }
   };
   
@@ -213,6 +263,15 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({ deckId, cards, onCa
     });
   };
   
+  // Componente para renderizar las cuantidades de cartas en la lista
+  const renderCardQuantity = (cardId: number, nCopies: number) => {
+    return (
+      <span className="quantity">
+        {nCopies}
+      </span>
+    );
+  };
+  
   return (
     <div className="deck-card-selector deck-card-selector-flex">
       {/* Imagen de la carta seleccionada o primera */}
@@ -251,7 +310,14 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({ deckId, cards, onCa
             )}
             <button 
               className={`toggle-edit-button ${isEditMode ? 'active' : ''}`}
-              onClick={() => setIsEditMode(!isEditMode)}
+              onClick={() => {
+                const newEditMode = !isEditMode;
+                setIsEditMode(newEditMode);
+                // Notify parent component about edit mode change
+                if (onEditModeChange) {
+                  onEditModeChange(newEditMode);
+                }
+              }}
             >
               {isEditMode ? 'Done Editing' : 'Edit Deck'}
             </button>
@@ -293,24 +359,23 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({ deckId, cards, onCa
               <p style={{ margin: '0 0 20px 0', color: '#ddd', lineHeight: '1.5' }}>
                 Are you sure you want to delete this deck? This will permanently remove the deck and all its cards. This action cannot be undone.
               </p>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
                 <button 
                   onClick={() => setShowDeleteConfirm(false)}
                   style={{
                     padding: '8px 16px',
-                    backgroundColor: '#555',
-                    color: 'white',
-                    border: 'none',
+                    backgroundColor: 'transparent',
+                    color: '#ddd',
+                    border: '1px solid #ddd',
                     borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontWeight: 'bold'
+                    cursor: 'pointer'
                   }}
+                  disabled={isDeleting}
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={handleDeleteDeck}
-                  disabled={isDeleting}
                   style={{
                     padding: '8px 16px',
                     backgroundColor: '#d32f2f',
@@ -318,11 +383,11 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({ deckId, cards, onCa
                     border: 'none',
                     borderRadius: '4px',
                     cursor: 'pointer',
-                    fontWeight: 'bold',
-                    opacity: isDeleting ? 0.7 : 1
+                    fontWeight: 'bold'
                   }}
+                  disabled={isDeleting}
                 >
-                  {isDeleting ? 'Deleting...' : 'Delete'}
+                  {isDeleting ? 'Deleting...' : 'Delete Deck'}
                 </button>
               </div>
             </div>
@@ -346,7 +411,7 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({ deckId, cards, onCa
                     {searchResults.map(card => (
                       <div 
                         key={card.cardId} 
-                        className={`search-result-item ${selectedCard?.cardId === card.cardId ? 'selected' : ''}`}
+                        className="search-result-item"
                         onClick={() => handleCardSelect(card)}
                       >
                         <div className="card-name">{card.name}</div>
@@ -363,28 +428,6 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({ deckId, cards, onCa
                   </div>
                 )}
               </div>
-              
-              {selectedCard && (
-                <div className="selected-card-controls">
-                  <div className="selected-card-name">{selectedCard.name}</div>
-                  <div className="quantity-control">
-                    <label htmlFor="card-quantity">Quantity:</label>
-                    <input 
-                      type="number" 
-                      id="card-quantity" 
-                      min="1"
-                      value={quantity}
-                      onChange={handleQuantityChange}
-                    />
-                    <button 
-                      className="add-card-button"
-                      onClick={handleAddCard}
-                    >
-                      Add to Deck
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
             
             <div className="current-deck-list">
@@ -407,14 +450,17 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({ deckId, cards, onCa
                             <div className="card-quantity-controls">
                               <button 
                                 className="quantity-btn decrease" 
-                                onClick={() => handleUpdateCardQuantity(card.cardId, card.nCopies - 1)}
+                                onClick={() => handleOptimisticQuantityChange(card.cardId, (localQuantities[card.cardId] || card.nCopies) - 1)}
+                                disabled={(localQuantities[card.cardId] || card.nCopies) <= 1}
                               >
                                 -
                               </button>
-                              <span className="quantity">{card.nCopies}x</span>
+                              <span className="quantity">{localQuantities[card.cardId] || card.nCopies}</span>
                               <button 
                                 className="quantity-btn increase" 
-                                onClick={() => handleUpdateCardQuantity(card.cardId, card.nCopies + 1)}
+                                onClick={() => handleOptimisticQuantityChange(card.cardId, (localQuantities[card.cardId] || card.nCopies) + 1)}
+                                disabled={!canIncreaseCardCopies(localQuantities[card.cardId] || card.nCopies)}
+                                title={deckGameType === 'COMMANDER' ? 'Commander format only allows 1 copy of each card' : ''}
                               >
                                 +
                               </button>
@@ -461,7 +507,7 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({ deckId, cards, onCa
                             onMouseEnter={() => setHoveredCardId(card.cardId)}
                             onMouseLeave={() => setHoveredCardId(null)}
                           >
-                            <span className="quantity">{card.nCopies}x</span>
+                            <span className="quantity">{card.nCopies}</span>
                             <span className="card-name">
                               {card.cardName} {renderManaSymbols(card.manaCost)}
                             </span>
@@ -479,4 +525,4 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({ deckId, cards, onCa
   );
 };
 
-export default DeckCardSelector; 
+export default DeckCardSelector;

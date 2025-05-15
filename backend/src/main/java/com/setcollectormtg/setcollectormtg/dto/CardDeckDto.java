@@ -1,5 +1,6 @@
 package com.setcollectormtg.setcollectormtg.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
@@ -14,6 +15,7 @@ public class CardDeckDto {
     
     @NotNull(message = "Number of copies is required")
     @Positive(message = "Number of copies must be greater than 0")
+    @JsonProperty("nCopies")
     private Integer nCopies;
     
     private String cardName;

@@ -59,6 +59,7 @@ const DeckEditor: React.FC = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [isEditingName, setIsEditingName] = useState(false);
   const [newDeckName, setNewDeckName] = useState('');
+  const [isDeckSelectorEditMode, setIsDeckSelectorEditMode] = useState(false);
 
   // Cargar datos del deck con sistema de reintentos
   useEffect(() => {
@@ -116,6 +117,7 @@ const DeckEditor: React.FC = () => {
     try {
       console.log(`Refrescando datos del mazo: ${deckId}`);
       const cardsData = await apiService.getCardsByDeck(parseInt(deckId));
+      console.log("Datos de cartas recibidos:", JSON.stringify(cardsData));
       setDeckCards(cardsData);
       
       const deckData = await apiService.getDeckById(parseInt(deckId));
@@ -187,6 +189,16 @@ const DeckEditor: React.FC = () => {
     setLoading(true);
   };
 
+  // Callback para cuando cambia el modo de edición en DeckCardSelector
+  const handleDeckSelectorEditModeChange = (isEditMode: boolean) => {
+    setIsDeckSelectorEditMode(isEditMode);
+    
+    // Si salimos del modo edición y hubo cambios en el nombre, guardar el deck
+    if (!isEditMode && deck) {
+      handleSaveDeck();
+    }
+  };
+
   if (loading) {
     return (
       <div className="deck-editor-page">
@@ -247,36 +259,24 @@ const DeckEditor: React.FC = () => {
               <div className="deck-name-edit">
                 <input
                   type="text"
-                  value={newDeckName}
-                  onChange={(e) => setNewDeckName(e.target.value)}
                   className="deck-name-input"
+                  value={newDeckName}
+                  onChange={e => setNewDeckName(e.target.value)}
                   autoFocus
                 />
                 <div className="name-edit-actions">
-                  <button
-                    onClick={handleSaveName}
-                    className="name-save-button"
-                    title="Guardar nombre"
-                  >
-                    ✓
-                  </button>
-                  <button
-                    onClick={handleCancelNameEdit}
-                    className="name-cancel-button"
-                    title="Cancelar"
-                  >
-                    ✗
-                  </button>
+                  <button className="name-save-button" onClick={handleSaveName}>Save</button>
+                  <button className="name-cancel-button" onClick={handleCancelNameEdit}>Cancel</button>
                 </div>
               </div>
             ) : (
               <h1>
                 {deck.deckName}
-                {isEditMode && (
+                {isDeckSelectorEditMode && (
                   <button
                     onClick={handleEditName}
                     className="edit-name-button"
-                    title="Editar nombre del mazo"
+                    title="Edit deck name"
                   >
                     <i className="fas fa-edit"></i>
                   </button>
@@ -284,38 +284,50 @@ const DeckEditor: React.FC = () => {
               </h1>
             )}
             <div className="deck-meta">
-              <span className="deck-type">{deck.gameType}</span>
+              <span className="deck-type">
+                {deck.gameType}
+              </span>
               <DeckColorDisplay deckColor={deck.deckColor} />
-              <span className="card-count">{deck.totalCards} cards</span>
+              <span className="card-count">
+                {deck.totalCards} cards
+              </span>
             </div>
           </div>
           <div className="deck-actions">
-            <button 
-              className="save-button" 
-              onClick={handleSaveDeck}
-            >
-              {isEditMode ? 'Save & Exit' : 'Save Deck'}
+            <button className="save-button" onClick={handleSaveDeck}>
+              Save
             </button>
-            <button 
-              className="back-button" 
-              onClick={handleBackToCollection}
-            >
-              Back to Collection
+            <button className="back-button" onClick={handleBackToCollection}>
+              Back
             </button>
           </div>
         </div>
         
+        {error && (
+          <div className="error-message">
+            <p>{error}</p>
+            <button className="retry-button" onClick={handleRetry}>
+              Retry
+            </button>
+          </div>
+        )}
+        
         {saveSuccess && (
-          <div className="success-message">Deck saved successfully!</div>
+          <div className="success-message">
+            Deck saved successfully!
+          </div>
         )}
         
         <div className="deck-content">
-          {/* Integración del nuevo selector de cartas */}
-          <DeckCardSelector 
-            deckId={parseInt(deckId!)} 
-            cards={deckCards}
-            onCardsUpdated={refreshDeckData}
-          />
+          <div className="card-list-container">
+            <DeckCardSelector 
+              deckId={parseInt(deckId || '0')} 
+              cards={deckCards} 
+              onCardsUpdated={refreshDeckData}
+              deckGameType={deck.gameType} 
+              onEditModeChange={handleDeckSelectorEditModeChange}
+            />
+          </div>
         </div>
       </div>
     </div>

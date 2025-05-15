@@ -65,7 +65,7 @@
   transform: translateY(0);
 }
 
-/* Estilos para los checkboxes de colores */
+/* Styles for color checkboxes */
 .color-filter-group {
   grid-column: 1 / -1;
   margin-bottom: 1rem;

@@ -184,7 +184,7 @@ public class CardDeckServiceImpl implements CardDeckService {
         // Buscar todas las cartas de ese mazo
         List<CardDeck> cardsInDeck = cardDeckRepository.findByDeck_DeckId(deckId);
         
-        // Convertir a DTOs
+        // Convertir a DTOs y asegurarse de que nCopies esté correctamente asignado
         return cardsInDeck.stream()
                 .map(cardDeckMapper::toDto)
                 .collect(Collectors.toList());

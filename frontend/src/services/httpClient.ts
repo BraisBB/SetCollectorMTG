@@ -35,13 +35,13 @@ class HttpClient {
       (response) => response,
       (error) => {
         // Mejorar la información del error
-        let errorMessage = 'Error desconocido';
+        let errorMessage = 'Unknown error';
         let errorDetails = '';
         
         if (error.response) {
           // La respuesta fue recibida pero el servidor respondió con un error
           const status = error.response.status;
-          errorMessage = `Error en solicitud HTTP (${status}): ${error.config?.url}`;
+          errorMessage = `HTTP request error (${status}): ${error.config?.url}`;
           
           // Intentar extraer detalles del error del cuerpo de la respuesta
           if (error.response.data) {
@@ -53,18 +53,18 @@ class HttpClient {
               try {
                 errorDetails = JSON.stringify(error.response.data);
               } catch (e) {
-                errorDetails = 'No se pudo parsear el detalle del error';
+                errorDetails = 'Could not parse error details';
               }
             }
           }
         } else if (error.request) {
           // La petición fue realizada pero no se recibió respuesta (ej: timeout)
-          errorMessage = `Error de red (Sin respuesta): ${error.config?.url}`;
-          errorDetails = 'El servidor no respondió. Verifica tu conexión a internet o si el servidor está disponible.';
+          errorMessage = `Network error (No response): ${error.config?.url}`;
+          errorDetails = 'The server did not respond. Check your internet connection or if the server is available.';
         } else {
           // Hubo un error al configurar la petición
-          errorMessage = `Error al preparar la petición: ${error.config?.url}`;
-          errorDetails = error.message || 'Error desconocido al preparar la petición';
+          errorMessage = `Error preparing the request: ${error.config?.url}`;
+          errorDetails = 'Unknown error while preparing the request';
         }
         
         // Agregar más detalles al error para usarlo en la UI

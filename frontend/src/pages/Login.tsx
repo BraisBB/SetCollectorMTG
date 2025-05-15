@@ -34,7 +34,7 @@ const Login: React.FC = () => {
     const { name, value } = e.target;
     setter(value);
     
-    // Limpiar error del campo cuando el usuario modifica su valor
+    // Clear field error when user modifies its value
     if (fieldErrors[name]) {
       const updatedErrors = { ...fieldErrors };
       delete updatedErrors[name];
@@ -80,13 +80,13 @@ const Login: React.FC = () => {
         localStorage.setItem('username', username);
         navigate('/'); // Redirect to home page on successful login
       } else {
-        // Mensaje genérico para cualquier error de autenticación
+        // Generic message for any authentication error
         setError('Invalid username or password');
       }
     } catch (error: unknown) {
       console.error(error);
       
-      // Mensaje genérico para cualquier error
+      // Generic message for any error
       setError('Invalid username or password');
     } finally {
       setLoading(false);

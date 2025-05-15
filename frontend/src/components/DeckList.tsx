@@ -140,7 +140,7 @@ const DeckList: React.FC<DeckListProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("DeckList: Formulario enviado, evitando comportamiento por defecto");
+    console.log("DeckList: Form onSubmit event captured");
     setLoading(true);
     setError(null);
     
@@ -347,7 +347,7 @@ const DeckList: React.FC<DeckListProps> = ({
             )}
             
             <form id="create-deck-form" onSubmit={(e) => {
-              console.log("DeckList: Evento onSubmit del formulario capturado");
+              console.log("DeckList: Form onSubmit event captured");
               handleSubmit(e);
             }}>
               <div className="form-group" style={{ marginBottom: '1.5rem' }}>

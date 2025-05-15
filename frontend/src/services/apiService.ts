@@ -199,6 +199,10 @@ const apiService = {
         try {
           const cards = await httpClient.get<CardDeck[]>(`/decks/${deckId}/cards`);
           console.log(`Retrieved ${cards.length} cards for deck ${deckId}`);
+          // Log para depuración - Mostrar nCopies de cada carta
+          cards.forEach(card => {
+            console.log(`Card ${card.cardName} (ID: ${card.cardId}) has ${card.nCopies} copies`);
+          });
           return cards;
         } catch (error: any) {
           lastError = error;

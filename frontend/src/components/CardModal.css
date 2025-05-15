@@ -504,7 +504,7 @@
   }
 }
 
-/* Estilos para el indicador de carga */
+/* Styles for loading indicator */
 .loading-indicator {
   display: flex;
   flex-direction: column;
@@ -531,7 +531,7 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Estilos para mensajes de error */
+/* Styles for error messages */
 .error-message {
   background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%);
   color: #ff4d4d;
@@ -550,7 +550,7 @@
   font-size: 1.1rem;
 }
 
-/* Estilos para el texto cuando no hay oracleText */
+/* Styles for text when no oracleText is available */
 .no-text-message {
   font-style: italic;
   color: #999;
