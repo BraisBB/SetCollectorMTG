@@ -3,6 +3,7 @@ import { Card, CardDeck } from '../services/types';
 import SearchBar, { SearchParams } from './SearchBar';
 import './DeckCardSelector.css';
 import { apiService } from '../services';
+import { useNavigate } from 'react-router-dom';
 
 interface DeckCardSelectorProps {
   deckId: number;
@@ -11,6 +12,7 @@ interface DeckCardSelectorProps {
 }
 
 const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({ deckId, cards, onCardsUpdated }) => {
+  const navigate = useNavigate();
   const [isEditMode, setIsEditMode] = useState(false);
   const [searchResults, setSearchResults] = useState<Card[]>([]);
   const [loading, setLoading] = useState(false);
@@ -19,6 +21,8 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({ deckId, cards, onCa
   const [quantity, setQuantity] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Obtener el tipo base de la carta (Creature, Instant, etc.)
   const getBaseCardType = (cardType: string): string => {
@@ -145,16 +149,60 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({ deckId, cards, onCa
     }
   };
   
+  // Eliminar mazo y redireccionar a la colección
+  const handleDeleteDeck = async () => {
+    if (!deleteConfirm) {
+      setDeleteConfirm(true);
+      return;
+    }
+    
+    setIsDeleting(true);
+    
+    try {
+      console.log(`Eliminando mazo con ID: ${deckId}`);
+      await apiService.deleteDeck(deckId);
+      console.log('Mazo eliminado con éxito, redireccionando a My Decks');
+      navigate('/collection', { state: { activeTab: 'decks' } });
+    } catch (err: any) {
+      console.error('Error deleting deck:', err);
+      setError('Failed to delete deck. Please try again.');
+      setDeleteConfirm(false);
+      setIsDeleting(false);
+    }
+  };
+  
   return (
     <div className="deck-card-selector">
       <div className="deck-selector-header">
         <h2>Deck Cards</h2>
-        <button 
-          className={`toggle-edit-button ${isEditMode ? 'active' : ''}`}
-          onClick={() => setIsEditMode(!isEditMode)}
-        >
-          {isEditMode ? 'Done Editing' : 'Edit Deck'}
-        </button>
+        <div className="deck-selector-actions">
+          {isEditMode && (
+            <button 
+              className="delete-deck-button" 
+              onClick={handleDeleteDeck}
+              style={{
+                backgroundColor: deleteConfirm ? '#b71c1c' : '#d32f2f',
+                color: 'white',
+                border: 'none',
+                padding: '0.5rem 0.8rem',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                marginRight: '10px',
+                transition: 'background-color 0.2s ease'
+              }}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Deleting...' : deleteConfirm ? 'Confirm Delete' : 'Delete Deck'}
+            </button>
+          )}
+          <button 
+            className={`toggle-edit-button ${isEditMode ? 'active' : ''}`}
+            onClick={() => setIsEditMode(!isEditMode)}
+          >
+            {isEditMode ? 'Done Editing' : 'Edit Deck'}
+          </button>
+        </div>
       </div>
       
       {error && <div className="error-message">{error}</div>}

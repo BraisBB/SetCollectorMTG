@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { apiService, authService, collectionService } from '../services';
 import { Card as ApiCard, Deck, UserCollectionCard, DeckCreateDto } from '../services/types';
 import Header from '../components/Header';
@@ -30,6 +30,14 @@ const Collection = () => {
     deckColor: ''
   });
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Verificar si se debe activar la pestaña de decks
+  useEffect(() => {
+    if (location.state && location.state.activeTab === 'decks') {
+      setActiveTab('decks');
+    }
+  }, [location]);
 
   // Función para eliminar una carta de la vista cuando es eliminada de la colección
   const handleCardRemoved = useCallback((cardId: number) => {
@@ -632,6 +640,35 @@ const Collection = () => {
           >
             My Decks
           </button>
+          
+          {/* Botón Create Deck solo visible cuando estamos en la pestaña decks */}
+          {activeTab === 'decks' && (
+            <button 
+              className="create-deck-button" 
+              onClick={() => {
+                console.log("Collection: Botón 'Create Deck' en tabs clickeado");
+                openCreateModal();
+              }}
+              style={{ 
+                padding: '0.5rem 0.8rem',
+                fontSize: '0.9rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                backgroundColor: '#e65100',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                marginLeft: 'auto',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                alignSelf: 'flex-end',
+                marginBottom: '2px'
+              }}
+            >
+              Create +
+            </button>
+          )}
         </div>
 
         {activeTab === 'cards' && (
@@ -682,29 +719,6 @@ const Collection = () => {
         
         {activeTab === 'decks' && (
           <>
-            <div className="decks-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h2>My Decks</h2>
-              <button 
-                className="create-deck-button" 
-                onClick={() => {
-                  console.log("Collection: Botón 'Create Deck' en header clickeado");
-                  openCreateModal();
-                }}
-                style={{ 
-                  padding: '0.6rem 1.2rem',
-                  fontSize: '1rem',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  backgroundColor: '#e65100',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px'
-                }}
-              >
-                Create Deck +
-              </button>
-            </div>
-
             {decksError && (
               <div className="error-message">
                 <p><strong>Error:</strong> {decksError}</p>
@@ -729,6 +743,8 @@ const Collection = () => {
                     decks={decks} 
                     onDeckCreated={handleDeckCreated}
                     onDeckDeleted={handleDeckCreated}
+                    showCreateModal={showCreateModal}
+                    setShowCreateModal={setShowCreateModal}
                   />
                 ) : (
                   <div className="empty-collection">

@@ -71,6 +71,8 @@ const DeckList: React.FC<DeckListProps> = ({
     // Si hay un setShowCreateModal desde props, lo actualizamos también
     if (setShowCreateModal) {
       setShowCreateModal(true);
+      // No hacemos nada más, ya que el componente padre manejará el modal
+      return;
     }
     setError(null);
     setNewDeck({
@@ -184,25 +186,6 @@ const DeckList: React.FC<DeckListProps> = ({
 
   return (
     <div className="deck-list-container">
-      <div className="deck-list-header">
-        <h2>My Decks</h2>
-        <button 
-          className="create-deck-button" 
-          onClick={() => {
-            console.log("DeckList: Botón para crear mazo clickeado");
-            openCreateModal();
-          }}
-          style={{ 
-            padding: '0.8rem 1.5rem',
-            fontSize: '1.1rem',
-            fontWeight: 'bold',
-            cursor: 'pointer'
-          }}
-        >
-          Create Deck +
-        </button>
-      </div>
-      
       {decks.length === 0 ? (
         <div className="no-decks-message">
           <p>You don't have any decks yet. Create your first deck to start building!</p>
@@ -229,44 +212,59 @@ const DeckList: React.FC<DeckListProps> = ({
               key={deck.deckId} 
               className={`deck-card ${deck.gameType.toLowerCase()}`}
               onClick={() => handleDeckClick(deck.deckId)}
+              style={{
+                borderRadius: '8px',
+                padding: '1rem',
+                backgroundColor: '#333',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.5rem'
+              }}
             >
-              <h3>{deck.deckName}</h3>
-              <div className="deck-info">
-                <span className="deck-type">{deck.gameType}</span>
-                <span className="deck-color">
+              <h3 style={{ 
+                margin: '0 0 0.5rem 0', 
+                fontSize: '1.2rem',
+                fontWeight: 'bold',
+                color: '#fff'
+              }}>
+                {deck.deckName}
+              </h3>
+              <div className="deck-info" style={{ 
+                display: 'flex', 
+                gap: '0.8rem',
+                fontSize: '0.85rem',
+                flexWrap: 'wrap'
+              }}>
+                <span className="deck-type" style={{
+                  backgroundColor: deck.gameType === 'COMMANDER' ? '#7b1fa2' : '#0277bd',
+                  padding: '0.25rem 0.5rem',
+                  borderRadius: '4px',
+                  color: 'white',
+                  fontWeight: 'bold'
+                }}>
+                  {deck.gameType}
+                </span>
+                <span className="deck-color" style={{
+                  backgroundColor: '#555',
+                  padding: '0.25rem 0.5rem',
+                  borderRadius: '4px',
+                  color: 'white'
+                }}>
                   {deck.deckColor === null || deck.deckColor === '' ? 
-                    'No color (add cards)' : 
+                    'No color' : 
                     deck.deckColor}
                 </span>
-                <span className="card-count">{deck.totalCards} cards</span>
-              </div>
-              <div className="deck-actions">
-                <button 
-                  className="edit-button" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEditDeck(deck);
-                  }}
-                >
-                  Edit
-                </button>
-                <button 
-                  className="delete-button" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(deck.deckId);
-                  }}
-                >
-                  Delete
-                </button>
               </div>
             </div>
           ))}
         </div>
       )}
       
-      {/* Modal para crear nuevo deck */}
-      {(isModalOpen || showCreateModal) && (
+      {/* Modal para crear nuevo deck - Solo se muestra si no hay un setShowCreateModal externo */}
+      {(isModalOpen || showCreateModal) && !setShowCreateModal && (
         <div 
           className="modal-overlay" 
           onClick={(e) => {
