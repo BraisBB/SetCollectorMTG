@@ -396,7 +396,7 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
                 }
               }}
             >
-              {isEditMode ? 'Done Editing' : 'Edit Deck'}
+              {isEditMode ? 'Save' : 'Edit Deck'}
             </button>
           </div>
         </div>

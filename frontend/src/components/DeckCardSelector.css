@@ -38,11 +38,11 @@
 }
 
 .toggle-edit-button.active {
-  background-color: #6c757d;
+  background-color: #28a745;
 }
 
 .toggle-edit-button.active:hover {
-  background-color: #5a6268;
+  background-color: #218838;
 }
 
 /* Mensajes de estado */
