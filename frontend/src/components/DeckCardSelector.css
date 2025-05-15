@@ -495,4 +495,22 @@
     max-width: 90vw;
     border-radius: 8px;
   }
-} 
+}
+
+/* Cartas que no están en la colección */
+.deck-card-item.view-mode.not-in-collection {
+  background-color: rgba(128, 128, 128, 0.2);
+  position: relative;
+  border-radius: 4px;
+}
+
+/* Eliminamos el texto "Not in collection"
+.deck-card-item.view-mode.not-in-collection::after {
+  content: "Not in collection";
+  position: absolute;
+  right: 10px;
+  font-size: 0.7rem;
+  color: #888;
+  font-style: italic;
+}
+*/ 

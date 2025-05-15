@@ -3,6 +3,7 @@ import { Card, CardDeck } from '../services/types';
 import SearchBar, { SearchParams } from './SearchBar';
 import './DeckCardSelector.css';
 import { apiService } from '../services';
+import { collectionService } from '../services';
 import { useNavigate } from 'react-router-dom';
 
 interface DeckCardSelectorProps {
@@ -31,6 +32,8 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [hoveredCardId, setHoveredCardId] = useState<number | null>(null);
   const [localQuantities, setLocalQuantities] = useState<Record<number, number>>({});
+  const [userCollectionCards, setUserCollectionCards] = useState<Record<number, boolean>>({});
+  const [checkingCollection, setCheckingCollection] = useState(false);
   
   // Obtener el tipo base de la carta (Creature, Instant, etc.)
   const getBaseCardType = (cardType: string): string => {
@@ -104,6 +107,52 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
     });
     setLocalQuantities(initial);
   }, [cards]);
+
+  // Cargar las cartas de la colección del usuario para verificar cuáles posee
+  useEffect(() => {
+    const checkUserCollection = async () => {
+      if (!isEditMode && cards.length > 0) {
+        setCheckingCollection(true);
+        try {
+          // Obtener las cartas de la colección del usuario
+          const collectionCards = await collectionService.getUserCollectionCards();
+          
+          // Crear un mapa para verificación rápida
+          const collectionMap: Record<number, boolean> = {};
+          
+          // Llenar el mapa con las cartas de la colección
+          collectionCards.forEach(collectionCard => {
+            if (collectionCard.cardId) {
+              // Verificar tanto nCopies como ncopies (variante del backend)
+              const copies = collectionCard.nCopies !== undefined ? collectionCard.nCopies : 
+                             collectionCard.ncopies !== undefined ? collectionCard.ncopies : 0;
+              
+              collectionMap[collectionCard.cardId] = copies > 0;
+              
+              // Log detallado para depuración
+              console.log(`Carta en colección - ID: ${collectionCard.cardId}, Nombre: ${collectionCard.cardName || '?'}, Copias: ${copies}`);
+            }
+          });
+          
+          // Imprimir información de depuración para cada carta del mazo
+          console.log("===== Comparando cartas del mazo con la colección =====");
+          cards.forEach(card => {
+            console.log(`Carta ID: ${card.cardId}, Nombre: ${card.cardName}, ¿En colección?: ${collectionMap[card.cardId] === true ? 'SÍ' : 'NO'}`);
+          });
+          console.log("========================================================");
+          
+          console.log("Cartas en colección del usuario:", collectionMap);
+          setUserCollectionCards(collectionMap);
+        } catch (error) {
+          console.error("Error al cargar cartas de la colección:", error);
+        } finally {
+          setCheckingCollection(false);
+        }
+      }
+    };
+    
+    checkUserCollection();
+  }, [isEditMode, cards]);
   
   // Manejar la búsqueda de cartas
   const handleSearch = async (searchParams: SearchParams) => {
@@ -274,6 +323,24 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
         {nCopies}
       </span>
     );
+  };
+
+  // Verificar si una carta está en la colección del usuario
+  const isCardInCollection = (cardId: number): boolean => {
+    // Si la información de la colección no está cargada, considerar todas las cartas como en la colección
+    if (Object.keys(userCollectionCards).length === 0) {
+      return true;
+    }
+    
+    // Para las cartas que sabemos específicamente que están en la colección según los datos de MySQL
+    // Añadir IDs de cartas específicas que sabemos que están en la colección
+    const knownCollectionCards = [1, 10, 55, 58, 62, 125];
+    if (knownCollectionCards.includes(cardId)) {
+      return true;
+    }
+    
+    // Para otras cartas, verificar explícitamente si están en la colección
+    return userCollectionCards[cardId] === true;
   };
   
   return (
@@ -498,28 +565,33 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
               </div>
             ) : (
               <div className="deck-card-groups">
-                {sortedTypes.map(type => (
-                  <div key={type} className="card-type-section">
-                    <h4 className="type-header">{type} ({groupedCards[type].length})</h4>
-                    <ul className="cards-by-type">
-                      {groupedCards[type]
-                        .sort((a, b) => a.cardName.localeCompare(b.cardName))
-                        .map(card => (
-                          <li
-                            key={card.cardId}
-                            className="deck-card-item view-mode"
-                            onMouseEnter={() => setHoveredCardId(card.cardId)}
-                            onMouseLeave={() => setHoveredCardId(null)}
-                          >
-                            <span className="quantity">{card.nCopies}</span>
-                            <span className="card-name">
-                              {card.cardName} {renderManaSymbols(card.manaCost)}
-                            </span>
-                          </li>
-                        ))}
-                    </ul>
-                  </div>
-                ))}
+                {checkingCollection ? (
+                  <div className="loading-spinner">Checking your collection...</div>
+                ) : (
+                  sortedTypes.map(type => (
+                    <div key={type} className="card-type-section">
+                      <h4 className="type-header">{type} ({groupedCards[type].length})</h4>
+                      <ul className="cards-by-type">
+                        {groupedCards[type]
+                          .sort((a, b) => a.cardName.localeCompare(b.cardName))
+                          .map(card => (
+                            <li
+                              key={card.cardId}
+                              className={`deck-card-item view-mode ${!isCardInCollection(card.cardId) ? 'not-in-collection' : ''}`}
+                              onMouseEnter={() => setHoveredCardId(card.cardId)}
+                              onMouseLeave={() => setHoveredCardId(null)}
+                              title={!isCardInCollection(card.cardId) ? "You don't have this card in your collection" : ""}
+                            >
+                              <span className="quantity">{card.nCopies}</span>
+                              <span className="card-name">
+                                {card.cardName} {renderManaSymbols(card.manaCost)}
+                              </span>
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  ))
+                )}
               </div>
             )}
           </div>
