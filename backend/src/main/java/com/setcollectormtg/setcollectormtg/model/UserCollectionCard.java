@@ -9,9 +9,19 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
-@Data
+import java.util.Objects;
+
+@Getter
+@Setter
+@ToString(exclude = {"userCollection", "card"})
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(
         name = "user_collection_card",
@@ -38,4 +48,17 @@ public class UserCollectionCard {
 
     @Column(name = "n_copies", nullable = false)
     private Integer nCopies;
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        UserCollectionCard that = (UserCollectionCard) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

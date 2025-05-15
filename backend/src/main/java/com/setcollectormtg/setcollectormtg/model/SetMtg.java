@@ -6,8 +6,11 @@ import lombok.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-@Data
+@Getter
+@Setter
+@ToString(exclude = {"cards"})
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -37,5 +40,18 @@ public class SetMtg {
     public void addCard(Card card) {
         cards.add(card);
         card.setSetMtg(this);
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SetMtg setMtg = (SetMtg) o;
+        return Objects.equals(setId, setMtg.setId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(setId);
     }
 }

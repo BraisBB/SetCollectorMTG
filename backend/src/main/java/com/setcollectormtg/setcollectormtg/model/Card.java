@@ -7,8 +7,11 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-@Data
+@Getter
+@Setter
+@ToString(exclude = {"setMtg", "userCollectionCards"})
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -62,5 +65,18 @@ public class Card {
     @Transient
     public Integer getConvertedManaCost() {
         return manaValue != null ? manaValue.intValue() : null;
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Card card = (Card) o;
+        return Objects.equals(cardId, card.cardId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(cardId);
     }
 }

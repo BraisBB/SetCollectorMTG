@@ -3,13 +3,18 @@ package com.setcollectormtg.setcollectormtg.model;
 import com.setcollectormtg.setcollectormtg.enums.GameType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
-@Data
+@Getter
+@Setter
+@ToString(exclude = {"user", "cardDecks"})
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -39,4 +44,17 @@ public class Deck {
 
     @OneToMany(mappedBy = "deck", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<CardDeck> cardDecks = new HashSet<>();
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Deck deck = (Deck) o;
+        return Objects.equals(deckId, deck.deckId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(deckId);
+    }
 }

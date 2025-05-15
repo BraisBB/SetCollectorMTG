@@ -13,12 +13,17 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.util.List;
+import java.util.Objects;
 
-@Data
+@Getter
+@Setter
+@ToString(exclude = {"user", "userCollectionCards"})
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -38,4 +43,17 @@ public class UserCollection {
 
     @OneToMany(mappedBy = "userCollection", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<UserCollectionCard> userCollectionCards;
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        UserCollection that = (UserCollection) o;
+        return Objects.equals(collectionId, that.collectionId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(collectionId);
+    }
 }

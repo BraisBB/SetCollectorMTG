@@ -158,7 +158,7 @@ public class DeckServiceImpl implements DeckService {
     }
 
     /**
-     * Elimina un mazo si no contiene cartas asociadas. Lanza excepción si el mazo tiene cartas.
+     * Elimina un mazo junto con todas sus cartas asociadas automáticamente.
      *
      * @param id ID del mazo a eliminar
      */
@@ -168,13 +168,11 @@ public class DeckServiceImpl implements DeckService {
         Deck deck = deckRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Deck not found with id: " + id));
 
-        // Verificar si hay cartas asociadas usando CardDeckRepository
-        if (cardDeckRepository.existsByDeck_DeckId(id)) {
-            throw new IllegalStateException("Cannot delete deck with id " + id +
-                    " because it contains cards. Remove cards first.");
-        }
-
+        // La configuración CascadeType.ALL y orphanRemoval=true en la entidad Deck
+        // se encargará de eliminar automáticamente todas las cartas asociadas
+        log.info("Eliminando mazo con ID: {} y todas sus cartas asociadas", id);
         deckRepository.delete(deck);
+        log.info("Mazo con ID: {} eliminado exitosamente", id);
     }
 
     @Override

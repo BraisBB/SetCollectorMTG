@@ -9,11 +9,16 @@ import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
+import java.util.Objects;
 
-@Data
+@Getter
+@Setter
+@ToString(exclude = {"deck", "card"})
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -42,4 +47,17 @@ public class CardDeck {
 
     @Column(name = "n_copies", nullable = false)
     private Integer nCopies;
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CardDeck cardDeck = (CardDeck) o;
+        return Objects.equals(id, cardDeck.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }
