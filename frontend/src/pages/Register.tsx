@@ -80,23 +80,73 @@ const Register: React.FC = () => {
         navigate('/login', { state: { message: 'Registration successful! Please log in.' } });
       }
     } catch (error: unknown) {
-      console.error(error);
+      console.error('Error during registration:', error);
       
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { data?: ErrorResponse, status?: number } };
+      if (axios.isAxiosError(error) && error.response) {
+        // Ya verificamos que error.response existe, podemos usar non-null assertion
+        const responseData = error.response!.data as ErrorResponse;
+        const responseStatus = error.response!.status;
+        
+        console.log('Backend response:', responseData);
         
         // Errores de validación (400 Bad Request)
-        if (axiosError.response?.status === 400 && axiosError.response.data?.errors) {
-          setFieldErrors(axiosError.response.data.errors);
-          setError('Please correct the highlighted fields');
+        if (responseStatus === 400) {
+          if (responseData.errors) {
+            // Errores de validación específicos por campo
+            setFieldErrors(responseData.errors);
+            setError('Please correct the highlighted fields');
+          } else if (responseData.message) {
+            // Mensaje general de error
+            setError(responseData.message);
+            
+            // Si el mensaje contiene información sobre un campo específico, intentamos extraerla
+            const usernameRegex = /username\s+(\w+)\s+is\s+already\s+taken/i;
+            const emailRegex = /email\s+(\w+@[\w.]+)\s+is\s+already\s+registered/i;
+            
+            const usernameMatch = typeof responseData.message === 'string' 
+              ? responseData.message.match(usernameRegex) 
+              : null;
+              
+            const emailMatch = typeof responseData.message === 'string'
+              ? responseData.message.match(emailRegex)
+              : null;
+            
+            if (usernameMatch) {
+              setFieldErrors({
+                ...fieldErrors,
+                username: `Username "${usernameMatch[1]}" is already taken`
+              });
+            } else if (emailMatch) {
+              setFieldErrors({
+                ...fieldErrors,
+                email: `Email "${emailMatch[1]}" is already registered`
+              });
+            }
+          }
         } 
-        // Mensaje general de error
-        else if (axiosError.response?.data?.message) {
-          setError(axiosError.response.data.message);
-        } 
-        // Error no controlado
+        // Conflicto (409)
+        else if (responseStatus === 409) {
+          const message = responseData.message || 'Username or email already exists';
+          setError(message);
+          
+          // Intentar determinar cuál campo es el que está en conflicto
+          if (typeof message === 'string') {
+            if (message.toLowerCase().includes('username')) {
+              setFieldErrors({
+                ...fieldErrors,
+                username: 'Username already exists'
+              });
+            } else if (message.toLowerCase().includes('email')) {
+              setFieldErrors({
+                ...fieldErrors,
+                email: 'Email already exists'
+              });
+            }
+          }
+        }
+        // Otros códigos de error
         else {
-          setError('Registration failed. Please try again.');
+          setError(responseData.message || 'Registration failed. Please try again.');
         }
       } else {
         setError('An error occurred. Please try again later.');

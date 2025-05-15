@@ -233,13 +233,7 @@ const DeckList: React.FC<DeckListProps> = ({
               console.log("DeckList: Botón alternativo para crear mazo clickeado");
               openCreateModal();
             }}
-            className="create-deck-button"
-            style={{ 
-              marginTop: '1rem',
-              padding: '1rem 2rem',
-              fontSize: '1.2rem',
-              display: 'inline-block'
-            }}
+            className="create-deck-button create-deck-button-large"
           >
             Create Your First Deck
           </button>
@@ -249,41 +243,14 @@ const DeckList: React.FC<DeckListProps> = ({
           {decks.map(deck => (
             <div 
               key={deck.deckId} 
-              className={`deck-card ${deck.gameType.toLowerCase()}`}
+              className={`deck-card ${deck.gameType.toLowerCase()} deck-card-style`}
               onClick={() => handleDeckClick(deck.deckId)}
-              style={{
-                borderRadius: '8px',
-                padding: '1rem',
-                backgroundColor: '#333',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.5rem'
-              }}
             >
-              <h3 style={{ 
-                margin: '0 0 0.5rem 0', 
-                fontSize: '1.2rem',
-                fontWeight: 'bold',
-                color: '#fff'
-              }}>
+              <h3 className="deck-card-title">
                 {deck.deckName}
               </h3>
-              <div className="deck-info" style={{ 
-                display: 'flex', 
-                gap: '0.8rem',
-                fontSize: '0.85rem',
-                flexWrap: 'wrap'
-              }}>
-                <span className="deck-type" style={{
-                  backgroundColor: deck.gameType === 'COMMANDER' ? '#7b1fa2' : '#0277bd',
-                  padding: '0.25rem 0.5rem',
-                  borderRadius: '4px',
-                  color: 'white',
-                  fontWeight: 'bold'
-                }}>
+              <div className="deck-info deck-info-style">
+                <span className={`deck-type deck-type-style deck-type-${deck.gameType.toLowerCase()}`}>
                   {deck.gameType}
                 </span>
                 <DeckColorDisplay deckColor={deck.deckColor} />
@@ -296,51 +263,20 @@ const DeckList: React.FC<DeckListProps> = ({
       {/* Modal para crear nuevo deck - Solo se muestra si no hay un setShowCreateModal externo */}
       {(isModalOpen || showCreateModal) && !setShowCreateModal && (
         <div 
-          className="modal-overlay" 
+          className="modal-overlay modal-overlay-style" 
           onClick={(e) => {
             e.stopPropagation();
           }}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 9999
-          }}
         >
           <div 
-            className="modal-content" 
+            className="modal-content modal-content-style" 
             onClick={(e) => e.stopPropagation()}
-            style={{
-              backgroundColor: '#494949',
-              borderRadius: '8px',
-              padding: '2rem',
-              width: '90%',
-              maxWidth: '500px',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-              color: '#ffffff',
-              zIndex: 10000,
-              position: 'relative'
-            }}
           >
-            <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Create New Deck</h2>
+            <h2 className="modal-title">Create New Deck</h2>
             
             {error && (
               <div 
-                className="error-message"
-                style={{
-                  backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                  border: '1px solid rgba(220, 53, 69, 0.3)',
-                  color: '#dc3545',
-                  padding: '0.8rem',
-                  borderRadius: '4px',
-                  marginBottom: '1.5rem'
-                }}
+                className="error-message error-message-style"
               >
                 {error}
               </div>
@@ -350,14 +286,10 @@ const DeckList: React.FC<DeckListProps> = ({
               console.log("DeckList: Form onSubmit event captured");
               handleSubmit(e);
             }}>
-              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+              <div className="form-group form-group-style">
                 <label 
                   htmlFor="deckName"
-                  style={{ 
-                    display: 'block', 
-                    marginBottom: '0.5rem',
-                    fontWeight: 'bold'
-                  }}
+                  className="form-label"
                 >
                   Deck Name
                 </label>
@@ -372,26 +304,14 @@ const DeckList: React.FC<DeckListProps> = ({
                   minLength={3}
                   maxLength={50}
                   required
-                  style={{
-                    width: '100%',
-                    padding: '0.8rem',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    fontSize: '1rem',
-                    backgroundColor: '#ffffff',
-                    color: '#333'
-                  }}
+                  className="form-input"
                 />
               </div>
               
-              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+              <div className="form-group form-group-style">
                 <label 
                   htmlFor="gameType"
-                  style={{ 
-                    display: 'block', 
-                    marginBottom: '0.5rem',
-                    fontWeight: 'bold'
-                  }}
+                  className="form-label"
                 >
                   Game Type
                 </label>
@@ -402,15 +322,7 @@ const DeckList: React.FC<DeckListProps> = ({
                   onChange={handleInputChange}
                   disabled={loading}
                   required
-                  style={{
-                    width: '100%',
-                    padding: '0.8rem',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    fontSize: '1rem',
-                    backgroundColor: '#ffffff',
-                    color: '#333'
-                  }}
+                  className="form-input"
                 >
                   <option value="STANDARD">Standard</option>
                   <option value="COMMANDER">Commander</option>
@@ -418,17 +330,11 @@ const DeckList: React.FC<DeckListProps> = ({
               </div>
               
               <div 
-                className="form-actions"
-                style={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  gap: '1rem',
-                  marginTop: '2rem'
-                }}
+                className="form-actions form-actions-style"
               >
                 <button 
                   type="button" 
-                  className="cancel-button" 
+                  className="cancel-button cancel-button-style" 
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -436,38 +342,17 @@ const DeckList: React.FC<DeckListProps> = ({
                     closeModal();
                   }}
                   disabled={loading}
-                  style={{
-                    padding: '0.8rem 1.5rem',
-                    borderRadius: '4px',
-                    fontSize: '1rem',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    backgroundColor: 'transparent',
-                    border: '1px solid #ddd',
-                    color: '#ddd'
-                  }}
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
-                  className="create-button"
+                  className="create-button create-button-style"
                   disabled={loading}
                   onClick={(e) => {
                     console.log("DeckList: Botón Create Deck (submit) clickeado");
                     // No necesitamos llamar a handleSubmit aquí ya que es un botón de tipo submit
                     // y el formulario ya tiene un controlador onSubmit
-                  }}
-                  style={{
-                    padding: '0.8rem 1.5rem',
-                    borderRadius: '4px',
-                    fontSize: '1rem',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    backgroundColor: '#e65100',
-                    color: 'white',
-                    border: 'none',
-                    minWidth: '120px'
                   }}
                 >
                   {loading ? 'Creating...' : 'Create Deck'}

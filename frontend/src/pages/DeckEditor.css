@@ -599,3 +599,25 @@
   background-color: #dc3545;
   color: white;
 }
+
+/* Estilos adicionales para el DeckEditor */
+.deck-name-input-style {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1.2rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.edit-name-button-style {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 5px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}

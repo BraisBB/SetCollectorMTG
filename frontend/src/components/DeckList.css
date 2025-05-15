@@ -385,3 +385,142 @@
   color: #cccacb !important;
   text-shadow: 0 0 1px #000;
 }
+
+/* Estilos adicionales para botones y cards */
+.create-deck-button-large {
+  margin-top: 1rem;
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
+  display: inline-block;
+}
+
+.deck-card-style {
+  border-radius: 8px;
+  padding: 1rem;
+  background-color: #333;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.deck-card-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #fff;
+}
+
+.deck-info-style {
+  display: flex;
+  gap: 0.8rem;
+  font-size: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.deck-type-style {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  color: white;
+  font-weight: bold;
+}
+
+.deck-type-commander {
+  background-color: #7b1fa2;
+}
+
+.deck-type-standard {
+  background-color: #0277bd;
+}
+
+/* Estilos para el modal */
+.modal-overlay-style {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.modal-content-style {
+  background-color: #494949;
+  border-radius: 8px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  color: #ffffff;
+  z-index: 10000;
+  position: relative;
+}
+
+.modal-title {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.error-message-style {
+  background-color: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  color: #dc3545;
+  padding: 0.8rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+}
+
+.form-group-style {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: #ffffff;
+  color: #333;
+}
+
+.form-actions-style {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.cancel-button-style {
+  padding: 0.8rem 1.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  background-color: transparent;
+  border: 1px solid #ddd;
+  color: #ddd;
+}
+
+.create-button-style {
+  padding: 0.8rem 1.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  background-color: #e65100;
+  color: white;
+  border: none;
+  min-width: 120px;
+}

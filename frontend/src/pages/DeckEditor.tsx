@@ -259,7 +259,7 @@ const DeckEditor: React.FC = () => {
               <div className="deck-name-edit">
                 <input
                   type="text"
-                  className="deck-name-input"
+                  className="deck-name-input deck-name-input-style"
                   value={newDeckName}
                   onChange={e => setNewDeckName(e.target.value)}
                   autoFocus
@@ -275,7 +275,7 @@ const DeckEditor: React.FC = () => {
                 {isDeckSelectorEditMode && (
                   <button
                     onClick={handleEditName}
-                    className="edit-name-button"
+                    className="edit-name-button edit-name-button-style"
                     title="Edit deck name"
                   >
                     <i className="fas fa-edit"></i>

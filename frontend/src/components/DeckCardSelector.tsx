@@ -111,7 +111,7 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
   // Cargar las cartas de la colección del usuario para verificar cuáles posee
   useEffect(() => {
     const checkUserCollection = async () => {
-      if (!isEditMode && cards.length > 0) {
+      if (cards.length > 0) {
         setCheckingCollection(true);
         try {
           // Obtener las cartas de la colección del usuario
@@ -152,7 +152,7 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
     };
     
     checkUserCollection();
-  }, [isEditMode, cards]);
+  }, [cards]);
   
   // Manejar la búsqueda de cartas
   const handleSearch = async (searchParams: SearchParams) => {
@@ -332,14 +332,7 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
       return true;
     }
     
-    // Para las cartas que sabemos específicamente que están en la colección según los datos de MySQL
-    // Añadir IDs de cartas específicas que sabemos que están en la colección
-    const knownCollectionCards = [1, 10, 55, 58, 62, 125];
-    if (knownCollectionCards.includes(cardId)) {
-      return true;
-    }
-    
-    // Para otras cartas, verificar explícitamente si están en la colección
+    // Verificar directamente si la carta está en la colección del usuario
     return userCollectionCards[cardId] === true;
   };
   
@@ -358,22 +351,11 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
       <div className="deck-card-list-panel">
         <div className="deck-selector-header">
           <h2>Deck Cards</h2>
-          <div className="deck-selector-actions" style={{ display: 'flex', alignItems: 'center' }}>
+          <div className="deck-selector-actions deck-selector-actions-style">
             {isEditMode && (
               <button 
-                className="delete-deck-button" 
+                className="delete-deck-button delete-deck-button-style" 
                 onClick={() => setShowDeleteConfirm(true)}
-                style={{
-                  backgroundColor: '#d32f2f',
-                  color: 'white',
-                  border: 'none',
-                  padding: '0.5rem 0.8rem',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  marginRight: '10px',
-                  fontSize: '0.9rem'
-                }}
                 disabled={isDeleting}
               >
                 Delete
@@ -401,61 +383,26 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
         {/* Modal de confirmación para borrar el mazo */}
         {showDeleteConfirm && (
           <div 
-            className="delete-confirm-modal" 
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.7)',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              zIndex: 1000
-            }}
+            className="delete-confirm-modal modal-overlay-style" 
           >
             <div 
-              className="delete-confirm-content" 
-              style={{
-                backgroundColor: '#2c2c2c',
-                padding: '20px',
-                borderRadius: '8px',
-                maxWidth: '400px',
-                textAlign: 'center',
-                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)'
-              }}
+              className="delete-confirm-content modal-content-style" 
             >
-              <h3 style={{ margin: '0 0 16px 0', color: '#fff' }}>Delete Deck</h3>
-              <p style={{ margin: '0 0 20px 0', color: '#ddd', lineHeight: '1.5' }}>
+              <h3 className="delete-warning-title">Delete Deck</h3>
+              <p className="delete-warning-text">
                 Are you sure you want to delete this deck? This will permanently remove the deck and all its cards. This action cannot be undone.
               </p>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
+              <div className="delete-warning-actions">
                 <button 
                   onClick={() => setShowDeleteConfirm(false)}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: 'transparent',
-                    color: '#ddd',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
+                  className="cancel-delete-button"
                   disabled={isDeleting}
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={handleDeleteDeck}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#d32f2f',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontWeight: 'bold'
-                  }}
+                  className="confirm-delete-button"
                   disabled={isDeleting}
                 >
                   {isDeleting ? 'Deleting...' : 'Delete Deck'}

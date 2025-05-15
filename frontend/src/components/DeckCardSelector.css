@@ -504,13 +504,60 @@
   border-radius: 4px;
 }
 
-/* Eliminamos el texto "Not in collection"
-.deck-card-item.view-mode.not-in-collection::after {
-  content: "Not in collection";
-  position: absolute;
-  right: 10px;
-  font-size: 0.7rem;
-  color: #888;
-  font-style: italic;
+/* Estilos adicionales para DeckCardSelector */
+.deck-selector-actions-style {
+  display: flex;
+  align-items: center;
 }
-*/ 
+
+.delete-deck-button-style {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-left: 10px;
+}
+
+.delete-deck-button-style:hover {
+  background-color: #c82333;
+}
+
+.delete-warning-title {
+  margin: 0 0 16px 0;
+  color: #fff;
+}
+
+.delete-warning-text {
+  margin: 0 0 20px 0;
+  color: #ddd;
+  line-height: 1.5;
+}
+
+.delete-warning-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.cancel-delete-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.confirm-delete-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-weight: bold;
+} 
