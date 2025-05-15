@@ -317,10 +317,22 @@ const apiService = {
       const params: Record<string, string> = {};
       if (searchParams.name) params.name = searchParams.name;
       if (searchParams.color) params.color = searchParams.color;
-      if (searchParams.type) params.type = searchParams.type;
+      if (searchParams.type) params.cardType = searchParams.type;
       if (searchParams.rarity) params.rarity = searchParams.rarity;
       if (searchParams.set) params.setCode = searchParams.set;
-      if (searchParams.manaCost) params.manaCost = searchParams.manaCost;
+      
+      // Manejar el costo de maná adecuadamente
+      if (searchParams.manaCost) {
+        // Si el valor es "8+", establecer manaCostMin=8 sin manaCostMax
+        if (searchParams.manaCost === "8+") {
+          params.manaCostMin = "8";
+        } 
+        // De lo contrario, usar el valor tanto para min como max para buscar exactamente ese valor
+        else {
+          params.manaCostMin = searchParams.manaCost;
+          params.manaCostMax = searchParams.manaCost;
+        }
+      }
       
       const results = await httpClient.get<Card[]>('/cards/search', { params });
       console.log(`Search successful: ${results.length} cards found`);
