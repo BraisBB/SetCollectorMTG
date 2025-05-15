@@ -52,6 +52,8 @@
   padding: 10px;
   border-radius: 4px;
   margin-bottom: 15px;
+  animation: fadeIn 0.3s ease;
+  position: relative;
 }
 
 .success-message {
@@ -60,6 +62,38 @@
   padding: 10px;
   border-radius: 4px;
   margin-bottom: 15px;
+  animation: fadeIn 0.3s ease;
+  position: relative;
+}
+
+/* Botón para cerrar manualmente los mensajes de error/éxito */
+.error-message::after,
+.success-message::after {
+  content: "×";
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.error-message::after:hover,
+.success-message::after:hover {
+  opacity: 1;
+}
+
+/* Animación de aparición */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Modo edición */
@@ -67,6 +101,12 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 20px;
+}
+
+.search-section {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin-bottom: 10px;
 }
 
 .card-selection-area {
@@ -82,7 +122,7 @@
     gap: 30px;
   }
   
-  .search-container {
+  .search-section {
     grid-column: 1 / -1;
     width: 100%;
     margin-bottom: 10px;
@@ -102,9 +142,9 @@
 .search-results-container {
   max-height: 500px;
   overflow-y: auto;
-  border: 1px solid #ddd;
+  border: 1px solid #333;
   border-radius: 5px;
-  background-color: white;
+  background-color: #333;
   width: 100%;
 }
 
@@ -113,21 +153,23 @@
   justify-content: center;
   align-items: center;
   height: 100px;
-  color: #666;
+  color: #ddd;
+  background-color: #333;
 }
 
 .no-results {
   padding: 20px;
   text-align: center;
-  color: #666;
+  color: #ddd;
+  background-color: #333;
 }
 
 .search-hint {
   padding: 30px;
   text-align: center;
-  color: #666;
+  color: #bbb;
   font-style: italic;
-  background-color: #f9f9f9;
+  background-color: #333;
 }
 
 .search-results-list {
@@ -139,28 +181,29 @@
 
 .search-result-item {
   padding: 12px;
-  border: 1px solid #eee;
+  border: 1px solid #555;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
-  background-color: #f8f9fa;
+  background-color: #494949;
+  color: #eee;
 }
 
 .search-result-item:hover {
-  background-color: #e3f2fd;
+  background-color: #555;
   transform: translateY(-2px);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-  border-color: #bbdefb;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  border-color: #666;
 }
 
 .search-result-item.selected {
-  background-color: #e3f2fd;
-  border-left: 3px solid #2c7be5;
+  background-color: #555;
+  border-left: 3px solid #e65100;
 }
 
 .search-result-item .card-name {
   font-weight: bold;
-  color: #333;
+  color: #fff;
   transition: color 0.2s ease;
   cursor: pointer;
 }
@@ -173,8 +216,28 @@
   display: flex;
   justify-content: space-between;
   font-size: 0.85rem;
-  color: #666;
+  color: #bbb;
   margin-top: 5px;
+}
+
+.search-result-item .card-type {
+  color: #000000;
+  font-weight: 500;
+}
+
+/* Estilos para iconos de mana en los resultados de búsqueda */
+.search-result-item .card-cost .ms {
+  font-size: 16px;
+  margin-right: 2px;
+  vertical-align: middle;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  border-radius: 50%;
+}
+
+/* Resaltar iconos de mana al pasar el cursor sobre la carta */
+.search-result-item:hover .card-cost .ms {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
 }
 
 /* Controles de carta seleccionada */
@@ -518,7 +581,7 @@
   padding: 8px 16px;
   cursor: pointer;
   transition: background-color 0.2s;
-  margin-left: 10px;
+  margin-right: 10px;
 }
 
 .delete-deck-button-style:hover {
@@ -560,4 +623,71 @@
   padding: 10px 20px;
   cursor: pointer;
   font-weight: bold;
+}
+
+/* Asegurarse de que el SearchBar dentro del selector de cartas ocupe todo el ancho */
+.deck-edit-mode .search-container {
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+  border: none;
+  background: transparent;
+}
+
+/* Estilo específico para el formulario de búsqueda en el editor de mazo */
+.deck-edit-mode .search-container form {
+  background: #494949;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-bottom: 15px;
+  border: 1px solid #333;
+  position: relative;
+  font-family: 'Noto Sans', sans-serif;
+}
+
+/* Estilos específicos para los elementos internos del formulario en el editor de mazo */
+.deck-edit-mode .search-input {
+  border: 2px solid #333;
+  background-color: #262626;
+  color: #fff;
+}
+
+.deck-edit-mode .search-input:focus {
+  border-color: #e65100;
+  box-shadow: 0 0 0 2px rgba(230, 81, 0, 0.2);
+}
+
+.deck-edit-mode .search-input::placeholder {
+  color: #888;
+}
+
+.deck-edit-mode .search-button {
+  background-color: #e65100;
+}
+
+.deck-edit-mode .search-button:hover {
+  background-color: #ff8f00;
+}
+
+/* Estilos para los filtros en el editor de mazo */
+.deck-edit-mode .filters-container {
+  background-color: transparent;
+}
+
+.deck-edit-mode .color-checkboxes {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.deck-edit-mode .filter-group label {
+  color: #ccc;
+}
+
+.deck-edit-mode .filter-group select {
+  padding: 0.6rem;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background-color: #262626;
+  color: #fff;
 } 

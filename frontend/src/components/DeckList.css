@@ -80,6 +80,10 @@
 }
 
 /* Estilos específicos según el tipo de juego */
+.deck-card.standard {
+  background-color: #5a5a5a;
+}
+
 .deck-card.standard::before {
   background: linear-gradient(90deg, #ff8f00, #e65100);
 }
@@ -432,7 +436,7 @@
 }
 
 .deck-type-standard {
-  background-color: #0277bd;
+  background-color: #e65100;
 }
 
 /* Estilos para el modal */

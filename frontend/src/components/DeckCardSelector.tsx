@@ -35,6 +35,28 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
   const [userCollectionCards, setUserCollectionCards] = useState<Record<number, boolean>>({});
   const [checkingCollection, setCheckingCollection] = useState(false);
   
+  // Efecto para limpiar mensajes de error automáticamente después de 10 segundos
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(null);
+      }, 10000); // 10 segundos
+      
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+  
+  // Efecto para limpiar mensajes de éxito automáticamente después de 3 segundos
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess(null);
+      }, 3000); // 3 segundos
+      
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+  
   // Obtener el tipo base de la carta (Creature, Instant, etc.)
   const getBaseCardType = (cardType: string): string => {
     if (!cardType) return 'Other';
@@ -366,6 +388,8 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
               onClick={() => {
                 const newEditMode = !isEditMode;
                 setIsEditMode(newEditMode);
+                // Limpiar mensajes de error al cambiar el modo
+                setError(null);
                 // Notify parent component about edit mode change
                 if (onEditModeChange) {
                   onEditModeChange(newEditMode);
@@ -377,8 +401,16 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
           </div>
         </div>
         
-        {error && <div className="error-message">{error}</div>}
-        {success && <div className="success-message">{success}</div>}
+        {error && (
+          <div className="error-message" onClick={() => setError(null)}>
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="success-message" onClick={() => setSuccess(null)}>
+            {success}
+          </div>
+        )}
         
         {/* Modal de confirmación para borrar el mazo */}
         {showDeleteConfirm && (
@@ -414,7 +446,7 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
         
         {isEditMode ? (
           <div className="deck-edit-mode">
-            <div className="search-container">
+            <div className="search-section">
               <SearchBar onSearch={handleSearch} />
             </div>
             
@@ -435,7 +467,7 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
                         <div className="card-name">{card.name}</div>
                         <div className="card-meta">
                           <span className="card-type">{card.cardType}</span>
-                          <span className="card-cost">{card.manaCost}</span>
+                          <span className="card-cost">{renderManaSymbols(card.manaCost)}</span>
                         </div>
                       </div>
                     ))}

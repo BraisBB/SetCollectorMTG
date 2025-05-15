@@ -4,8 +4,8 @@
   border-radius: 8px;
   padding: 1.5rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  margin: 2rem auto;
-  max-width: 900px;
+  margin: 0;
+  width: 100%;
   transition: all 0.5s ease;
   border: 1px solid #333;
   position: relative;
@@ -13,12 +13,13 @@
 }
 
 .search-container.expanded {
-  transform: translateY(-20px);
+  margin: 2rem auto;
 }
 
 .search-input-group {
   display: flex;
   margin-bottom: 1.5rem;
+  width: 100%;
 }
 
 .search-input {
@@ -231,6 +232,7 @@
   transition: max-height 0.5s ease, opacity 0.5s ease, margin 0.5s ease;
   opacity: 0;
   margin-top: 0;
+  width: 100%;
 }
 
 .expanded .filters-container {
@@ -353,7 +355,7 @@
   
   .search-container {
     padding: 1rem;
-    margin: 1.5rem 1rem;
+    margin: 0;
   }
   
   .color-checkboxes {
