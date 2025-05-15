@@ -257,10 +257,14 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
     const regex = /\{([^}]+)\}/g;
     const symbols = manaCost.match(regex);
     if (!symbols) return null;
-    return symbols.map((symbol, idx) => {
-      const clean = symbol.replace(/[{}]/g, '');
-      return <i key={idx} className={`ms ms-${clean.toLowerCase()}`}></i>;
-    });
+    return (
+      <span className="mana-symbols">
+        {symbols.map((symbol, idx) => {
+          const clean = symbol.replace(/[{}]/g, '');
+          return <i key={idx} className={`ms ms-${clean.toLowerCase()}`}></i>;
+        })}
+      </span>
+    );
   };
   
   // Componente para renderizar las cuantidades de cartas en la lista

@@ -161,6 +161,12 @@
 .search-result-item .card-name {
   font-weight: bold;
   color: #333;
+  transition: color 0.2s ease;
+  cursor: pointer;
+}
+
+.search-result-item:hover .card-name {
+  color: #e65100;
 }
 
 .search-result-item .card-meta {
@@ -260,6 +266,24 @@
   border-bottom: none;
 }
 
+.deck-card-item .card-name {
+  color: #333;
+  transition: color 0.2s ease;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-grow: 1;
+  margin-right: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deck-card-item:hover .card-name {
+  color: #e65100;
+}
+
 .card-quantity-controls {
   display: flex;
   align-items: center;
@@ -329,6 +353,32 @@
 
 .deck-card-item.view-mode .card-name {
   color: #333;
+  transition: color 0.2s ease;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-grow: 1;
+  width: auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deck-card-item.view-mode:hover .card-name {
+  color: #e65100;
+}
+
+/* Estilo para los símbolos de mana */
+.mana-symbols {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  gap: 2px;
+}
+
+.ms {
+  margin-left: 2px;
 }
 
 /* Responsive para pantallas más pequeñas */
