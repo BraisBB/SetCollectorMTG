@@ -4,6 +4,45 @@ import { apiService, authService } from '../services';
 import { Deck, DeckCreateDto } from '../services/types';
 import './DeckList.css';
 
+// Componente para mostrar símbolos de mana para los colores
+const DeckColorDisplay = ({ deckColor }: { deckColor: string | null }) => {
+  if (!deckColor) return null;
+  
+  // Mapeo de nombres de colores a símbolos de mana
+  const colorToManaSymbol: Record<string, string> = {
+    white: 'W',
+    blue: 'U',
+    black: 'B',
+    red: 'R',
+    green: 'G',
+    colorless: 'C'
+  };
+  
+  // Separar colores si hay múltiples
+  const colors = deckColor.split(' ');
+  
+  return (
+    <div className="deck-card-colors">
+      {colors.map((color, index) => {
+        // Obtener el símbolo de mana correspondiente al color
+        const manaSymbol = colorToManaSymbol[color];
+        
+        if (!manaSymbol) return null;
+        
+        return (
+          <label 
+            key={index} 
+            className="color-check-label"
+            title={color.charAt(0).toUpperCase() + color.slice(1)}
+          >
+            <i className={`ms ms-${manaSymbol.toLowerCase()} color-icon`}></i>
+          </label>
+        );
+      })}
+    </div>
+  );
+};
+
 interface DeckListProps {
   decks: Deck[];
   onDeckCreated: () => void;
@@ -247,16 +286,7 @@ const DeckList: React.FC<DeckListProps> = ({
                 }}>
                   {deck.gameType}
                 </span>
-                <span className="deck-color" style={{
-                  backgroundColor: '#555',
-                  padding: '0.25rem 0.5rem',
-                  borderRadius: '4px',
-                  color: 'white'
-                }}>
-                  {deck.deckColor === null || deck.deckColor === '' ? 
-                    'No color' : 
-                    deck.deckColor}
-                </span>
+                <DeckColorDisplay deckColor={deck.deckColor} />
               </div>
             </div>
           ))}

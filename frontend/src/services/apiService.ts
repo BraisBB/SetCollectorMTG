@@ -329,6 +329,16 @@ const apiService = {
 
   updateCardQuantity: async (deckId: number, cardId: number, quantity: number): Promise<CardDeck> => {
     return apiService.updateCardInDeck(deckId, cardId, quantity);
+  },
+
+  updateDeckColor: async (deckId: number): Promise<Deck> => {
+    try {
+      console.log(`Actualizando color del mazo ${deckId} basado en sus cartas`);
+      return httpClient.get<Deck>(`/decks/${deckId}/update-color`);
+    } catch (error) {
+      console.error(`Error actualizando el color del mazo ${deckId}:`, error);
+      throw error;
+    }
   }
 };
 

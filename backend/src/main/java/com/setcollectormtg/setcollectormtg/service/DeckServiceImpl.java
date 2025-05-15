@@ -284,36 +284,28 @@ public class DeckServiceImpl implements DeckService {
             if (manaCost.contains("{G}")) hasGreen = true;
         }
         
-        // Contar cuántos colores diferentes hay
-        int colorCount = 0;
-        if (hasWhite) colorCount++;
-        if (hasBlue) colorCount++;
-        if (hasBlack) colorCount++;
-        if (hasRed) colorCount++;
-        if (hasGreen) colorCount++;
-        
         // Determinar el color del mazo
         StringBuilder deckColor = new StringBuilder();
         
-        if (colorCount == 0) {
+        // Siempre agregar los colores individuales, incluso si hay más de 2
+        if (hasWhite) deckColor.append("white ");
+        if (hasBlue) deckColor.append("blue ");
+        if (hasBlack) deckColor.append("black ");
+        if (hasRed) deckColor.append("red ");
+        if (hasGreen) deckColor.append("green ");
+        
+        // Si no hay colores, es incoloro
+        if (deckColor.length() == 0) {
             deck.setDeckColor("colorless");
-        } else if (colorCount > 2) {
-            deck.setDeckColor("multicolor");
+            log.info("Mazo con ID {} es incoloro", deckId);
         } else {
-            // Para 1 o 2 colores, especificamos cuáles son
-            if (hasWhite) deckColor.append("white ");
-            if (hasBlue) deckColor.append("blue ");
-            if (hasBlack) deckColor.append("black ");
-            if (hasRed) deckColor.append("red ");
-            if (hasGreen) deckColor.append("green ");
             // Eliminar el espacio final si existe
-            if (deckColor.length() > 0 && deckColor.charAt(deckColor.length() - 1) == ' ') {
+            if (deckColor.charAt(deckColor.length() - 1) == ' ') {
                 deckColor.deleteCharAt(deckColor.length() - 1);
             }
             deck.setDeckColor(deckColor.toString());
+            log.info("Actualizando color del mazo con ID {}: {}", deckId, deck.getDeckColor());
         }
-        
-        log.info("Actualizando color del mazo con ID {}: {}", deckId, deck.getDeckColor());
         
         return deckMapper.toDto(deckRepository.save(deck));
     }

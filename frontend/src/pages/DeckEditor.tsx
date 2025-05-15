@@ -6,6 +6,45 @@ import DeckCardSelector from '../components/DeckCardSelector';
 import { Deck, CardDeck } from '../services/types';
 import './DeckEditor.css';
 
+// Componente para mostrar símbolos de mana para los colores
+const DeckColorDisplay = ({ deckColor }: { deckColor: string | null }) => {
+  if (!deckColor) return <span className="deck-color">Sin color</span>;
+  
+  // Mapeo de nombres de colores a símbolos de mana
+  const colorToManaSymbol: Record<string, string> = {
+    white: 'W',
+    blue: 'U',
+    black: 'B',
+    red: 'R',
+    green: 'G',
+    colorless: 'C'
+  };
+  
+  // Separar colores si hay múltiples
+  const colors = deckColor.split(' ');
+  
+  return (
+    <span className="deck-color">
+      {colors.map((color, index) => {
+        // Obtener el símbolo de mana correspondiente al color
+        const manaSymbol = colorToManaSymbol[color];
+        
+        if (!manaSymbol) return null;
+        
+        return (
+          <label 
+            key={index} 
+            className="color-check-label"
+            title={color.charAt(0).toUpperCase() + color.slice(1)}
+          >
+            <i className={`ms ms-${manaSymbol.toLowerCase()} color-icon`}></i>
+          </label>
+        );
+      })}
+    </span>
+  );
+};
+
 const DeckEditor: React.FC = () => {
   const { deckId } = useParams<{ deckId: string }>();
   const navigate = useNavigate();
@@ -18,6 +57,8 @@ const DeckEditor: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [newDeckName, setNewDeckName] = useState('');
 
   // Cargar datos del deck con sistema de reintentos
   useEffect(() => {
@@ -96,7 +137,7 @@ const DeckEditor: React.FC = () => {
       
       // Si estamos en modo edición, volver a la vista normal
       if (isEditMode) {
-        navigate(`/deck/${deckId}`);
+        navigate(`/decks/${deckId}`);
         return;
       }
       
@@ -108,6 +149,30 @@ const DeckEditor: React.FC = () => {
       console.error('Error saving deck:', err);
       setError('Failed to save deck. Please try again.');
     }
+  };
+
+  // Iniciar edición del nombre
+  const handleEditName = () => {
+    if (deck) {
+      setNewDeckName(deck.deckName);
+      setIsEditingName(true);
+    }
+  };
+
+  // Guardar el nuevo nombre
+  const handleSaveName = () => {
+    if (deck && newDeckName.trim()) {
+      setDeck({
+        ...deck,
+        deckName: newDeckName.trim()
+      });
+      setIsEditingName(false);
+    }
+  };
+
+  // Cancelar edición de nombre
+  const handleCancelNameEdit = () => {
+    setIsEditingName(false);
   };
 
   // Volver a la página de colección
@@ -178,10 +243,49 @@ const DeckEditor: React.FC = () => {
       <div className="container">
         <div className="deck-editor-header">
           <div className="deck-info">
-            <h1>{deck.deckName}</h1>
+            {isEditingName ? (
+              <div className="deck-name-edit">
+                <input
+                  type="text"
+                  value={newDeckName}
+                  onChange={(e) => setNewDeckName(e.target.value)}
+                  className="deck-name-input"
+                  autoFocus
+                />
+                <div className="name-edit-actions">
+                  <button
+                    onClick={handleSaveName}
+                    className="name-save-button"
+                    title="Guardar nombre"
+                  >
+                    ✓
+                  </button>
+                  <button
+                    onClick={handleCancelNameEdit}
+                    className="name-cancel-button"
+                    title="Cancelar"
+                  >
+                    ✗
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <h1>
+                {deck.deckName}
+                {isEditMode && (
+                  <button
+                    onClick={handleEditName}
+                    className="edit-name-button"
+                    title="Editar nombre del mazo"
+                  >
+                    <i className="fas fa-edit"></i>
+                  </button>
+                )}
+              </h1>
+            )}
             <div className="deck-meta">
               <span className="deck-type">{deck.gameType}</span>
-              <span className="deck-color">{deck.deckColor || 'No color'}</span>
+              <DeckColorDisplay deckColor={deck.deckColor} />
               <span className="card-count">{deck.totalCards} cards</span>
             </div>
           </div>

@@ -27,13 +27,17 @@
   margin: 0 0 10px 0;
   color: #343a40;
   font-size: 1.8rem;
+  display: flex;
+  align-items: center;
 }
 
 .deck-meta {
   display: flex;
-  gap: 15px;
-  font-size: 0.9rem;
-  color: #6c757d;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  color: #ccc;
 }
 
 .deck-type, .deck-color, .card-count {
@@ -477,4 +481,121 @@
   .add-button {
     width: 100%;
   }
+}
+
+.deck-color {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Estilos para label de los símbolos de mana */
+.deck-color .color-check-label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background-color: rgba(30, 30, 30, 0.7);
+  transition: all 0.3s ease;
+}
+
+.deck-color .color-icon {
+  font-size: 1.8rem;
+  filter: grayscale(0%) brightness(1);
+}
+
+/* Estilos para cada color */
+.deck-color .ms-w {
+  color: #f9faf4 !important;
+  text-shadow: 0 0 1px #000, 0 0 2px #000;
+}
+
+.deck-color .ms-u {
+  color: #0e68ab !important;
+}
+
+.deck-color .ms-b {
+  color: #150b00 !important;
+}
+
+.deck-color .ms-r {
+  color: #d3202a !important;
+}
+
+.deck-color .ms-g {
+  color: #00733e !important;
+}
+
+.deck-color .ms-c {
+  color: #cccacb !important;
+  text-shadow: 0 0 1px #000;
+}
+
+.edit-name-button {
+  background: none;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  margin-left: 10px;
+  padding: 5px;
+  transition: color 0.2s;
+  font-size: 0.8em;
+}
+
+.edit-name-button:hover {
+  color: #007bff;
+}
+
+.deck-name-edit {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.deck-name-input {
+  font-size: 1.6rem;
+  padding: 5px 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
+  min-width: 300px;
+}
+
+.name-edit-actions {
+  display: flex;
+  margin-left: 10px;
+}
+
+.name-save-button,
+.name-cancel-button {
+  background: none;
+  border: 1px solid;
+  border-radius: 4px;
+  padding: 5px 10px;
+  margin-left: 5px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.name-save-button {
+  border-color: #28a745;
+  color: #28a745;
+}
+
+.name-save-button:hover {
+  background-color: #28a745;
+  color: white;
+}
+
+.name-cancel-button {
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.name-cancel-button:hover {
+  background-color: #dc3545;
+  color: white;
 }

@@ -332,3 +332,56 @@
     text-align: center;
   }
 }
+
+.deck-card-colors {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+/* Estilos para label de los símbolos de mana */
+.deck-card-colors .color-check-label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background-color: rgba(30, 30, 30, 0.7);
+  transition: all 0.3s ease;
+}
+
+.deck-card-colors .color-icon {
+  font-size: 1.8rem;
+  filter: grayscale(0%) brightness(1);
+}
+
+/* Estilos para cada color */
+.deck-card-colors .ms-w {
+  color: #f9faf4 !important;
+  text-shadow: 0 0 1px #000, 0 0 2px #000;
+}
+
+.deck-card-colors .ms-u {
+  color: #0e68ab !important;
+}
+
+.deck-card-colors .ms-b {
+  color: #150b00 !important;
+}
+
+.deck-card-colors .ms-r {
+  color: #d3202a !important;
+}
+
+.deck-card-colors .ms-g {
+  color: #00733e !important;
+}
+
+.deck-card-colors .ms-c {
+  color: #cccacb !important;
+  text-shadow: 0 0 1px #000;
+}

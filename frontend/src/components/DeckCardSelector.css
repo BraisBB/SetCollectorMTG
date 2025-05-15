@@ -319,4 +319,104 @@
   .quantity-control {
     flex-wrap: wrap;
   }
+}
+
+/* Imagen flotante de carta al hacer hover */
+.hovered-card-image {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  z-index: 2000;
+  max-height: 320px;
+  max-width: 220px;
+  width: auto;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 1.5px 8px rgba(230,81,0,0.15);
+  background: #fff;
+  border: 2px solid #e65100;
+  transition: box-shadow 0.2s, border 0.2s;
+  pointer-events: none;
+}
+
+@media (max-width: 900px) {
+  .hovered-card-image {
+    top: 1rem;
+    right: 1rem;
+    max-height: 180px;
+    max-width: 120px;
+  }
+}
+
+@media (max-width: 600px) {
+  .hovered-card-image {
+    top: unset;
+    bottom: 1rem;
+    right: 50%;
+    transform: translateX(50%);
+    max-height: 120px;
+    max-width: 90vw;
+    border-radius: 8px;
+  }
+}
+
+/* Layout principal: lista a la izquierda, imagen a la derecha */
+.deck-card-selector-flex {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 2.5rem;
+}
+
+.deck-card-list-panel {
+  flex: 2 1 0;
+  min-width: 0;
+}
+
+.deck-card-image-panel {
+  flex: 1 1 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 180px;
+  max-width: 260px;
+  margin-top: 0.5rem;
+}
+
+.side-card-image {
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 1.5px 8px rgba(230,81,0,0.15);
+  background: #fff;
+  border: 2px solid #e65100;
+  transition: box-shadow 0.2s, border 0.2s;
+}
+
+@media (max-width: 900px) {
+  .deck-card-selector-flex {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .deck-card-image-panel {
+    align-items: center;
+    max-width: 180px;
+    margin: 0 auto 1rem auto;
+  }
+  .side-card-image {
+    max-width: 140px;
+    border-radius: 10px;
+  }
+}
+
+@media (max-width: 600px) {
+  .deck-card-image-panel {
+    max-width: 90vw;
+    margin: 0 auto 1rem auto;
+  }
+  .side-card-image {
+    max-width: 90vw;
+    border-radius: 8px;
+  }
 } 
