@@ -25,9 +25,10 @@ interface CardGridProps {
   isAuthenticated?: boolean;
   isCollectionPage?: boolean; // Indica si estamos en la página de colección
   onCardRemoved?: (cardId: number) => void; // Callback cuando una carta es eliminada
+  onCardCollectionUpdated?: (cardId: number, newCount: number) => void;
 }
 
-const CardGrid = ({ cards, loading, hasMore, onLoadMore, isAuthenticated = false, isCollectionPage = false, onCardRemoved }: CardGridProps) => {
+const CardGrid = ({ cards, loading, hasMore, onLoadMore, isAuthenticated = false, isCollectionPage = false, onCardRemoved, onCardCollectionUpdated }: CardGridProps) => {
   const [selectedCard, setSelectedCard] = useState<CardModalType | null>(null);
 
   const handleCardClick = (card: Card) => {
@@ -164,6 +165,7 @@ const CardGrid = ({ cards, loading, hasMore, onLoadMore, isAuthenticated = false
         isAuthenticated={isAuthenticated}
         isCollectionPage={isCollectionPage}
         onCardRemoved={onCardRemoved}
+        onCardCollectionUpdated={onCardCollectionUpdated}
       />
     </div>
   );

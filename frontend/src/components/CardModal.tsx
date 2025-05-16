@@ -33,6 +33,7 @@ interface CardModalProps {
   isAuthenticated?: boolean;
   isCollectionPage?: boolean; // Indica si estamos en la página de colección
   onCardRemoved?: (cardId: number) => void; // Callback when a card is completely removed
+  onCardCollectionUpdated?: (cardId: number, newCount: number) => void; // Callback when card count changes
 }
 
 const CardModal: React.FC<CardModalProps> = ({ 
@@ -40,7 +41,8 @@ const CardModal: React.FC<CardModalProps> = ({
   onClose, 
   isAuthenticated = false,
   isCollectionPage = false, // Por defecto, asumimos que no estamos en la página de colección
-  onCardRemoved = () => {} // Función vacía por defecto
+  onCardRemoved = () => {}, // Función vacía por defecto
+  onCardCollectionUpdated = () => {} // Función vacía por defecto
 }) => {
   const [sets, setSets] = useState<SetInfo[]>([]);
   const [fullCardData, setFullCardData] = useState<Card | null>(null);
@@ -216,6 +218,12 @@ const CardModal: React.FC<CardModalProps> = ({
       console.log(`Collection updated, new count: ${newCount}`);
       setCollectionCount(newCount);
       setCopiesCount(1); // Resetear el contador de copias a añadir
+      
+      // Notificar al componente padre sobre la actualización
+      if (isCollectionPage && onCardCollectionUpdated) {
+        console.log(`Notifying parent component about collection update for card ${card.cardId}`);
+        onCardCollectionUpdated(card.cardId, newCount);
+      }
     } catch (error: any) {
       console.error('Error updating collection:', error);
       
@@ -258,7 +266,17 @@ const CardModal: React.FC<CardModalProps> = ({
         // Reducir cantidad
         console.log(`Decreasing quantity from ${collectionCount} to ${collectionCount - 1}`);
         await collectionService.updateCardQuantity(card.cardId, collectionCount - 1);
-        setCollectionCount(prevCount => prevCount - 1);
+        setCollectionCount(prevCount => {
+          const newCount = prevCount - 1;
+          
+          // Notificar al componente padre sobre la actualización
+          if (isCollectionPage && onCardCollectionUpdated) {
+            console.log(`Notifying parent component about collection update for card ${card.cardId}`);
+            onCardCollectionUpdated(card.cardId, newCount);
+          }
+          
+          return newCount;
+        });
       }
       
       console.log('Collection updated successfully');

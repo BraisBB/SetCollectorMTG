@@ -9,5 +9,5 @@ export const KEYCLOAK_CONFIG = {
   URL: 'http://localhost:8181',
   REALM: 'setcollector-realm',
   CLIENT_ID: 'setcollector-app',
-  CLIENT_SECRET: 'JxFs2SbcKOiliG4SxO1j2mhkmVCxL3Wt'
+  CLIENT_SECRET: 'uhIU5gtTgCXqTT8V84uXtS20b8vBGXnr'
 }; 

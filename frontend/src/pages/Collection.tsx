@@ -615,6 +615,37 @@ const Collection = () => {
     return value;
   }
 
+  // Función para actualizar la cantidad de una carta en la colección
+  const handleCardCollectionUpdated = useCallback((cardId: number, newCount: number) => {
+    console.log(`Actualizando carta ${cardId} a ${newCount} en la UI`);
+    
+    setCollectionCards(prevCards => 
+      prevCards.map(card => {
+        if (card.id === cardId.toString()) {
+          console.log(`Carta encontrada: ${card.name}, actualizando contador de ${card.collectionCount} a ${newCount}`);
+          return {
+            ...card,
+            collectionCount: newCount
+          };
+        }
+        return card;
+      })
+    );
+    
+    // También actualizar las cartas filtradas si es necesario
+    setFilteredCards(prevFiltered => 
+      prevFiltered.map(card => {
+        if (card.id === cardId.toString()) {
+          return {
+            ...card,
+            collectionCount: newCount
+          };
+        }
+        return card;
+      })
+    );
+  }, []);
+
   return (
     <div className="collection-container">
       <Header />
@@ -712,6 +743,7 @@ const Collection = () => {
                 isAuthenticated={isAuthenticated}
                 isCollectionPage={true}
                 onCardRemoved={handleCardRemoved}
+                onCardCollectionUpdated={handleCardCollectionUpdated}
               />
             )}
           </>

@@ -100,6 +100,10 @@
   margin-top: 1.5rem;
 }
 
+.profile-actions.centered {
+  margin: 2rem auto;
+}
+
 .edit-button,
 .save-button,
 .cancel-button {
@@ -170,10 +174,54 @@ button:disabled {
   font-family: 'Noto Sans', sans-serif;
 }
 
+/* Estilos para la vista de información del perfil */
+.profile-data {
+  margin: 2rem 0;
+}
+
+.profile-field {
+  display: flex;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.field-label {
+  font-weight: 600;
+  width: 30%;
+  color: #e0e0e0;
+  font-family: 'Noto Sans', sans-serif;
+}
+
+.field-value {
+  width: 70%;
+  color: #ffffff;
+  font-family: 'Noto Sans', sans-serif;
+}
+
+.edit-form {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 /* Responsive styles */
 @media (max-width: 768px) {
   .profile-card {
     padding: 1.5rem;
+  }
+  
+  .profile-field {
+    flex-direction: column;
+  }
+  
+  .field-label, .field-value {
+    width: 100%;
+  }
+  
+  .field-label {
+    margin-bottom: 0.25rem;
   }
 }
 

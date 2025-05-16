@@ -24,6 +24,28 @@ const App: React.FC = () => {
   useEffect(() => {
     // Inicializar el servicio de autenticación al cargar la aplicación
     authService.initAuth();
+    
+    // Configurar un intervalo para verificar y renovar el token cada 4 minutos
+    // Esto asegura que renovamos el token antes de que expire (si es de 5 minutos)
+    const tokenRefreshInterval = setInterval(() => {
+      if (authService.isAuthenticated()) {
+        console.log('Verificando si el token necesita renovación...');
+        authService.refreshTokenIfNeeded()
+          .then(refreshed => {
+            if (refreshed) {
+              console.log('Token renovado automáticamente');
+            }
+          })
+          .catch(error => {
+            console.error('Error al renovar el token:', error);
+          });
+      }
+    }, 4 * 60 * 1000); // 4 minutos en milisegundos
+    
+    // Limpiar el intervalo cuando el componente se desmonte
+    return () => {
+      clearInterval(tokenRefreshInterval);
+    };
   }, []);
 
   return (
