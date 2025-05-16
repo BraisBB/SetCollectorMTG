@@ -283,20 +283,30 @@ class AuthService {
     const expiresAt = localStorage.getItem('expires_at');
     if (!expiresAt) return false;
     
-    // Consideramos que expira pronto si queda menos de 5 minutos
-    return Date.now() > parseInt(expiresAt, 10) - 5 * 60 * 1000;
+    // Consideramos que expira pronto si queda menos de 3 minutos
+    // Esto nos da tiempo suficiente para renovarlo antes de que expire
+    const expiresAtMs = parseInt(expiresAt, 10);
+    const timeRemaining = expiresAtMs - Date.now();
+    const THREE_MINUTES = 3 * 60 * 1000;
+    
+    return timeRemaining < THREE_MINUTES;
   }
 
   /**
    * Refresca el token si es necesario
+   * @param force Si es true, fuerza la renovación incluso si el token no está por expirar
    */
-  async refreshTokenIfNeeded(): Promise<boolean> {
-    if (!this.isTokenExpiringSoon()) return true;
+  async refreshTokenIfNeeded(force: boolean = false): Promise<boolean> {
+    // Si no está forzado y el token no está por expirar, no hacemos nada
+    if (!force && !this.isTokenExpiringSoon()) {
+      return true;
+    }
     
     const refreshToken = localStorage.getItem('refresh_token');
     if (!refreshToken) return false;
     
     try {
+      console.log(`Intentando renovar token... (forzado: ${force})`);
       const params = new URLSearchParams();
       params.append('client_id', KEYCLOAK_CONFIG.CLIENT_ID);
       params.append('client_secret', KEYCLOAK_CONFIG.CLIENT_SECRET);
@@ -314,6 +324,7 @@ class AuthService {
       );
       
       this.setSession(response.data);
+      console.log('Token renovado con éxito, nueva expiración:', new Date(parseInt(localStorage.getItem('expires_at') || '0')));
       return true;
     } catch (error) {
       console.error('Error refreshing token:', error);
@@ -326,18 +337,31 @@ class AuthService {
    * Inicializa la autenticación
    */
   initAuth(): void {
-    // Verificamos si hay token y si está expirado
-    if (this.isAuthenticated()) {
-      // Si el token está a punto de expirar, lo refrescamos
-      if (this.isTokenExpiringSoon()) {
-        this.refreshTokenIfNeeded().catch(() => {
-          console.error('Failed to refresh token during init');
+    // Verificamos si hay token válido
+    const token = localStorage.getItem('access_token');
+    const refreshToken = localStorage.getItem('refresh_token');
+    
+    if (token && refreshToken) {
+      console.log('Token encontrado al iniciar, intentando renovar sesión...');
+      // Intentar renovar el token siempre al iniciar la app o recargar la página
+      // Esto asegura que siempre tengamos un token fresco al comenzar
+      this.refreshTokenIfNeeded(true)
+        .then(success => {
+          if (success) {
+            console.log('Sesión renovada correctamente al iniciar');
+          } else {
+            console.warn('No se pudo renovar la sesión al iniciar, cerrando sesión...');
+            this.clearSession();
+          }
+        })
+        .catch(error => {
+          console.error('Error al renovar token durante inicialización:', error);
+          this.clearSession();
         });
-      }
-    } else {
+    } else if (!this.isAuthenticated()) {
       // Si no hay token válido, limpiamos la sesión
-      const token = localStorage.getItem('access_token');
       if (token) {
+        console.log('Token expirado encontrado, limpiando sesión...');
         this.clearSession();
       }
     }

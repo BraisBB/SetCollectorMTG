@@ -90,13 +90,22 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
     return (indexA !== -1 ? indexA : 999) - (indexB !== -1 ? indexB : 999);
   });
 
-  // Check if a card can have multiple copies based on deck format
-  const canIncreaseCardCopies = (currentCopies: number): boolean => {
+  // Check if a card can have multiple copies based on deck format and card type
+  const canIncreaseCardCopies = (currentCopies: number, cardId: number): boolean => {
     // In Commander format, only one copy of each card is allowed
     if (deckGameType === 'COMMANDER') {
       return currentCopies < 1;
     }
-    // In Standard format, up to 4 copies are allowed (except basic lands which we don't check here)
+    
+    // Get the card from the cards array
+    const card = cards.find(c => c.cardId === cardId);
+    
+    // For Land cards, allow unlimited copies in Standard
+    if (card && card.cardType && card.cardType.includes('Land')) {
+      return true; // No hay límite para tierras
+    }
+    
+    // In Standard format, up to 4 copies are allowed for non-land cards
     return currentCopies < 4;
   };
   
@@ -235,7 +244,7 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
     const currentQuantity = localQuantities[cardId] || 1;
     
     // If trying to increase over format limit, show error and don't make API call
-    if (newQuantity > currentQuantity && !canIncreaseCardCopies(currentQuantity)) {
+    if (newQuantity > currentQuantity && !canIncreaseCardCopies(currentQuantity, cardId)) {
       const formatName = deckGameType === 'COMMANDER' ? 'Commander' : 'Standard';
       const maxCopies = deckGameType === 'COMMANDER' ? 1 : 4;
       
@@ -509,7 +518,7 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
                               <button 
                                 className="quantity-btn increase" 
                                 onClick={() => handleOptimisticQuantityChange(card.cardId, (localQuantities[card.cardId] || card.nCopies) + 1)}
-                                disabled={!canIncreaseCardCopies(localQuantities[card.cardId] || card.nCopies)}
+                                disabled={!canIncreaseCardCopies(localQuantities[card.cardId] || card.nCopies, card.cardId)}
                                 title={deckGameType === 'COMMANDER' ? 'Commander format only allows 1 copy of each card' : ''}
                               >
                                 +

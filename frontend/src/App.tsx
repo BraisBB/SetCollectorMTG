@@ -25,11 +25,20 @@ const App: React.FC = () => {
     // Inicializar el servicio de autenticación al cargar la aplicación
     authService.initAuth();
     
-    // Configurar un intervalo para verificar y renovar el token cada 4 minutos
-    // Esto asegura que renovamos el token antes de que expire (si es de 5 minutos)
+    // Configurar un intervalo para verificar y renovar el token cada 2 minutos
+    // Un intervalo más frecuente asegura que nunca te quedes sin token válido
     const tokenRefreshInterval = setInterval(() => {
       if (authService.isAuthenticated()) {
-        console.log('Verificando si el token necesita renovación...');
+        console.log('Verificando si el token necesita renovación... (estado: ' + 
+          (authService.isTokenExpiringSoon() ? 'expira pronto' : 'vigente') + ')');
+          
+        // Obtener timestamp actual y de expiración para depuración
+        const expiresAt = localStorage.getItem('expires_at');
+        if (expiresAt) {
+          const timeRemaining = parseInt(expiresAt) - Date.now();
+          console.log(`Tiempo restante de token: ${Math.floor(timeRemaining / 1000)} segundos`);
+        }
+        
         authService.refreshTokenIfNeeded()
           .then(refreshed => {
             if (refreshed) {
@@ -39,12 +48,34 @@ const App: React.FC = () => {
           .catch(error => {
             console.error('Error al renovar el token:', error);
           });
+      } else {
+        console.log('Sesión no autenticada, no se intenta renovar token.');
       }
-    }, 4 * 60 * 1000); // 4 minutos en milisegundos
+    }, 2 * 60 * 1000); // 2 minutos en milisegundos
     
-    // Limpiar el intervalo cuando el componente se desmonte
+    // Renovar token cuando el usuario regresa a la pestaña después de tenerla inactiva
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && authService.isAuthenticated()) {
+        console.log('Usuario regresó a la pestaña, verificando token...');
+        authService.refreshTokenIfNeeded(true)
+          .then(refreshed => {
+            if (refreshed) {
+              console.log('Token renovado al regresar a la pestaña');
+            }
+          })
+          .catch(error => {
+            console.error('Error al renovar el token al regresar:', error);
+          });
+      }
+    };
+    
+    // Agregar event listener para detectar cuando el usuario regresa a la pestaña
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Limpiar recursos cuando el componente se desmonte
     return () => {
       clearInterval(tokenRefreshInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 
