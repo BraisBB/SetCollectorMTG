@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import './CardModal.css';
 import { httpClient } from '../services/httpClient';
 import { collectionService } from '../services';
-import { Card as CardType } from '../services/types';
 
 export interface Card {
   cardId: number;

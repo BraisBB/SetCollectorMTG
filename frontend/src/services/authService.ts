@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { KEYCLOAK_CONFIG } from './config';
-import { LoginCredentials, AuthTokens, User } from './types';
+import { LoginCredentials, AuthTokens } from './types';
 
 class AuthService {
   // Gestión de nombres de usuario
@@ -372,6 +372,43 @@ class AuthService {
    */
   preloadKnownUsername(exactUsername: string): void {
     this.registerKnownUsername(exactUsername);
+  }
+
+  /**
+   * Verifica si el usuario tiene el rol de administrador
+   * @returns true si el usuario tiene rol ADMIN, false en caso contrario
+   */
+  isAdmin(): boolean {
+    // Si no está autenticado, definitivamente no es admin
+    if (!this.isAuthenticated()) {
+      return false;
+    }
+    
+    const token = localStorage.getItem('access_token');
+    if (!token) return false;
+    
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      
+      // Verificar si tiene el rol 'ADMIN' en realm_access.roles
+      if (payload.realm_access && Array.isArray(payload.realm_access.roles)) {
+        if (payload.realm_access.roles.includes('ADMIN')) {
+          return true;
+        }
+      }
+      
+      // Verificar roles en resource_access para el cliente específico
+      if (payload.resource_access && 
+          payload.resource_access[KEYCLOAK_CONFIG.CLIENT_ID] && 
+          Array.isArray(payload.resource_access[KEYCLOAK_CONFIG.CLIENT_ID].roles)) {
+        return payload.resource_access[KEYCLOAK_CONFIG.CLIENT_ID].roles.includes('ADMIN');
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error al verificar rol de administrador:', error);
+      return false;
+    }
   }
 }
 

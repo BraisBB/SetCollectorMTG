@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { apiService, authService, collectionService } from '../services';
-import { Card as ApiCard, Deck, UserCollectionCard, DeckCreateDto } from '../services/types';
+import { Deck, DeckCreateDto } from '../services/types';
 import Header from '../components/Header';
 import CardGrid from '../components/CardGrid';
 import { Card } from '../components/CardGrid';
@@ -20,7 +20,6 @@ const Collection = () => {
   const [decksLoading, setDecksLoading] = useState(true);
   const [decksError, setDecksError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'cards' | 'decks'>('cards');
-  const [userId, setUserId] = useState<number | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createDeckLoading, setCreateDeckLoading] = useState(false);
   const [createDeckError, setCreateDeckError] = useState<string | null>(null);

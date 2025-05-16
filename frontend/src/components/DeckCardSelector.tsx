@@ -212,7 +212,7 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
   const handleCardSelect = async (card: Card) => {
     try {
       // Añadir la carta directamente al mazo con cantidad 1
-      await apiService.addCardToDeck(deckId, card.cardId, 1);
+      await apiService.addCardToDeck(deckId, card.cardId);
       
       // Actualizar color del mazo basado en las cartas agregadas
       await apiService.updateDeckColor(deckId);
@@ -347,15 +347,6 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
     );
   };
   
-  // Componente para renderizar las cuantidades de cartas en la lista
-  const renderCardQuantity = (cardId: number, nCopies: number) => {
-    return (
-      <span className="quantity">
-        {nCopies}
-      </span>
-    );
-  };
-
   // Verificar si una carta está en la colección del usuario
   const isCardInCollection = (cardId: number): boolean => {
     // Si la información de la colección no está cargada, considerar todas las cartas como en la colección

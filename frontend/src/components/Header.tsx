@@ -7,6 +7,7 @@ import "./Header.css";
 const Header: React.FC = () => {
   const navigate = useNavigate();
   const isAuthenticated = authService.isAuthenticated();
+  const isAdmin = authService.isAdmin();
   const [username, setUsername] = useState<string>("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -45,7 +46,10 @@ const Header: React.FC = () => {
             <Link to="/">Home</Link>
             {isAuthenticated && (
               <Link to="/collection" className="collection-link">My Collection</Link>
-            )} 
+            )}
+            {isAuthenticated && isAdmin && (
+              <Link to="/admin" className="admin-link">Panel Admin</Link>
+            )}
             {isAuthenticated ? (
               <div className="user-menu">
                 <button className="username-button" onClick={toggleDropdown}>
@@ -55,6 +59,9 @@ const Header: React.FC = () => {
                   <div className="dropdown-menu">
                     <Link to="/profile" onClick={() => setDropdownOpen(false)}>My Profile</Link>
                     <Link to="/collection" onClick={() => setDropdownOpen(false)}>My Collection</Link>
+                    {isAdmin && (
+                      <Link to="/admin" onClick={() => setDropdownOpen(false)}>Panel Admin</Link>
+                    )}
                     <button className="dropdown-item" onClick={handleLogout}>
                       Logout
                     </button>

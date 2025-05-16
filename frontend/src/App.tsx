@@ -6,6 +6,7 @@ import Register from './pages/Register.tsx';
 import Profile from './pages/Profile.tsx';
 import Collection from './pages/Collection.tsx';
 import DeckEditor from './pages/DeckEditor.tsx';
+import Admin from './pages/Admin.tsx';
 import authService from "./services/authService.ts";
 
 // Componente para rutas protegidas
@@ -15,6 +16,24 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   if (!isAuthenticated) {
     // Redirigir a login si no está autenticado
     return <Navigate to="/login" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
+// Componente para rutas de administración
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const isAuthenticated = authService.isAuthenticated();
+  const isAdmin = authService.isAdmin();
+  
+  if (!isAuthenticated) {
+    // Redirigir a login si no está autenticado
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (!isAdmin) {
+    // Redirigir a home si está autenticado pero no es admin
+    return <Navigate to="/" replace />;
   }
   
   return <>{children}</>;
@@ -104,6 +123,12 @@ const App: React.FC = () => {
           <ProtectedRoute>
             <DeckEditor />
           </ProtectedRoute>
+        } />
+        {/* Ruta del panel de administración */}
+        <Route path="/admin" element={
+          <AdminRoute>
+            <Admin />
+          </AdminRoute>
         } />
         {/* Ruta para About Us */}
         <Route path="/about" element={<Home />} />

@@ -1,10 +1,7 @@
 import { httpClient } from './httpClient';
 import authService from './authService';
-import { SetMtg, Card, Deck, DeckCreateDto, CardDeck, User } from './types';
+import { SetMtg, Card, Deck, DeckCreateDto, CardDeck, User, UserCollectionCard } from './types';
 import { SearchParams } from '../components/SearchBar';
-
-// Usando el proxy configurado en vite.config.ts
-const API_URL = '/api';
 
 // Servicio para operaciones de la API
 const apiService = {
@@ -63,9 +60,9 @@ const apiService = {
       
       // Intento 3: Usar username real del usuario
       const username = localStorage.getItem('username') || '';
-      if (username && username !== keycloakId) { // Asegurarse de que no sea el keycloakId
+      if (username) {
+        console.log(`Intentando obtener mazos con username: ${username}`);
         try {
-          console.log(`Intentando obtener mazos con username real: ${username}`);
           const decks = await httpClient.get<Deck[]>(`/decks/user/byUsername/${username}`);
           
           if (Array.isArray(decks) && decks.length > 0) {
@@ -78,111 +75,46 @@ const apiService = {
           console.error(`Error al obtener mazos con username: ${username}`, error);
         }
       }
-
-      // Fallback final: devolver un array vacío si todos los intentos fallan
-      console.log('Todos los intentos fallaron, devolviendo array vacío');
+      
+      // Si llegamos aquí, intentamos el enfoque original (userId numérico)
+      if (userId) {
+        console.log(`Intentando obtener mazos con userId: ${userId}`);
+        try {
+          const decks = await httpClient.get<Deck[]>(`/decks/user/${userId}`);
+          
+          if (Array.isArray(decks) && decks.length > 0) {
+            console.log(`¡Éxito! Encontrados ${decks.length} mazos con userId`);
+            return decks;
+          } else {
+            console.log('No se encontraron mazos con userId');
+          }
+        } catch (error) {
+          console.error(`Error al obtener mazos con userId: ${userId}`, error);
+        }
+      }
+      
+      // Si llegamos aquí, ninguno de los enfoques funcionó
+      console.warn('No se pudo obtener los mazos con ninguno de los métodos disponibles');
       return [];
     } catch (error) {
-      console.error('Error al obtener mazos del usuario', error);
+      console.error('Error general al obtener mazos del usuario:', error);
       return [];
     }
   },
 
   getDeckById: async (deckId: number): Promise<Deck> => {
-    try {
-      console.log(`Requesting deck ${deckId}`);
-      
-      // Implement retry system
-      const MAX_RETRIES = 3;
-      let retryCount = 0;
-      let lastError = null;
-      
-      while (retryCount < MAX_RETRIES) {
-        try {
-          const deck = await httpClient.get<Deck>(`/decks/${deckId}`);
-          console.log(`Deck ${deckId} retrieved successfully:`, deck.deckName);
-          return deck;
-        } catch (error: any) {
-          lastError = error;
-          
-          // If error is 403, it could be a permissions issue
-          if (error.response && error.response.status === 403) {
-            console.warn(`You don't have permission to access deck ${deckId}.`);
-            // For permission errors, break the cycle and return a "not found" deck
-            break;
-          }
-          
-          // For other errors, try again after a delay
-          retryCount++;
-          console.log(`Retry ${retryCount}/${MAX_RETRIES} to get deck ${deckId}...`);
-          
-          // Wait a bit before retrying (using setTimeout with Promise)
-          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-        }
-      }
-      
-      console.error(`Error getting deck by ID after ${MAX_RETRIES} attempts:`, lastError);
-      throw new Error(`Could not retrieve deck ${deckId}`);
-    } catch (error) {
-      console.error('Error getting deck by ID:', error);
-      throw error;
-    }
+    console.log(`Requesting deck ${deckId}`);
+    return httpClient.get<Deck>(`/decks/${deckId}`);
   },
 
-  createDeck: async (deckData: DeckCreateDto): Promise<Deck> => {
-    try {
-      // Make sure userId is set
-      const userId = authService.getUserIdentifier();
-      console.log("Creating deck, authenticated user ID:", userId);
-      
-      if (userId === null) {
-        throw new Error('No se pudo determinar el ID del usuario');
-      }
-      
-      // Create complete object to send to backend
-      const deckToCreate = {
-        ...deckData
-      };
-      
-      console.log('Creating new deck with data:', deckToCreate);
-      
-      // Send the request
-      try {
-        const response = await httpClient.post<Deck>('/decks', deckToCreate);
-        console.log('Deck created successfully:', response);
-        return response;
-      } catch (apiError: any) {
-        console.error('API error creating deck:', apiError);
-        if (apiError.response) {
-          console.error('Response data:', apiError.response.data);
-          console.error('Response status:', apiError.response.status);
-        }
-        throw apiError;
-      }
-    } catch (error) {
-      console.error('Error creating deck:', error);
-      throw error;
-    }
+  createDeck: async (deck: DeckCreateDto): Promise<Deck> => {
+    console.log('Creating deck:', deck);
+    return httpClient.post<Deck>('/decks', deck);
   },
-
-  updateDeck: async (deckId: number, deckData: Deck): Promise<Deck> => {
-    try {
-      console.log(`Updating deck ${deckId}:`, deckData);
-      return httpClient.put<Deck>(`/decks/${deckId}`, deckData);
-    } catch (error) {
-      console.error(`Error updating deck ${deckId}:`, error);
-      throw error;
-    }
-  },
-
-  deleteDeck: async (deckId: number): Promise<void> => {
-    try {
-      console.log(`Deleting deck ${deckId}`);
-      await httpClient.delete(`/decks/${deckId}`);
-    } catch (error) {
-      console.error(`Error deleting deck ${deckId}:`, error);
-      throw error;
-    }
+  
+  updateDeck: async (deckId: number, deck: Partial<Deck>): Promise<Deck> => {
+    console.log(`Updating deck ${deckId}:`, deck);
+    return httpClient.put<Deck>(`/decks/${deckId}`, deck);
   },
 
   // Cards in Deck
@@ -233,58 +165,134 @@ const apiService = {
       console.error(`Error getting cards from deck ${deckId} after ${MAX_RETRIES} attempts:`, lastError);
       return [];
     } catch (error) {
-      console.error(`Error getting cards from deck ${deckId}:`, error);
+      console.error('Error getting cards from deck:', error);
       return [];
     }
   },
 
-  addCardToDeck: async (deckId: number, cardId: number, quantity: number = 1): Promise<CardDeck> => {
-    try {
-      console.log(`Adding card ${cardId} to deck ${deckId} (${quantity} copies)`);
-      return httpClient.post<CardDeck>(
-        `/decks/${deckId}/cards/${cardId}`, 
-        {}, 
-        { params: { quantity } }
-      );
-    } catch (error) {
-      console.error(`Error adding card ${cardId} to deck ${deckId}:`, error);
-      throw error;
-    }
+  // Add a card to a deck
+  addCardToDeck: async (deckId: number, cardId: number): Promise<CardDeck> => {
+    console.log(`Adding card ${cardId} to deck ${deckId}`);
+    return httpClient.post<CardDeck>(`/decks/${deckId}/cards/${cardId}`, {});
   },
 
+  // Update card quantity in a deck
   updateCardInDeck: async (deckId: number, cardId: number, quantity: number): Promise<CardDeck> => {
-    try {
-      console.log(`Updating quantity of card ${cardId} in deck ${deckId} to ${quantity}`);
-      return httpClient.put<CardDeck>(
-        `/decks/${deckId}/cards/${cardId}`, 
-        {}, 
-        { params: { quantity } }
-      );
-    } catch (error) {
-      console.error(`Error updating quantity of card ${cardId} in deck ${deckId}:`, error);
-      throw error;
-    }
+    console.log(`Updating card ${cardId} in deck ${deckId} with quantity ${quantity}`);
+    return httpClient.put<CardDeck>(`/decks/${deckId}/cards/${cardId}`, { nCopies: quantity });
   },
 
+  // Remove a card from a deck
   removeCardFromDeck: async (deckId: number, cardId: number): Promise<void> => {
+    console.log(`Removing card ${cardId} from deck ${deckId}`);
+    await httpClient.delete(`/decks/${deckId}/cards/${cardId}`);
+  },
+
+  // User Collection
+  getUserCollection: async (): Promise<UserCollectionCard[]> => {
     try {
-      console.log(`Removing card ${cardId} from deck ${deckId}`);
-      await httpClient.delete(`/decks/${deckId}/cards/${cardId}`);
+      // Primero intentamos con el UUID de Keycloak
+      const keycloakId = localStorage.getItem('user_keycloak_id');
+      if (keycloakId) {
+        try {
+          console.log(`Requesting collection for user with Keycloak ID: ${keycloakId}`);
+          const data = await httpClient.get<UserCollectionCard[]>(`/collections/user/keycloak/${keycloakId}/cards`);
+          if (data && data.length > 0) {
+            console.log(`Collection found with Keycloak ID. Cards: ${data.length}`);
+            return data;
+          }
+        } catch (error) {
+          console.error('Error fetching collection with Keycloak ID:', error);
+        }
+      }
+      
+      // Luego probamos con el username
+      const username = localStorage.getItem('username');
+      if (username) {
+        try {
+          console.log(`Requesting collection for user with username: ${username}`);
+          const data = await httpClient.get<UserCollectionCard[]>(`/collections/user/byUsername/${username}/cards`);
+          if (data && data.length > 0) {
+            console.log(`Collection found with username. Cards: ${data.length}`);
+            return data;
+          }
+        } catch (error) {
+          console.error('Error fetching collection with username:', error);
+        }
+      }
+      
+      // Finalmente, probamos con el ID de usuario
+      const userId = authService.getUserIdentifier();
+      if (userId && userId.match(/^\d+$/)) {
+        try {
+          console.log(`Requesting collection for user with ID: ${userId}`);
+          const data = await httpClient.get<UserCollectionCard[]>(`/collections/user/${userId}/cards`);
+          console.log(`Collection found with user ID. Cards: ${data.length}`);
+          return data;
+        } catch (error) {
+          console.error('Error fetching collection with user ID:', error);
+        }
+      }
+      
+      console.warn('Could not fetch user collection with any available method');
+      return [];
     } catch (error) {
-      console.error(`Error removing card ${cardId} from deck ${deckId}:`, error);
-      throw error;
+      console.error('Error fetching user collection:', error);
+      return [];
     }
   },
 
-  // Cards
-  getAllCards: async (): Promise<Card[]> => {
-    console.log('Requesting all cards');
-    return httpClient.get<Card[]>('/cards');
-  },
-
-  getCardById: async (id: number): Promise<Card> => {
-    console.log(`Requesting card ${id}`);
-    return httpClient.get<Card>(`/cards/${id}`);
+  // Add or update a card in the user's collection
+  updateCardInCollection: async (cardId: number, copies: number): Promise<UserCollectionCard> => {
+    try {
+      console.log(`Updating card ${cardId} in collection with ${copies} copies`);
+      
+      // Intentar primero con Keycloak UUID
+      const keycloakId = localStorage.getItem('user_keycloak_id');
+      if (keycloakId) {
+        try {
+          const data = await httpClient.put<UserCollectionCard>(
+            `/collections/user/keycloak/${keycloakId}/cards/${cardId}`, 
+            { copies }
+          );
+          console.log(`Card updated in collection using Keycloak ID`);
+          return data;
+        } catch (error) {
+          console.error('Error updating card with Keycloak ID:', error);
+        }
+      }
+      
+      // Intentar con username
+      const username = localStorage.getItem('username');
+      if (username) {
+        try {
+          const data = await httpClient.put<UserCollectionCard>(
+            `/collections/user/byUsername/${username}/cards/${cardId}`, 
+            { copies }
+          );
+          console.log(`Card updated in collection using username`);
+          return data;
+        } catch (error) {
+          console.error('Error updating card with username:', error);
+        }
+      }
+      
+      // Intentar con user ID
+      const userId = authService.getUserIdentifier();
+      if (userId && userId.match(/^\d+$/)) {
+        const data = await httpClient.put<UserCollectionCard>(
+          `/collections/user/${userId}/cards/${cardId}`, 
+          { copies }
+        );
+        console.log(`Card updated in collection using user ID`);
+        return data;
+      }
+      
+      throw new Error('Could not update card in collection with any available method');
+    } catch (error) {
+      console.error(`Error updating card ${cardId} in collection:`, error);
+      throw error;
+    }
   },
 
   // Users
@@ -355,7 +363,135 @@ const apiService = {
       console.error(`Error actualizando el color del mazo ${deckId}:`, error);
       throw error;
     }
+  },
+
+  // Funciones administrativas
+  
+  // Usuarios
+  getAllUsers: async (): Promise<User[]> => {
+    try {
+      return httpClient.get<User[]>('/admin/users');
+    } catch (error) {
+      console.error('Error obteniendo usuarios:', error);
+      return [];
+    }
+  },
+
+  createUser: async (userData: Partial<User>): Promise<User> => {
+    try {
+      return httpClient.post<User>('/admin/users', userData);
+    } catch (error) {
+      console.error('Error creando usuario:', error);
+      throw error;
+    }
+  },
+
+  updateUser: async (userId: number, userData: Partial<User>): Promise<User> => {
+    try {
+      return httpClient.put<User>(`/admin/users/${userId}`, userData);
+    } catch (error) {
+      console.error(`Error actualizando usuario ${userId}:`, error);
+      throw error;
+    }
+  },
+
+  deleteUser: async (userId: number): Promise<void> => {
+    try {
+      await httpClient.delete(`/admin/users/${userId}`);
+    } catch (error) {
+      console.error(`Error eliminando usuario ${userId}:`, error);
+      throw error;
+    }
+  },
+
+  // Sets
+  createSet: async (setData: Partial<SetMtg>): Promise<SetMtg> => {
+    try {
+      return httpClient.post<SetMtg>('/admin/sets', setData);
+    } catch (error) {
+      console.error('Error creando set:', error);
+      throw error;
+    }
+  },
+
+  updateSet: async (setId: number, setData: Partial<SetMtg>): Promise<SetMtg> => {
+    try {
+      return httpClient.put<SetMtg>(`/admin/sets/${setId}`, setData);
+    } catch (error) {
+      console.error(`Error actualizando set ${setId}:`, error);
+      throw error;
+    }
+  },
+
+  deleteSet: async (setId: number): Promise<void> => {
+    try {
+      await httpClient.delete(`/admin/sets/${setId}`);
+    } catch (error) {
+      console.error(`Error eliminando set ${setId}:`, error);
+      throw error;
+    }
+  },
+
+  // Cartas
+  getAllCards: async (page: number = 0, size: number = 50): Promise<Card[]> => {
+    try {
+      return httpClient.get<Card[]>('/admin/cards', {
+        params: { page, size }
+      });
+    } catch (error) {
+      console.error('Error obteniendo todas las cartas:', error);
+      return [];
+    }
+  },
+
+  createCard: async (cardData: Partial<Card>): Promise<Card> => {
+    try {
+      return httpClient.post<Card>('/admin/cards', cardData);
+    } catch (error) {
+      console.error('Error creando carta:', error);
+      throw error;
+    }
+  },
+
+  updateCard: async (cardId: number, cardData: Partial<Card>): Promise<Card> => {
+    try {
+      return httpClient.put<Card>(`/admin/cards/${cardId}`, cardData);
+    } catch (error) {
+      console.error(`Error actualizando carta ${cardId}:`, error);
+      throw error;
+    }
+  },
+
+  deleteCard: async (cardId: number): Promise<void> => {
+    try {
+      await httpClient.delete(`/admin/cards/${cardId}`);
+    } catch (error) {
+      console.error(`Error eliminando carta ${cardId}:`, error);
+      throw error;
+    }
+  },
+
+  // Mazos (funciones administrativas)
+  getAllDecks: async (page: number = 0, size: number = 50): Promise<Deck[]> => {
+    try {
+      return httpClient.get<Deck[]>('/admin/decks', {
+        params: { page, size }
+      });
+    } catch (error) {
+      console.error('Error obteniendo todos los mazos:', error);
+      return [];
+    }
+  },
+
+  deleteDeck: async (deckId: number): Promise<void> => {
+    try {
+      await httpClient.delete(`/admin/decks/${deckId}`);
+    } catch (error) {
+      console.error(`Error eliminando mazo ${deckId}:`, error);
+      throw error;
+    }
   }
 };
 
+export { apiService };
 export default apiService;

@@ -54,7 +54,8 @@ interface DeckListProps {
 const DeckList: React.FC<DeckListProps> = ({ 
   decks, 
   onDeckCreated, 
-  onDeckDeleted,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onDeckDeleted: _onDeckDeleted,
   showCreateModal = false,
   setShowCreateModal
 }) => {
@@ -87,23 +88,6 @@ const DeckList: React.FC<DeckListProps> = ({
     navigate(`/deck/${deckId}`);
   };
   
-  const handleDelete = async (deckId: number) => {
-    try {
-      await apiService.deleteDeck(deckId);
-      onDeckDeleted();
-    } catch (error) {
-      if (error instanceof Error) {
-        console.error('Error deleting deck:', error.message);
-      } else {
-        console.error('Unknown error deleting deck');
-      }
-    }
-  };
-
-  const handleEditDeck = (deck: Deck) => {
-    navigate(`/deck/${deck.deckId}`);
-  };
-
   const openCreateModal = () => {
     console.log("DeckList: Abriendo modal para crear mazo");
     setIsModalOpen(true);
@@ -349,7 +333,7 @@ const DeckList: React.FC<DeckListProps> = ({
                   type="submit" 
                   className="create-button create-button-style"
                   disabled={loading}
-                  onClick={(e) => {
+                  onClick={() => {
                     console.log("DeckList: Botón Create Deck (submit) clickeado");
                     // No necesitamos llamar a handleSubmit aquí ya que es un botón de tipo submit
                     // y el formulario ya tiene un controlador onSubmit
