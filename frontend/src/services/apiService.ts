@@ -370,7 +370,7 @@ const apiService = {
   // Usuarios
   getAllUsers: async (): Promise<User[]> => {
     try {
-      return httpClient.get<User[]>('/admin/users');
+      return httpClient.get<User[]>('/users');
     } catch (error) {
       console.error('Error obteniendo usuarios:', error);
       return [];
@@ -379,7 +379,7 @@ const apiService = {
 
   createUser: async (userData: Partial<User>): Promise<User> => {
     try {
-      return httpClient.post<User>('/admin/users', userData);
+      return httpClient.post<User>('/users', userData);
     } catch (error) {
       console.error('Error creando usuario:', error);
       throw error;
@@ -388,7 +388,7 @@ const apiService = {
 
   updateUser: async (userId: number, userData: Partial<User>): Promise<User> => {
     try {
-      return httpClient.put<User>(`/admin/users/${userId}`, userData);
+      return httpClient.put<User>(`/users/${userId}`, userData);
     } catch (error) {
       console.error(`Error actualizando usuario ${userId}:`, error);
       throw error;
@@ -397,7 +397,7 @@ const apiService = {
 
   deleteUser: async (userId: number): Promise<void> => {
     try {
-      await httpClient.delete(`/admin/users/${userId}`);
+      await httpClient.delete(`/users/${userId}`);
     } catch (error) {
       console.error(`Error eliminando usuario ${userId}:`, error);
       throw error;
@@ -407,7 +407,7 @@ const apiService = {
   // Sets
   createSet: async (setData: Partial<SetMtg>): Promise<SetMtg> => {
     try {
-      return httpClient.post<SetMtg>('/admin/sets', setData);
+      return httpClient.post<SetMtg>('/sets', setData);
     } catch (error) {
       console.error('Error creando set:', error);
       throw error;
@@ -416,7 +416,7 @@ const apiService = {
 
   updateSet: async (setId: number, setData: Partial<SetMtg>): Promise<SetMtg> => {
     try {
-      return httpClient.put<SetMtg>(`/admin/sets/${setId}`, setData);
+      return httpClient.put<SetMtg>(`/sets/${setId}`, setData);
     } catch (error) {
       console.error(`Error actualizando set ${setId}:`, error);
       throw error;
@@ -425,7 +425,7 @@ const apiService = {
 
   deleteSet: async (setId: number): Promise<void> => {
     try {
-      await httpClient.delete(`/admin/sets/${setId}`);
+      await httpClient.delete(`/sets/${setId}`);
     } catch (error) {
       console.error(`Error eliminando set ${setId}:`, error);
       throw error;
@@ -435,7 +435,7 @@ const apiService = {
   // Cartas
   getAllCards: async (page: number = 0, size: number = 50): Promise<Card[]> => {
     try {
-      return httpClient.get<Card[]>('/admin/cards', {
+      return httpClient.get<Card[]>('/cards', {
         params: { page, size }
       });
     } catch (error) {
@@ -446,7 +446,7 @@ const apiService = {
 
   createCard: async (cardData: Partial<Card>): Promise<Card> => {
     try {
-      return httpClient.post<Card>('/admin/cards', cardData);
+      return httpClient.post<Card>('/cards', cardData);
     } catch (error) {
       console.error('Error creando carta:', error);
       throw error;
@@ -455,7 +455,7 @@ const apiService = {
 
   updateCard: async (cardId: number, cardData: Partial<Card>): Promise<Card> => {
     try {
-      return httpClient.put<Card>(`/admin/cards/${cardId}`, cardData);
+      return httpClient.put<Card>(`/cards/${cardId}`, cardData);
     } catch (error) {
       console.error(`Error actualizando carta ${cardId}:`, error);
       throw error;
@@ -464,7 +464,7 @@ const apiService = {
 
   deleteCard: async (cardId: number): Promise<void> => {
     try {
-      await httpClient.delete(`/admin/cards/${cardId}`);
+      await httpClient.delete(`/cards/${cardId}`);
     } catch (error) {
       console.error(`Error eliminando carta ${cardId}:`, error);
       throw error;
@@ -474,7 +474,7 @@ const apiService = {
   // Mazos (funciones administrativas)
   getAllDecks: async (page: number = 0, size: number = 50): Promise<Deck[]> => {
     try {
-      return httpClient.get<Deck[]>('/admin/decks', {
+      return httpClient.get<Deck[]>('/decks', {
         params: { page, size }
       });
     } catch (error) {
@@ -485,7 +485,7 @@ const apiService = {
 
   deleteDeck: async (deckId: number): Promise<void> => {
     try {
-      await httpClient.delete(`/admin/decks/${deckId}`);
+      await httpClient.delete(`/decks/${deckId}`);
     } catch (error) {
       console.error(`Error eliminando mazo ${deckId}:`, error);
       throw error;

@@ -26,6 +26,14 @@ class HttpClient {
       const token = localStorage.getItem('access_token');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+        console.log('Token incluido en la solicitud');
+        
+        // Para depuración, mostrar parte del token (pero no completo por seguridad)
+        if (token.length > 20) {
+          console.log(`Token Auth: Bearer ${token.substring(0, 15)}...${token.substring(token.length - 5)}`);
+        }
+      } else {
+        console.warn('No hay token de autenticación disponible para la solicitud');
       }
       return config;
     });

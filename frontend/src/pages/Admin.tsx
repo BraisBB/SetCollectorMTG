@@ -53,8 +53,8 @@ const Admin: React.FC = () => {
           setSets(fetchedSets);
           break;
         case 'cards':
-          // Aquí podríamos implementar una búsqueda paginada, 
-          // ya que obtener todas las cartas podría ser demasiado
+          // Here we could implement paginated search,
+          // as getting all cards could be too much
           const fetchedCards = await apiService.getAllCards();
           setCards(fetchedCards);
           break;
@@ -67,30 +67,30 @@ const Admin: React.FC = () => {
       }
     } catch (err: any) {
       console.error(`Error loading ${tab} data:`, err);
-      setError(`Error cargando datos: ${err.message || 'Error desconocido'}`);
+      setError(`Error loading data: ${err.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
   };
 
-  // Funciones para usuarios
+  // User functions
   const handleCreateUser = async (userData: any) => {
     try {
       await apiService.createUser(userData);
       setShowUserForm(false);
       loadTabData('users');
     } catch (err: any) {
-      setError(`Error creando usuario: ${err.message}`);
+      setError(`Error creating user: ${err.message}`);
     }
   };
 
   const handleDeleteUser = async (userId: number) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
+    if (window.confirm('Are you sure you want to delete this user?')) {
       try {
         await apiService.deleteUser(userId);
         loadTabData('users');
       } catch (err: any) {
-        setError(`Error eliminando usuario: ${err.message}`);
+        setError(`Error deleting user: ${err.message}`);
       }
     }
   };
@@ -107,28 +107,28 @@ const Admin: React.FC = () => {
       setSelectedUser(null);
       loadTabData('users');
     } catch (err: any) {
-      setError(`Error actualizando usuario: ${err.message}`);
+      setError(`Error updating user: ${err.message}`);
     }
   };
 
-  // Funciones para sets
+  // Sets functions
   const handleCreateSet = async (setData: any) => {
     try {
       await apiService.createSet(setData);
       setShowSetForm(false);
       loadTabData('sets');
     } catch (err: any) {
-      setError(`Error creando set: ${err.message}`);
+      setError(`Error creating set: ${err.message}`);
     }
   };
 
   const handleDeleteSet = async (setId: number) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este set?')) {
+    if (window.confirm('Are you sure you want to delete this set?')) {
       try {
         await apiService.deleteSet(setId);
         loadTabData('sets');
       } catch (err: any) {
-        setError(`Error eliminando set: ${err.message}`);
+        setError(`Error deleting set: ${err.message}`);
       }
     }
   };
@@ -145,28 +145,28 @@ const Admin: React.FC = () => {
       setSelectedSet(null);
       loadTabData('sets');
     } catch (err: any) {
-      setError(`Error actualizando set: ${err.message}`);
+      setError(`Error updating set: ${err.message}`);
     }
   };
 
-  // Funciones para cartas
+  // Cards functions
   const handleCreateCard = async (cardData: any) => {
     try {
       await apiService.createCard(cardData);
       setShowCardForm(false);
       loadTabData('cards');
     } catch (err: any) {
-      setError(`Error creando carta: ${err.message}`);
+      setError(`Error creating card: ${err.message}`);
     }
   };
 
   const handleDeleteCard = async (cardId: number) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar esta carta?')) {
+    if (window.confirm('Are you sure you want to delete this card?')) {
       try {
         await apiService.deleteCard(cardId);
         loadTabData('cards');
       } catch (err: any) {
-        setError(`Error eliminando carta: ${err.message}`);
+        setError(`Error deleting card: ${err.message}`);
       }
     }
   };
@@ -183,25 +183,25 @@ const Admin: React.FC = () => {
       setSelectedCard(null);
       loadTabData('cards');
     } catch (err: any) {
-      setError(`Error actualizando carta: ${err.message}`);
+      setError(`Error updating card: ${err.message}`);
     }
   };
 
-  // Funciones para mazos (más simples, probablemente solo ver y eliminar)
+  // Decks functions (simpler, probably just view and delete)
   const handleDeleteDeck = async (deckId: number) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este mazo?')) {
+    if (window.confirm('Are you sure you want to delete this deck?')) {
       try {
         await apiService.deleteDeck(deckId);
         loadTabData('decks');
       } catch (err: any) {
-        setError(`Error eliminando mazo: ${err.message}`);
+        setError(`Error deleting deck: ${err.message}`);
       }
     }
   };
 
   const renderUserForm = () => (
     <div className="admin-form">
-      <h3>{selectedUser ? 'Editar Usuario' : 'Crear Usuario'}</h3>
+      <h3>{selectedUser ? 'Edit User' : 'Create User'}</h3>
       <form onSubmit={(e) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
@@ -209,7 +209,7 @@ const Admin: React.FC = () => {
           id: selectedUser?.id,
           username: formData.get('username') as string,
           email: formData.get('email') as string,
-          // Puedes añadir más campos según sea necesario
+          // You can add more fields as needed
         };
         
         if (selectedUser) {
@@ -219,7 +219,7 @@ const Admin: React.FC = () => {
         }
       }}>
         <div className="form-group">
-          <label htmlFor="username">Nombre de usuario</label>
+          <label htmlFor="username">Username</label>
           <input 
             type="text" 
             id="username" 
@@ -240,7 +240,7 @@ const Admin: React.FC = () => {
         </div>
         {!selectedUser && (
           <div className="form-group">
-            <label htmlFor="password">Contraseña</label>
+            <label htmlFor="password">Password</label>
             <input 
               type="password" 
               id="password" 
@@ -251,7 +251,7 @@ const Admin: React.FC = () => {
         )}
         <div className="form-buttons">
           <button type="submit" className="btn-primary">
-            {selectedUser ? 'Actualizar' : 'Crear'}
+            {selectedUser ? 'Update' : 'Create'}
           </button>
           <button 
             type="button" 
@@ -261,7 +261,7 @@ const Admin: React.FC = () => {
               setSelectedUser(null);
             }}
           >
-            Cancelar
+            Cancel
           </button>
         </div>
       </form>
@@ -270,7 +270,7 @@ const Admin: React.FC = () => {
 
   const renderSetForm = () => (
     <div className="admin-form">
-      <h3>{selectedSet ? 'Editar Set' : 'Crear Set'}</h3>
+      <h3>{selectedSet ? 'Edit Set' : 'Create Set'}</h3>
       <form onSubmit={(e) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
@@ -279,7 +279,7 @@ const Admin: React.FC = () => {
           name: formData.get('name') as string,
           code: formData.get('code') as string,
           releaseDate: formData.get('releaseDate') as string,
-          // Añadir más campos según sea necesario
+          // Add more fields as needed
         };
         
         if (selectedSet) {
@@ -289,7 +289,7 @@ const Admin: React.FC = () => {
         }
       }}>
         <div className="form-group">
-          <label htmlFor="name">Nombre del Set</label>
+          <label htmlFor="name">Set Name</label>
           <input 
             type="text" 
             id="name" 
@@ -299,7 +299,7 @@ const Admin: React.FC = () => {
           />
         </div>
         <div className="form-group">
-          <label htmlFor="code">Código</label>
+          <label htmlFor="code">Code</label>
           <input 
             type="text" 
             id="code" 
@@ -309,7 +309,7 @@ const Admin: React.FC = () => {
           />
         </div>
         <div className="form-group">
-          <label htmlFor="releaseDate">Fecha de lanzamiento</label>
+          <label htmlFor="releaseDate">Release Date</label>
           <input 
             type="date" 
             id="releaseDate" 
@@ -320,7 +320,7 @@ const Admin: React.FC = () => {
         </div>
         <div className="form-buttons">
           <button type="submit" className="btn-primary">
-            {selectedSet ? 'Actualizar' : 'Crear'}
+            {selectedSet ? 'Update' : 'Create'}
           </button>
           <button 
             type="button" 
@@ -330,7 +330,7 @@ const Admin: React.FC = () => {
               setSelectedSet(null);
             }}
           >
-            Cancelar
+            Cancel
           </button>
         </div>
       </form>
@@ -339,7 +339,7 @@ const Admin: React.FC = () => {
 
   const renderCardForm = () => (
     <div className="admin-form">
-      <h3>{selectedCard ? 'Editar Carta' : 'Crear Carta'}</h3>
+      <h3>{selectedCard ? 'Edit Card' : 'Create Card'}</h3>
       <form onSubmit={(e) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
@@ -352,7 +352,7 @@ const Admin: React.FC = () => {
           setId: parseInt(formData.get('setId') as string),
           oracleText: formData.get('oracleText') as string,
           cardImageUrl: formData.get('cardImageUrl') as string,
-          // Más campos según sea necesario
+          // More fields as needed
         };
         
         if (selectedCard) {
@@ -362,7 +362,7 @@ const Admin: React.FC = () => {
         }
       }}>
         <div className="form-group">
-          <label htmlFor="name">Nombre de la Carta</label>
+          <label htmlFor="name">Card Name</label>
           <input 
             type="text" 
             id="name" 
@@ -372,7 +372,7 @@ const Admin: React.FC = () => {
           />
         </div>
         <div className="form-group">
-          <label htmlFor="cardType">Tipo</label>
+          <label htmlFor="cardType">Type</label>
           <input 
             type="text" 
             id="cardType" 
@@ -382,7 +382,7 @@ const Admin: React.FC = () => {
           />
         </div>
         <div className="form-group">
-          <label htmlFor="manaCost">Coste de Maná</label>
+          <label htmlFor="manaCost">Mana Cost</label>
           <input 
             type="text" 
             id="manaCost" 
@@ -391,7 +391,7 @@ const Admin: React.FC = () => {
           />
         </div>
         <div className="form-group">
-          <label htmlFor="rarity">Rareza</label>
+          <label htmlFor="rarity">Rarity</label>
           <select 
             id="rarity" 
             name="rarity" 
@@ -412,14 +412,14 @@ const Admin: React.FC = () => {
             defaultValue={selectedCard?.setId || ''} 
             required
           >
-            <option value="">Seleccionar Set</option>
+            <option value="">Select Set</option>
             {sets.map(set => (
               <option key={set.id} value={set.id}>{set.name}</option>
             ))}
           </select>
         </div>
         <div className="form-group">
-          <label htmlFor="oracleText">Texto</label>
+          <label htmlFor="oracleText">Text</label>
           <textarea 
             id="oracleText" 
             name="oracleText" 
@@ -428,7 +428,7 @@ const Admin: React.FC = () => {
           />
         </div>
         <div className="form-group">
-          <label htmlFor="cardImageUrl">URL de la Imagen</label>
+          <label htmlFor="cardImageUrl">Image URL</label>
           <input 
             type="url" 
             id="cardImageUrl" 
@@ -438,7 +438,7 @@ const Admin: React.FC = () => {
         </div>
         <div className="form-buttons">
           <button type="submit" className="btn-primary">
-            {selectedCard ? 'Actualizar' : 'Crear'}
+            {selectedCard ? 'Update' : 'Create'}
           </button>
           <button 
             type="button" 
@@ -448,7 +448,7 @@ const Admin: React.FC = () => {
               setSelectedCard(null);
             }}
           >
-            Cancelar
+            Cancel
           </button>
         </div>
       </form>
@@ -459,12 +459,12 @@ const Admin: React.FC = () => {
     <div className="admin-tab-content">
       <div className="admin-actions">
         <button className="btn-primary" onClick={() => setShowUserForm(true)}>
-          Crear Usuario
+          Create User
         </button>
       </div>
       
       {loading ? (
-        <div className="loading">Cargando usuarios...</div>
+        <div className="loading">Loading users...</div>
       ) : error ? (
         <div className="error">{error}</div>
       ) : (
@@ -472,9 +472,9 @@ const Admin: React.FC = () => {
           <thead>
             <tr>
               <th>ID</th>
-              <th>Usuario</th>
+              <th>Username</th>
               <th>Email</th>
-              <th>Acciones</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -484,12 +484,12 @@ const Admin: React.FC = () => {
                 <td>{user.username}</td>
                 <td>{user.email}</td>
                 <td className="actions">
-                  <button onClick={() => handleEditUser(user)}>Editar</button>
+                  <button onClick={() => handleEditUser(user)}>Edit</button>
                   <button 
                     className="delete" 
                     onClick={() => handleDeleteUser(user.id)}
                   >
-                    Eliminar
+                    Delete
                   </button>
                 </td>
               </tr>
@@ -506,12 +506,12 @@ const Admin: React.FC = () => {
     <div className="admin-tab-content">
       <div className="admin-actions">
         <button className="btn-primary" onClick={() => setShowSetForm(true)}>
-          Crear Set
+          Create Set
         </button>
       </div>
       
       {loading ? (
-        <div className="loading">Cargando sets...</div>
+        <div className="loading">Loading sets...</div>
       ) : error ? (
         <div className="error">{error}</div>
       ) : (
@@ -519,10 +519,10 @@ const Admin: React.FC = () => {
           <thead>
             <tr>
               <th>ID</th>
-              <th>Nombre</th>
-              <th>Código</th>
-              <th>Fecha de Lanzamiento</th>
-              <th>Acciones</th>
+              <th>Name</th>
+              <th>Code</th>
+              <th>Release Date</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -533,12 +533,12 @@ const Admin: React.FC = () => {
                 <td>{set.code}</td>
                 <td>{new Date(set.releaseDate).toLocaleDateString()}</td>
                 <td className="actions">
-                  <button onClick={() => handleEditSet(set)}>Editar</button>
+                  <button onClick={() => handleEditSet(set)}>Edit</button>
                   <button 
                     className="delete" 
                     onClick={() => handleDeleteSet(set.id)}
                   >
-                    Eliminar
+                    Delete
                   </button>
                 </td>
               </tr>
@@ -555,12 +555,12 @@ const Admin: React.FC = () => {
     <div className="admin-tab-content">
       <div className="admin-actions">
         <button className="btn-primary" onClick={() => setShowCardForm(true)}>
-          Crear Carta
+          Create Card
         </button>
       </div>
       
       {loading ? (
-        <div className="loading">Cargando cartas...</div>
+        <div className="loading">Loading cards...</div>
       ) : error ? (
         <div className="error">{error}</div>
       ) : (
@@ -568,11 +568,11 @@ const Admin: React.FC = () => {
           <thead>
             <tr>
               <th>ID</th>
-              <th>Nombre</th>
-              <th>Tipo</th>
-              <th>Rareza</th>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Rarity</th>
               <th>Set</th>
-              <th>Acciones</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -584,12 +584,12 @@ const Admin: React.FC = () => {
                 <td>{card.rarity}</td>
                 <td>{card.setName || card.setCode}</td>
                 <td className="actions">
-                  <button onClick={() => handleEditCard(card)}>Editar</button>
+                  <button onClick={() => handleEditCard(card)}>Edit</button>
                   <button 
                     className="delete" 
                     onClick={() => handleDeleteCard(card.id || card.cardId)}
                   >
-                    Eliminar
+                    Delete
                   </button>
                 </td>
               </tr>
@@ -605,7 +605,7 @@ const Admin: React.FC = () => {
   const renderDecksTab = () => (
     <div className="admin-tab-content">
       {loading ? (
-        <div className="loading">Cargando mazos...</div>
+        <div className="loading">Loading decks...</div>
       ) : error ? (
         <div className="error">{error}</div>
       ) : (
@@ -613,12 +613,12 @@ const Admin: React.FC = () => {
           <thead>
             <tr>
               <th>ID</th>
-              <th>Nombre</th>
-              <th>Usuario</th>
-              <th>Tipo</th>
+              <th>Name</th>
+              <th>User</th>
+              <th>Type</th>
               <th>Color</th>
-              <th>Cartas</th>
-              <th>Acciones</th>
+              <th>Cards</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -635,7 +635,7 @@ const Admin: React.FC = () => {
                     className="delete" 
                     onClick={() => handleDeleteDeck(deck.deckId)}
                   >
-                    Eliminar
+                    Delete
                   </button>
                 </td>
               </tr>
@@ -650,14 +650,14 @@ const Admin: React.FC = () => {
     <div className="admin-page">
       <Header />
       <div className="admin-container">
-        <h1>Panel de Administración</h1>
+        <h1>Admin Panel</h1>
         
         <div className="admin-tabs">
           <button 
             className={`tab-button ${activeTab === 'users' ? 'active' : ''}`}
             onClick={() => setActiveTab('users')}
           >
-            Usuarios
+            Users
           </button>
           <button 
             className={`tab-button ${activeTab === 'sets' ? 'active' : ''}`}
@@ -669,13 +669,13 @@ const Admin: React.FC = () => {
             className={`tab-button ${activeTab === 'cards' ? 'active' : ''}`}
             onClick={() => setActiveTab('cards')}
           >
-            Cartas
+            Cards
           </button>
           <button 
             className={`tab-button ${activeTab === 'decks' ? 'active' : ''}`}
             onClick={() => setActiveTab('decks')}
           >
-            Mazos
+            Decks
           </button>
         </div>
         

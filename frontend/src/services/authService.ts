@@ -381,18 +381,39 @@ class AuthService {
   isAdmin(): boolean {
     // Si no está autenticado, definitivamente no es admin
     if (!this.isAuthenticated()) {
+      console.log("No está autenticado, no puede ser admin");
       return false;
     }
     
     const token = localStorage.getItem('access_token');
-    if (!token) return false;
+    if (!token) {
+      console.log("No hay token disponible");
+      return false;
+    }
     
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
+      console.log("Verificando roles de administrador en el token JWT");
+      console.log("Cliente ID configurado:", KEYCLOAK_CONFIG.CLIENT_ID);
+      
+      // Para depuración, mostrar todos los roles disponibles
+      if (payload.realm_access && Array.isArray(payload.realm_access.roles)) {
+        console.log("Roles de realm disponibles:", payload.realm_access.roles);
+      } else {
+        console.log("No se encontraron roles de realm en el token");
+      }
+      
+      if (payload.resource_access && payload.resource_access[KEYCLOAK_CONFIG.CLIENT_ID]) {
+        console.log("Roles de cliente disponibles:", 
+          payload.resource_access[KEYCLOAK_CONFIG.CLIENT_ID].roles || "ninguno");
+      } else {
+        console.log("No se encontraron roles de cliente específicos en el token");
+      }
       
       // Verificar si tiene el rol 'ADMIN' en realm_access.roles
       if (payload.realm_access && Array.isArray(payload.realm_access.roles)) {
         if (payload.realm_access.roles.includes('ADMIN')) {
+          console.log("¡Es admin! (por rol de realm)");
           return true;
         }
       }
@@ -401,9 +422,13 @@ class AuthService {
       if (payload.resource_access && 
           payload.resource_access[KEYCLOAK_CONFIG.CLIENT_ID] && 
           Array.isArray(payload.resource_access[KEYCLOAK_CONFIG.CLIENT_ID].roles)) {
-        return payload.resource_access[KEYCLOAK_CONFIG.CLIENT_ID].roles.includes('ADMIN');
+        if (payload.resource_access[KEYCLOAK_CONFIG.CLIENT_ID].roles.includes('ADMIN')) {
+          console.log("¡Es admin! (por rol de cliente)");
+          return true;
+        }
       }
       
+      console.log("No tiene rol de administrador");
       return false;
     } catch (error) {
       console.error('Error al verificar rol de administrador:', error);
