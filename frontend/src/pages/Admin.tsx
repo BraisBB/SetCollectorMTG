@@ -29,11 +29,17 @@ const Admin: React.FC = () => {
 
   useEffect(() => {
     // Verificar si el usuario es administrador
-    if (!authService.isAdmin()) {
+    console.log("Verificando permisos de administrador...");
+    const isAdmin = authService.isAdmin();
+    console.log("¿Es administrador?", isAdmin);
+    
+    if (!isAdmin) {
+      console.warn("Usuario sin permisos de administrador, redirigiendo a inicio");
       navigate('/');
       return;
     }
     
+    console.log("Usuario autenticado como administrador, cargando panel");
     // Cargar datos iniciales según la pestaña activa
     loadTabData(activeTab);
   }, [activeTab, navigate]);
@@ -45,8 +51,18 @@ const Admin: React.FC = () => {
     try {
       switch (tab) {
         case 'users':
+          console.log('Solicitando usuarios...');
           const fetchedUsers = await apiService.getAllUsers();
-          setUsers(fetchedUsers);
+          console.log('Usuarios recibidos:', fetchedUsers);
+          
+          if (!fetchedUsers || !Array.isArray(fetchedUsers)) {
+            console.error('Datos de usuarios recibidos no válidos:', fetchedUsers);
+            setUsers([]);
+            setError('Error: Los datos de usuarios recibidos no son válidos');
+          } else {
+            console.log(`Recibidos ${fetchedUsers.length} usuarios correctamente`);
+            setUsers(fetchedUsers);
+          }
           break;
         case 'sets':
           const fetchedSets = await apiService.getAllSets();
@@ -76,21 +92,37 @@ const Admin: React.FC = () => {
   // User functions
   const handleCreateUser = async (userData: any) => {
     try {
-      await apiService.createUser(userData);
+      console.log('Creating user with data:', userData);
+      // Create a properly formatted UserCreateDto object as expected by the backend
+      const userCreateDto = {
+        username: userData.username,
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        password: userData.password
+      };
+      await apiService.createUser(userCreateDto);
       setShowUserForm(false);
       loadTabData('users');
     } catch (err: any) {
-      setError(`Error creating user: ${err.message}`);
+      setDetailedError('Error creating user', err);
     }
   };
 
   const handleDeleteUser = async (userId: number) => {
+    if (!userId) {
+      setError("Cannot delete user: Missing user ID");
+      return;
+    }
+    
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
+        console.log(`Deleting user with ID: ${userId}`);
         await apiService.deleteUser(userId);
+        console.log(`User ${userId} deleted successfully`);
         loadTabData('users');
       } catch (err: any) {
-        setError(`Error deleting user: ${err.message}`);
+        setDetailedError(`Error deleting user ${userId}`, err);
       }
     }
   };
@@ -102,12 +134,30 @@ const Admin: React.FC = () => {
 
   const handleUpdateUser = async (userData: any) => {
     try {
-      await apiService.updateUser(userData.id, userData);
+      console.log('Updating user with data:', userData);
+      
+      // Determine the correct user ID (could be in id or userId field)
+      const userId = userData.userId || userData.id;
+      if (!userId) {
+        throw new Error("Cannot update user: Missing user ID");
+      }
+      
+      // Create a properly formatted UserDto object as expected by the backend
+      const userDto = {
+        userId: userId,
+        username: userData.username,
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName
+      };
+      
+      console.log(`Calling updateUser with userId: ${userId} and data:`, userDto);
+      await apiService.updateUser(userId, userDto);
       setShowUserForm(false);
       setSelectedUser(null);
       loadTabData('users');
     } catch (err: any) {
-      setError(`Error updating user: ${err.message}`);
+      setDetailedError('Error updating user', err);
     }
   };
 
@@ -199,6 +249,52 @@ const Admin: React.FC = () => {
     }
   };
 
+  // Función para mostrar errores detallados
+  const setDetailedError = (message: string, err: any) => {
+    console.error(message, err);
+    
+    // Construir un mensaje de error detallado
+    let errorDetail = err.message || 'Unknown error';
+    
+    // Si hay detalles adicionales disponibles en la respuesta
+    if (err.response && err.response.data) {
+      if (typeof err.response.data === 'string') {
+        errorDetail += ': ' + err.response.data;
+      } else if (err.response.data.message) {
+        errorDetail += ': ' + err.response.data.message;
+      } else if (err.response.data.error) {
+        errorDetail += ': ' + err.response.data.error;
+      } else if (err.response.data.errors) {
+        // Para errores de validación múltiples
+        const validationErrors = Object.entries(err.response.data.errors)
+          .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+          .join('; ');
+        errorDetail += ': ' + validationErrors;
+      }
+    }
+    
+    setError(`${message}: ${errorDetail}`);
+  };
+
+  const testConnection = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log("Testing connection to the server...");
+      
+      // Intentar obtener la lista de usuarios como prueba
+      const users = await apiService.getAllUsers();
+      console.log("Connection test successful:", users);
+      
+      setError(null);
+      alert("Conexión exitosa con el servidor. Se recibieron " + users.length + " usuarios.");
+    } catch (err: any) {
+      setDetailedError("Error testing connection", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const renderUserForm = () => (
     <div className="admin-form">
       <h3>{selectedUser ? 'Edit User' : 'Create User'}</h3>
@@ -206,10 +302,14 @@ const Admin: React.FC = () => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         const userData = {
-          id: selectedUser?.id,
+          id: selectedUser?.id || selectedUser?.userId,
+          userId: selectedUser?.userId || selectedUser?.id,
           username: formData.get('username') as string,
           email: formData.get('email') as string,
-          // You can add more fields as needed
+          firstName: formData.get('firstName') as string,
+          lastName: formData.get('lastName') as string,
+          // Optional password field for new users
+          ...(selectedUser ? {} : { password: formData.get('password') as string })
         };
         
         if (selectedUser) {
@@ -235,6 +335,26 @@ const Admin: React.FC = () => {
             id="email" 
             name="email" 
             defaultValue={selectedUser?.email || ''} 
+            required 
+          />
+        </div>
+        <div className="form-group">
+          <label htmlFor="firstName">First Name</label>
+          <input 
+            type="text" 
+            id="firstName" 
+            name="firstName" 
+            defaultValue={selectedUser?.firstName || ''} 
+            required 
+          />
+        </div>
+        <div className="form-group">
+          <label htmlFor="lastName">Last Name</label>
+          <input 
+            type="text" 
+            id="lastName" 
+            name="lastName" 
+            defaultValue={selectedUser?.lastName || ''} 
             required 
           />
         </div>
@@ -467,6 +587,8 @@ const Admin: React.FC = () => {
         <div className="loading">Loading users...</div>
       ) : error ? (
         <div className="error">{error}</div>
+      ) : !users || users.length === 0 ? (
+        <div className="info">No users found.</div>
       ) : (
         <table className="admin-table">
           <thead>
@@ -474,26 +596,41 @@ const Admin: React.FC = () => {
               <th>ID</th>
               <th>Username</th>
               <th>Email</th>
+              <th>First Name</th>
+              <th>Last Name</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {users.map(user => (
-              <tr key={user.id}>
-                <td>{user.id}</td>
-                <td>{user.username}</td>
-                <td>{user.email}</td>
-                <td className="actions">
-                  <button onClick={() => handleEditUser(user)}>Edit</button>
-                  <button 
-                    className="delete" 
-                    onClick={() => handleDeleteUser(user.id)}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {users.map(user => {
+              // Ensure we have a valid ID for this user
+              const userId = user.id || user.userId;
+              
+              return (
+                <tr key={userId || `user-${Math.random()}`}>
+                  <td>{userId || 'N/A'}</td>
+                  <td>{user.username || 'N/A'}</td>
+                  <td>{user.email || 'N/A'}</td>
+                  <td>{user.firstName || 'N/A'}</td>
+                  <td>{user.lastName || 'N/A'}</td>
+                  <td className="actions">
+                    <button 
+                      onClick={() => handleEditUser(user)}
+                      disabled={!userId}
+                    >
+                      Edit
+                    </button>
+                    <button 
+                      className="delete" 
+                      onClick={() => handleDeleteUser(userId)}
+                      disabled={!userId}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}
@@ -651,6 +788,20 @@ const Admin: React.FC = () => {
       <Header />
       <div className="admin-container">
         <h1>Admin Panel</h1>
+        
+        {error && (
+          <div className="error">{error}</div>
+        )}
+        
+        <div className="admin-actions" style={{ marginBottom: '20px' }}>
+          <button 
+            className="btn-secondary" 
+            onClick={testConnection}
+            disabled={loading}
+          >
+            {loading ? 'Testing...' : 'Test Server Connection'}
+          </button>
+        </div>
         
         <div className="admin-tabs">
           <button 

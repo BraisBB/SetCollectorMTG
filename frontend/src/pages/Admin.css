@@ -194,6 +194,26 @@
 }
 
 .error {
-  background-color: #ffebee;
-  color: #e74c3c;
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 12px 15px;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  margin: 15px 0;
+  font-size: 14px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.error-details {
+  margin-top: 8px;
+  font-family: monospace;
+  background-color: #f8f9fa;
+  padding: 8px;
+  border-radius: 4px;
+  border-left: 3px solid #dc3545;
+  font-size: 12px;
+  white-space: pre-wrap;
 } 

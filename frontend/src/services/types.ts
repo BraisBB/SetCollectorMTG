@@ -81,8 +81,11 @@ export interface AuthTokens {
 }
 
 export interface User {
+  id?: number;      // Campo usado en el frontend
+  userId?: number;  // Campo usado en el backend
   username: string;
   email?: string;
   firstName?: string;
   lastName?: string;
+  joinDate?: string;
 } 

@@ -38,54 +38,45 @@ class HttpClient {
       return config;
     });
     
-    // Interceptor para manejar errores de respuesta
+    // Interceptor para manejar errores
     this.api.interceptors.response.use(
       (response) => response,
       (error) => {
-        // Mejorar la información del error
-        let errorMessage = 'Unknown error';
-        let errorDetails = '';
-        
+        // Mejora en la gestión de errores
         if (error.response) {
-          // La respuesta fue recibida pero el servidor respondió con un error
-          const status = error.response.status;
-          errorMessage = `HTTP request error (${status}): ${error.config?.url}`;
-          
-          // Intentar extraer detalles del error del cuerpo de la respuesta
-          if (error.response.data) {
-            if (error.response.data.message) {
-              errorDetails = error.response.data.message;
-            } else if (error.response.data.error) {
-              errorDetails = error.response.data.error;
-            } else {
-              try {
-                errorDetails = JSON.stringify(error.response.data);
-              } catch (e) {
-                errorDetails = 'Could not parse error details';
-              }
+          // La solicitud fue realizada y el servidor respondió con un código de estado
+          // que no está en el rango de 2xx
+          console.error('Error de respuesta del servidor:', {
+            status: error.response.status,
+            statusText: error.response.statusText,
+            data: error.response.data,
+            config: {
+              url: error.config.url,
+              method: error.config.method,
+              baseURL: error.config.baseURL,
+              headers: error.config.headers,
             }
+          });
+          
+          // Añadir información más descriptiva al error
+          if (error.response.data && error.response.data.message) {
+            error.message = `Error ${error.response.status}: ${error.response.data.message}`;
+          } else {
+            error.message = `Error ${error.response.status}: ${error.response.statusText}`;
+          }
+          
+          // Si es un error 401/403, podemos intentar renovar el token
+          if (error.response.status === 401 || error.response.status === 403) {
+            console.warn('Error de autenticación o autorización. Considera renovar el token o redirigir al login.');
+            // Aquí se podría implementar lógica para renovar el token o redirigir al login
           }
         } else if (error.request) {
-          // La petición fue realizada pero no se recibió respuesta (ej: timeout)
-          errorMessage = `Network error (No response): ${error.config?.url}`;
-          errorDetails = 'The server did not respond. Check your internet connection or if the server is available.';
+          // La solicitud fue realizada pero no se recibió respuesta
+          console.error('No se recibió respuesta del servidor:', error.request);
+          error.message = 'No se recibió respuesta del servidor';
         } else {
-          // Hubo un error al configurar la petición
-          errorMessage = `Error preparing the request: ${error.config?.url}`;
-          errorDetails = 'Unknown error while preparing the request';
-        }
-        
-        // Agregar más detalles al error para usarlo en la UI
-        if (errorDetails) {
-          console.error(`${errorMessage}\nDetalles: ${errorDetails}`, error);
-        } else {
-          console.error(errorMessage, error);
-        }
-        
-        // Si es un error 401/403, podemos intentar renovar el token
-        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-          console.warn('Error de autenticación o autorización. Considera renovar el token o redirigir al login.');
-          // Aquí se podría implementar la lógica para renovar el token o redirigir al login
+          // Algo ocurrió durante la preparación de la solicitud
+          console.error('Error en la configuración de la solicitud:', error.message);
         }
         
         return Promise.reject(error);
@@ -97,7 +88,17 @@ class HttpClient {
   async get<T>(url: string, config?: any): Promise<T> {
     try {
       const response = await this.api.get(url, config);
-      return response.data as T;
+      // Asegurar que tenemos datos válidos
+      if (response && response.data !== undefined) {
+        return response.data as T;
+      } else {
+        console.warn(`Respuesta vacía o inválida para GET ${url}`, response);
+        // Si estamos esperando un array, devolvemos un array vacío
+        if (url.includes('/users') || url.includes('/sets') || url.includes('/cards') || url.includes('/decks')) {
+          return [] as unknown as T;
+        }
+        return null as unknown as T;
+      }
     } catch (error) {
       // Manejo de fallback para desarrollo
       if (url.includes('/sets')) {
@@ -110,17 +111,29 @@ class HttpClient {
   
   async post<T>(url: string, data?: any, config?: any): Promise<T> {
     const response = await this.api.post(url, data, config);
-    return response.data as T;
+    if (response && response.data !== undefined) {
+      return response.data as T;
+    }
+    console.warn(`Respuesta vacía o inválida para POST ${url}`, response);
+    return null as unknown as T;
   }
   
   async put<T>(url: string, data?: any, config?: any): Promise<T> {
     const response = await this.api.put(url, data, config);
-    return response.data as T;
+    if (response && response.data !== undefined) {
+      return response.data as T;
+    }
+    console.warn(`Respuesta vacía o inválida para PUT ${url}`, response);
+    return null as unknown as T;
   }
   
   async delete<T>(url: string, config?: any): Promise<T> {
     const response = await this.api.delete(url, config);
-    return response.data as T;
+    if (response && response.data !== undefined) {
+      return response.data as T;
+    }
+    console.warn(`Respuesta vacía o inválida para DELETE ${url}`, response);
+    return null as unknown as T;
   }
 }
 

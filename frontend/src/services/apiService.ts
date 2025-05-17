@@ -370,36 +370,88 @@ const apiService = {
   // Usuarios
   getAllUsers: async (): Promise<User[]> => {
     try {
-      return httpClient.get<User[]>('/users');
+      console.log('Requesting all users from the backend');
+      const response = await httpClient.get<User[]>('/users');
+      
+      // Verificar que tenemos datos válidos
+      if (response === null || response === undefined) {
+        console.error('Respuesta nula o indefinida al obtener usuarios');
+        return [];
+      }
+      
+      if (!Array.isArray(response)) {
+        console.error('Respuesta inesperada al obtener usuarios (no es un array):', response);
+        // Intentar convertir a array si es posible
+        if (response && typeof response === 'object') {
+          console.log('Intentando convertir objeto a array:', response);
+          // Si es un objeto con múltiples propiedades que podrían ser usuarios
+          const values = Object.values(response);
+          if (values.length > 0) {
+            console.log('Convertido a array con éxito, elementos:', values.length);
+            return values as User[];
+          }
+        }
+        return [];
+      }
+      
+      console.log('Users retrieved successfully:', response);
+      return response;
     } catch (error) {
-      console.error('Error obteniendo usuarios:', error);
+      console.error('Error retrieving users:', error);
       return [];
     }
   },
 
-  createUser: async (userData: Partial<User>): Promise<User> => {
+  createUser: async (userData: any): Promise<User> => {
     try {
-      return httpClient.post<User>('/users', userData);
+      console.log('Creating user with data:', userData);
+      // Ensure we're sending data in the format expected by the backend (UserCreateDto)
+      const createDto = {
+        username: userData.username,
+        email: userData.email,
+        password: userData.password,
+        firstName: userData.firstName,
+        lastName: userData.lastName
+      };
+      console.log('Formatted data for backend:', createDto);
+      const response = await httpClient.post<User>('/users', createDto);
+      console.log('User created successfully:', response);
+      return response;
     } catch (error) {
-      console.error('Error creando usuario:', error);
+      console.error('Error creating user:', error);
       throw error;
     }
   },
 
-  updateUser: async (userId: number, userData: Partial<User>): Promise<User> => {
+  updateUser: async (userId: number, userData: any): Promise<User> => {
     try {
-      return httpClient.put<User>(`/users/${userId}`, userData);
+      console.log(`Updating user ${userId} with data:`, userData);
+      // Ensure we're sending data in the format expected by the backend (UserDto)
+      // The backend expects UserDto with userId, not id
+      const userDto = {
+        userId: userId, // Make sure we're using the proper field name
+        username: userData.username,
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName
+      };
+      console.log('Formatted data for backend:', userDto);
+      const response = await httpClient.put<User>(`/users/${userId}`, userDto);
+      console.log('User updated successfully:', response);
+      return response;
     } catch (error) {
-      console.error(`Error actualizando usuario ${userId}:`, error);
+      console.error(`Error updating user ${userId}:`, error);
       throw error;
     }
   },
 
   deleteUser: async (userId: number): Promise<void> => {
     try {
+      console.log(`Deleting user with ID: ${userId}`);
       await httpClient.delete(`/users/${userId}`);
+      console.log(`User ${userId} deleted successfully`);
     } catch (error) {
-      console.error(`Error eliminando usuario ${userId}:`, error);
+      console.error(`Error deleting user ${userId}:`, error);
       throw error;
     }
   },
