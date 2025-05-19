@@ -29,17 +29,17 @@ const Admin: React.FC = () => {
 
   useEffect(() => {
     // Verificar si el usuario es administrador
-    console.log("Verificando permisos de administrador...");
+    console.log("Verifying administrator permissions...");
     const isAdmin = authService.isAdmin();
-    console.log("¿Es administrador?", isAdmin);
+    console.log("Is administrator?", isAdmin);
     
     if (!isAdmin) {
-      console.warn("Usuario sin permisos de administrador, redirigiendo a inicio");
+      console.warn("User without administrator permissions, redirecting to home");
       navigate('/');
       return;
     }
     
-    console.log("Usuario autenticado como administrador, cargando panel");
+    console.log("User authenticated as administrator, loading panel");
     // Cargar datos iniciales según la pestaña activa
     loadTabData(activeTab);
   }, [activeTab, navigate]);
@@ -51,16 +51,16 @@ const Admin: React.FC = () => {
     try {
       switch (tab) {
         case 'users':
-          console.log('Solicitando usuarios...');
+          console.log('Requesting users...');
           const fetchedUsers = await apiService.getAllUsers();
-          console.log('Usuarios recibidos:', fetchedUsers);
+          console.log('Users received:', fetchedUsers);
           
           if (!fetchedUsers || !Array.isArray(fetchedUsers)) {
-            console.error('Datos de usuarios recibidos no válidos:', fetchedUsers);
+            console.error('Received invalid user data:', fetchedUsers);
             setUsers([]);
-            setError('Error: Los datos de usuarios recibidos no son válidos');
+            setError('Error: Received invalid user data');
           } else {
-            console.log(`Recibidos ${fetchedUsers.length} usuarios correctamente`);
+            console.log(`Received ${fetchedUsers.length} users correctly`);
             setUsers(fetchedUsers);
           }
           break;
@@ -202,8 +202,17 @@ const Admin: React.FC = () => {
   // Cards functions
   const handleCreateCard = async (cardData: any) => {
     try {
-      // Formatear los datos según el DTO que espera el backend para creación
-      const cardCreateDto = {
+      // Format data according to the DTO expected by the backend
+      const cardCreateDto: {
+        name: string;
+        cardType: string;
+        manaCost: string;
+        rarity: string;
+        manaValue: number;
+        oracleText: string;
+        imageUrl: string;
+        setId?: number;
+      } = {
         name: cardData.name,
         cardType: cardData.cardType,
         manaCost: cardData.manaCost || "",
@@ -211,24 +220,33 @@ const Admin: React.FC = () => {
         manaValue: cardData.manaValue || 0,
         oracleText: cardData.oracleText || "",
         imageUrl: cardData.imageUrl || "",
-        setId: cardData.setId
       };
       
-      console.log("Enviando datos para crear carta:", cardCreateDto);
+      // Only include setId if present
+      if (cardData.setId !== undefined) {
+        cardCreateDto.setId = cardData.setId;
+      }
+      
+      console.log("Sending data to create card:", cardCreateDto);
       await apiService.createCard(cardCreateDto);
+      
+      // Clear form state
       setShowCardForm(false);
+      setSelectedCard(null);
+      
+      // Reload data
       loadTabData('cards');
     } catch (err: any) {
       setError(`Error creating card: ${err.message}`);
     }
   };
 
-  // Función para cargar los sets
+  // Function to load all sets
   const loadSets = async () => {
     try {
       const fetchedSets = await apiService.getAllSets();
       setSets(fetchedSets);
-      console.log("Sets cargados exitosamente:", fetchedSets);
+      console.log("Sets loaded successfully:", fetchedSets);
     } catch (err: any) {
       setError(`Error loading sets: ${err.message}`);
     }
@@ -247,50 +265,51 @@ const Admin: React.FC = () => {
 
   // Función para preparar una carta para edición
   const handleEditCard = (card: any) => {
-    console.log("Preparando carta para edición:", card);
+    console.log("Preparing card for editing:", card);
     
-    // Asegurarnos de que los sets estén cargados primero
-    if (sets.length === 0) {
-      console.log("Cargando sets antes de editar...");
-      loadSets().then(() => {
-        prepareCardForEditing(card);
-      });
-    } else {
+    // Always load sets before editing a card
+    console.log("Loading sets before editing...");
+    loadSets().then(() => {
       prepareCardForEditing(card);
-    }
+    });
   };
   
   // Función auxiliar para preparar la carta para edición
   const prepareCardForEditing = (card: any) => {
-    // Determinar el ID del set
+    // Determine the ID of the set from the setMtg directly
     let cardSetId = null;
     
-    // Intentar obtener el setId de la forma más confiable primero
-    if (card.setId !== undefined && card.setId !== null) {
+    // Verify all data available in the console
+    console.log("Complete card to edit:", JSON.stringify(card, null, 2));
+    
+    // Try to get setId specifically from the setMtg object (highest priority)
+    if (card.setMtg && card.setMtg.setId) {
+      cardSetId = card.setMtg.setId;
+      console.log("Using setId from setMtg object:", cardSetId);
+    } 
+    // If no setMtg, search in other fields
+    else if (card.setId !== undefined && card.setId !== null) {
       cardSetId = card.setId;
-      console.log("Usando setId directo:", cardSetId);
+      console.log("Using direct setId:", cardSetId);
     } else if (card.set_id !== undefined && card.set_id !== null) {
       cardSetId = card.set_id;
-      console.log("Usando set_id de la BD:", cardSetId);
-    } else if (card.set && typeof card.set === 'object' && card.set.id) {
-      cardSetId = card.set.id;
-      console.log("Usando id del objeto set:", cardSetId);
-    } else if (card.setName || card.setCode) {
-      // Buscar por nombre o código
-      const matchingSet = sets.find(s => 
-        s.name === card.setName || s.code === card.setCode
-      );
-      if (matchingSet) {
-        cardSetId = matchingSet.id;
-        console.log("Set encontrado por nombre/código:", cardSetId);
-      }
+      console.log("Using set_id from BD:", cardSetId);
     }
     
-    // Log de diagnóstico
-    console.log("Sets disponibles:", sets);
-    console.log("ID determinado del set:", cardSetId);
+    // Log for diagnostic
+    console.log("Available sets:", sets.map(s => ({ id: s.id, name: s.name })));
+    console.log("Determined set ID:", cardSetId);
     
-    // Crear un objeto normalizado para edición
+    // Verify if the set exists in our data
+    const setExists = cardSetId ? sets.some(s => s.id === cardSetId) : false;
+    if (cardSetId && !setExists) {
+      console.warn(`The set with ID ${cardSetId} is not in the list of available sets`);
+    }
+    
+    // Save original set for comparison during update
+    const originalSetId = cardSetId;
+    
+    // Create a normalized object for editing
     const normalizedCard = {
       id: card.id || card.cardId,
       cardId: card.id || card.cardId,
@@ -301,12 +320,14 @@ const Admin: React.FC = () => {
       manaValue: card.manaValue || 0,
       setId: cardSetId,
       set_id: cardSetId,
+      originalSetId: originalSetId, // Save original ID for comparison
       oracleText: card.oracleText || "",
       cardImageUrl: card.imageUrl || card.cardImageUrl || "",
       imageUrl: card.imageUrl || card.cardImageUrl || "",
+      isNewCard: false // This is an existing card being edited
     };
     
-    console.log("Datos normalizados para edición:", normalizedCard);
+    console.log("Normalized data for editing:", normalizedCard);
     setSelectedCard(normalizedCard);
     setShowCardForm(true);
   };
@@ -319,10 +340,10 @@ const Admin: React.FC = () => {
         throw new Error("Cannot update card: Missing card ID");
       }
       
-      console.log("Datos completos para actualización:", cardData);
+      console.log("Complete data for update:", cardData);
       
-      // Crear un objeto DTO completo para asegurar que todos los campos estén presentes
-      // Usando una interfaz ampliada para permitir setId opcional
+      // Create a complete DTO to ensure all fields are present
+      // Using an extended interface to allow optional setId
       interface CardDto {
         id: number;
         name: string;
@@ -332,11 +353,11 @@ const Admin: React.FC = () => {
         manaValue: number;
         oracleText: string;
         imageUrl: string;
-        setId?: number; // Propiedad opcional para el setId
+        setId?: number; // Only allow number or undefined for the API
       }
       
       const cardDto: CardDto = {
-        id: cardId, // Incluimos el id en lugar de cardId
+        id: cardId, // Include id instead of cardId
         name: cardData.name,
         cardType: cardData.cardType,
         manaCost: cardData.manaCost || "",
@@ -346,23 +367,40 @@ const Admin: React.FC = () => {
         imageUrl: cardData.imageUrl || cardData.cardImageUrl || "",
       };
       
-      // Solo incluir setId si está presente y es válido
+      // Only include setId if changed from original value or if present
+      const isSetIdChanged = cardData.setId !== cardData.originalSetId;
       if (cardData.setId) {
         const setId = typeof cardData.setId === 'string' ? parseInt(cardData.setId) : cardData.setId;
         if (!isNaN(setId)) {
           cardDto.setId = setId;
-          console.log("Incluyendo setId en la actualización:", setId);
+          console.log("Including setId in update:", setId);
+          if (isSetIdChanged) {
+            console.log(`SetId changed from ${cardData.originalSetId} to ${setId}`);
+          } else {
+            console.log("SetId did not change");
+          }
+        }
+      } else {
+        // If set was removed (was not null and now is null)
+        // We don't add any setId to the DTO for the backend to treat as undefined
+        if (cardData.originalSetId) {
+          console.log(`Removing setId (was ${cardData.originalSetId})`);
+          // Don't include setId in the DTO
         }
       }
       
-      console.log("Enviando datos de actualización al backend:", cardDto);
+      console.log("Sending update data to backend:", cardDto);
       await apiService.updateCard(cardId, cardDto);
-      console.log("Carta actualizada con éxito");
+      console.log("Card updated successfully");
+      
+      // Clear form state
       setShowCardForm(false);
       setSelectedCard(null);
+      
+      // Reload data
       loadTabData('cards');
     } catch (err: any) {
-      console.error("Error al actualizar carta:", err);
+      console.error("Error updating card:", err);
       setError(`Error updating card: ${err.message || "Unknown error"}`);
     }
   };
@@ -404,10 +442,10 @@ const Admin: React.FC = () => {
   const setDetailedError = (message: string, err: any) => {
     console.error(message, err);
     
-    // Construir un mensaje de error detallado
+    // Build a detailed error message
     let errorDetail = err.message || 'Unknown error';
     
-    // Si hay detalles adicionales disponibles en la respuesta
+    // If additional details are available in the response
     if (err.response && err.response.data) {
       if (typeof err.response.data === 'string') {
         errorDetail += ': ' + err.response.data;
@@ -416,7 +454,7 @@ const Admin: React.FC = () => {
       } else if (err.response.data.error) {
         errorDetail += ': ' + err.response.data.error;
       } else if (err.response.data.errors) {
-        // Para errores de validación múltiples
+        // For multiple validation errors
         const validationErrors = Object.entries(err.response.data.errors)
           .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
           .join('; ');
@@ -433,12 +471,12 @@ const Admin: React.FC = () => {
       setError(null);
       console.log("Testing connection to the server...");
       
-      // Intentar obtener la lista de usuarios como prueba
+      // Try to get the list of users as a test
       const users = await apiService.getAllUsers();
       console.log("Connection test successful:", users);
       
       setError(null);
-      alert("Conexión exitosa con el servidor. Se recibieron " + users.length + " usuarios.");
+      alert("Connection successful to the server. Received " + users.length + " users.");
     } catch (err: any) {
       setDetailedError("Error testing connection", err);
     } finally {
@@ -610,12 +648,12 @@ const Admin: React.FC = () => {
 
   const renderCardForm = () => (
     <div className="admin-form">
-      <h3>{selectedCard ? 'Edit Card' : 'Create Card'}</h3>
+      <h3>{selectedCard?.isNewCard ? 'Create Card' : 'Edit Card'}</h3>
       <form onSubmit={(e) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         
-        // Obtener los valores del formulario
+        // Get form values
         const name = formData.get('name') as string;
         const cardType = formData.get('cardType') as string;
         const manaCost = formData.get('manaCost') as string || "";
@@ -624,47 +662,56 @@ const Admin: React.FC = () => {
         const oracleText = formData.get('oracleText') as string || "";
         const cardImageUrl = formData.get('cardImageUrl') as string || "";
         
-        // Calcular valor de maná a partir del coste
+        // Calculate mana value based on mana cost
         const manaValue = calculateManaValue(manaCost);
         
-        // Procesar el setId
-        let setId = 0;
+        // Process setId (now optional)
+        let setId = undefined;
         if (setIdStr && setIdStr !== '') {
           setId = parseInt(setIdStr);
-        } else if (sets.length > 0) {
-          // Si no hay setId seleccionado pero hay sets disponibles, usar el primero
-          setId = sets[0].id;
+          console.log("Set selected from form:", setId);
         }
         
-        // Verificar si tenemos un setId válido
-        if (!setId && selectedCard?.setId) {
-          setId = selectedCard.setId;
-        }
-        
-        // Si estamos creando una carta, el setId es obligatorio
-        if (!setId && !selectedCard) {
-          setError("No se ha podido determinar un ID de set válido. Por favor, selecciona un set.");
-          return;
-        }
-        
-        // Preparar objeto de datos
-        const cardData = {
-          ...(selectedCard ? { id: selectedCard.id, cardId: selectedCard.id } : {}),
+        // Prepare data object
+        const cardData: {
+          id?: number;
+          cardId?: number;
+          name: string;
+          cardType: string;
+          manaCost: string;
+          manaValue: number;
+          rarity: string;
+          oracleText: string;
+          imageUrl: string;
+          cardImageUrl: string;
+          setId?: number;
+          originalSetId?: number;
+        } = {
+          ...(selectedCard && !selectedCard.isNewCard ? { id: selectedCard.id, cardId: selectedCard.id } : {}),
           name,
           cardType,
           manaCost,
           manaValue,
           rarity,
-          setId,
           oracleText,
           imageUrl: cardImageUrl,
           cardImageUrl
         };
         
-        console.log("Datos del formulario procesados:", cardData);
+        // Add setId only if present and save original if editing
+        if (setId !== undefined) {
+          cardData.setId = setId;
+        }
         
-        // Llamar a la función correspondiente
-        if (selectedCard) {
+        // If editing, save original setId for comparison
+        if (selectedCard && !selectedCard.isNewCard) {
+          cardData.originalSetId = selectedCard.originalSetId;
+        }
+        
+        console.log("Processed form data:", cardData);
+        
+        // Call appropriate function
+        if (selectedCard && !selectedCard.isNewCard) {
           handleUpdateCard(cardData);
         } else {
           handleCreateCard(cardData);
@@ -697,7 +744,41 @@ const Admin: React.FC = () => {
             id="manaCost" 
             name="manaCost" 
             defaultValue={selectedCard?.manaCost || ''} 
+            placeholder="Example: {W}{U}{2} (W=white, U=blue, B=black, R=red, G=green)"
+            onChange={(e) => {
+              // Update mana value when mana cost changes
+              if (selectedCard) {
+                const newManaValue = calculateManaValue(e.target.value);
+                setSelectedCard({
+                  ...selectedCard,
+                  manaCost: e.target.value,
+                  manaValue: newManaValue
+                });
+              }
+              
+              // Update mana value field visually
+              const manaValueField = document.getElementById('manaValue') as HTMLInputElement;
+              if (manaValueField) {
+                manaValueField.value = String(calculateManaValue(e.target.value));
+              }
+            }}
           />
+          <small className="form-text text-muted">
+            Use format {"{X}"} where X can be a number or color symbol: W (white), U (blue), B (black), R (red), G (green)
+          </small>
+        </div>
+        <div className="form-group">
+          <label htmlFor="manaValue">Mana Value (automatically calculated)</label>
+          <input 
+            type="number" 
+            id="manaValue" 
+            name="manaValue" 
+            value={selectedCard?.manaValue || calculateManaValue(selectedCard?.manaCost || '')}
+            readOnly 
+          />
+          <small className="form-text text-muted">
+            This value is automatically calculated based on Mana Cost
+          </small>
         </div>
         <div className="form-group">
           <label htmlFor="rarity">Rarity</label>
@@ -722,14 +803,15 @@ const Admin: React.FC = () => {
           </select>
         </div>
         <div className="form-group">
-          <label htmlFor="setId">Set</label>
+          <label htmlFor="setId">Set (optional)</label>
           <select 
             id="setId" 
             name="setId" 
-            value={selectedCard?.setId || ''} 
+            value={selectedCard?.setId || ''}
             onChange={(e) => {
               if (selectedCard) {
-                const newSetId = e.target.value ? parseInt(e.target.value) : null;
+                const newSetId = e.target.value ? parseInt(e.target.value) : undefined;
+                console.log("Set selection changed:", newSetId);
                 setSelectedCard({
                   ...selectedCard,
                   setId: newSetId,
@@ -737,13 +819,24 @@ const Admin: React.FC = () => {
                 });
               }
             }}
-            required={!selectedCard} // Solo requerido para nuevas cartas
           >
-            <option key="default" value="">Select Set</option>
-            {sets.map(set => (
-              <option key={set.id} value={set.id}>{set.name}</option>
-            ))}
+            <option key="default" value="">- No set -</option>
+            {sets.length === 0 ? (
+              <option key="loading" value="" disabled>Loading sets...</option>
+            ) : (
+              sets.map(set => {
+                const setId = set.id || set.setId; // Ensure compatibility
+                return (
+                  <option key={setId} value={setId}>
+                    {set.name} (ID: {setId})
+                  </option>
+                );
+              })
+            )}
           </select>
+          <small className="form-text text-muted">
+            Currently selected set ID: {selectedCard?.setId || 'None'}
+          </small>
         </div>
         <div className="form-group">
           <label htmlFor="oracleText">Text</label>
@@ -765,15 +858,16 @@ const Admin: React.FC = () => {
         </div>
         <div className="form-buttons">
           <button type="submit" className="btn-primary">
-            {selectedCard ? 'Update' : 'Create'}
+            {selectedCard?.isNewCard ? 'Create' : 'Update'}
           </button>
           <button 
             type="button" 
             className="btn-secondary"
             onClick={() => {
+              // Clear form and reset state
               setShowCardForm(false);
               setSelectedCard(null);
-              setError(null); // Limpiar errores
+              setError(null); // Clear errors
             }}
           >
             Cancel
@@ -900,11 +994,23 @@ const Admin: React.FC = () => {
     <div className="admin-tab-content">
       <div className="admin-actions">
         <button className="btn-primary" onClick={() => {
-          setShowCardForm(true);
-          // Asegurarse de que los sets estén cargados
-          if (sets.length === 0) {
-            loadSets();
-          }
+          // Ensure sets are loaded before showing the form
+          loadSets().then(() => {
+            // Initialize an empty card instead of null
+            setSelectedCard({
+              name: "",
+              cardType: "",
+              manaCost: "",
+              rarity: "common",
+              manaValue: 0,
+              oracleText: "",
+              cardImageUrl: "",
+              imageUrl: "",
+              setId: undefined,
+              isNewCard: true // Flag to identify this is a new card
+            });
+            setShowCardForm(true);
+          });
         }}>
           Create Card
         </button>
@@ -929,15 +1035,21 @@ const Admin: React.FC = () => {
           </thead>
           <tbody>
             {cards.map(card => {
-              console.log("Mostrando carta en tabla:", card); // Log para depuración
+              console.log("Displaying card in table:", card); // Log for debugging in English
               return (
                 <tr key={card.id || card.cardId} data-card-id={card.id || card.cardId}>
                   <td>{card.id || card.cardId}</td>
                   <td>{card.name}</td>
                   <td>{card.cardType}</td>
                   <td>{card.rarity}</td>
-                  <td>{card.setName || card.setCode}</td>
-                  <td>{card.setId || card.set_id}</td>
+                  <td>
+                    {card.setName || 'No set'} 
+                    {card.setCode && <span> ({card.setCode})</span>}
+                  </td>
+                  <td>
+                    {card.setId || card.set_id || 'N/A'}
+                    {card.setMtg && <span title="From setMtg object"> (✓)</span>}
+                  </td>
                   <td className="actions">
                     <button onClick={() => handleEditCard(card)}>Edit</button>
                     <button 

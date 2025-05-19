@@ -4,31 +4,32 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-
+import lombok.AllArgsConstructor;
+import jakarta.validation.constraints.PositiveOrZero;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class CardCreateDto {
-    @NotBlank(message = "Card name is required")
+    @NotBlank(message = "The card name is mandatory")
     private String name;
 
-    @NotBlank(message = "Rarity is required")
+    @NotBlank(message = "The card rarity is mandatory")
     private String rarity;
 
     private String oracleText;
 
-    @NotNull(message = "Mana value is required")
+    @NotNull(message = "The mana value is mandatory")
+    @PositiveOrZero(message = "The mana value must be 0 or greater")
     private Integer manaValue;
 
-    @NotBlank(message = "Mana cost is required")
+    @NotBlank(message = "The mana cost is mandatory")
     private String manaCost;
 
-    @NotBlank(message = "Card type is required")
+    @NotBlank(message = "The card type is mandatory")
     private String cardType;
 
     private String imageUrl;
 
-    @NotNull(message = "Set ID is required")
     private Long setId;
 }

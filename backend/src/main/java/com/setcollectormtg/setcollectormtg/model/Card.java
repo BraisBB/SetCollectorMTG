@@ -47,7 +47,7 @@ public class Card {
     private String scryfallId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "set_id", nullable = false)
+    @JoinColumn(name = "set_id", nullable = true)
     private SetMtg setMtg;
 
     @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true)

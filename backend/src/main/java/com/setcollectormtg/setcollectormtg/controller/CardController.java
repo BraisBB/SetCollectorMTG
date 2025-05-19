@@ -62,6 +62,7 @@ public class CardController {
             System.out.println("Card: " + 
                 "id=" + card.getCardId() + 
                 ", name=" + card.getName() + 
+                ", setId=" + card.getSetId() + 
                 ", oracleText=" + card.getOracleText()
             );
         });
@@ -125,7 +126,13 @@ public class CardController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<CardDto> updateCard(@PathVariable Long id, @Valid @RequestBody CardDto cardDto) {
-        return ResponseEntity.ok(cardService.updateCard(id, cardDto));
+        logger.info("Recibida solicitud para actualizar carta con ID: {}", id);
+        logger.info("Datos recibidos: {}", cardDto);
+        
+        CardDto updatedCard = cardService.updateCard(id, cardDto);
+        logger.info("Carta actualizada: {}", updatedCard);
+        
+        return ResponseEntity.ok(updatedCard);
     }
 
     /**

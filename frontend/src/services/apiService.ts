@@ -487,16 +487,23 @@ const apiService = {
   // Cartas
   getAllCards: async (page: number = 0, size: number = 50): Promise<Card[]> => {
     try {
+      console.log("Solicitando todas las cartas...");
+      
       // Obtener las cartas
       const cards = await httpClient.get<Card[]>('/cards', {
         params: { page, size }
       });
       
+      console.log(`Recibidas ${cards.length} cartas del servidor`);
+      
       // Si hay cartas, obtener todos los sets para enriquecer los datos
       if (cards && cards.length > 0) {
         try {
+          console.log("Obteniendo sets para enriquecer datos de cartas...");
+          
           // Obtener todos los sets
           const sets = await httpClient.get<SetMtg[]>('/sets');
+          console.log(`Recibidos ${sets.length} sets del servidor`);
           
           // Crear un mapa de sets por ID para búsqueda rápida
           const setsMap = new Map<number, SetMtg>();
@@ -508,18 +515,32 @@ const apiService = {
               // Asegurar aliases de compatibilidad
               set.id = setId;
               set.code = set.code || set.setCode;
+              console.log(`Set mapeado: ID=${setId}, Nombre=${set.name}, Código=${set.code}`);
             }
           });
           
           // Enriquecer cada carta con los datos de su set
-          return cards.map(card => {
-            const cardSet = setsMap.get(card.setId);
+          const enrichedCards = cards.map(card => {
+            console.log(`Procesando carta: ID=${card.cardId}, Nombre=${card.name}, SetID=${card.setId}`);
+            
+            const cardSet = card.setId ? setsMap.get(card.setId) : null;
+            if (cardSet) {
+              console.log(`Set encontrado para carta ${card.name}: ${cardSet.name}`);
+            } else if (card.setId) {
+              console.log(`⚠️ No se encontró set con ID=${card.setId} para carta ${card.name}`);
+            } else {
+              console.log(`La carta ${card.name} no tiene setId asignado`);
+            }
+            
             return {
               ...card,
               setName: cardSet?.name || 'Unknown Set',
-              setCode: cardSet?.setCode || cardSet?.code || 'UNK'
+              setCode: cardSet?.code || 'UNK'
             };
           });
+          
+          console.log("Procesamiento de cartas completado");
+          return enrichedCards;
         } catch (error) {
           console.error('Error obteniendo sets para enriquecer cartas:', error);
           // Si falla la obtención de sets, devolver las cartas sin enriquecer

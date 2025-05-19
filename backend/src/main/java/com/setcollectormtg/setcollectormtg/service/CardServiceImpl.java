@@ -68,8 +68,8 @@ public class CardServiceImpl implements CardService {
     }
 
     /**
-     * Crea una nueva carta asociada a un set existente.
-     * Lanza excepción si el set no existe.
+     * Crea una nueva carta asociada a un set existente (opcional).
+     * Lanza excepción si el set especificado no existe.
      *
      * @param cardCreateDto DTO con los datos de la carta a crear
      * @return DTO de la carta creada
@@ -77,11 +77,17 @@ public class CardServiceImpl implements CardService {
     @Override
     @Transactional
     public CardDto createCard(CardCreateDto cardCreateDto) {
-        SetMtg setMtg = setMtgRepository.findById(cardCreateDto.getSetId())
-                .orElseThrow(() -> new ResourceNotFoundException("Set not found with id: " + cardCreateDto.getSetId()));
-
         Card card = cardMapper.toEntity(cardCreateDto);
-        card.setSetMtg(setMtg);
+        
+        // Asociar al set solo si se proporciona un setId
+        if (cardCreateDto.getSetId() != null) {
+            SetMtg setMtg = setMtgRepository.findById(cardCreateDto.getSetId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Set not found with id: " + cardCreateDto.getSetId()));
+            card.setSetMtg(setMtg);
+        } else {
+            // Si no se proporciona un setId, la carta no estará asociada a ningún set
+            card.setSetMtg(null);
+        }
 
         Card savedCard = cardRepository.save(card);
         return cardMapper.toDto(savedCard);
