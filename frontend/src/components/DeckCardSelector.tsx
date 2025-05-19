@@ -260,6 +260,7 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
     
     try {
       // Realizar llamada al backend
+      console.log(`Updating card quantity: deckId=${deckId}, cardId=${cardId}, newQuantity=${newQuantity}, deck format=${deckGameType}`);
       await apiService.updateCardQuantity(deckId, cardId, newQuantity);
       await apiService.updateDeckColor(deckId);
       
@@ -271,15 +272,22 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
     } catch (err: any) {
       console.error('Error actualizando cantidad de carta:', err);
       
+      // Mostrar información detallada del error para depuración
+      if (err.response) {
+        console.error('Error response data:', err.response.data);
+        console.error('Error response status:', err.response.status);
+        console.error('Error response headers:', err.response.headers);
+      }
+      
       // More specific error message based on response
       if (err.response && err.response.data && err.response.data.message) {
-        setError(err.response.data.message);
+        setError(`Error: ${err.response.data.message}`);
       } else if (err.message && err.message.includes('Commander')) {
         setError('Commander format only allows 1 copy of each card.');
       } else if (err.message && err.message.includes('Standard')) {
         setError('Standard format only allows 4 copies of each card.');
       } else {
-        setError('Failed to update card quantity.');
+        setError(`Failed to update card quantity: ${err.message || 'Unknown error'}`);
       }
       
       // Revertir cambio en UI si falla la llamada al backend

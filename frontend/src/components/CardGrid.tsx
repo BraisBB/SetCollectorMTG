@@ -55,39 +55,16 @@ const CardGrid = ({ cards, loading, hasMore, onLoadMore, isAuthenticated = false
   // Función para manejar errores de carga de imágenes
   const handleImageError = (event: React.SyntheticEvent<HTMLImageElement, Event>, cardId: string, cardName: string) => {
     const target = event.target as HTMLImageElement;
-    console.log(`Error cargando imagen para ${cardName} (ID: ${cardId}): ${target.src}`);
+    console.log(`Error loading image for ${cardName} (ID: ${cardId}): ${target.src}`);
     
-    // Si la URL original era de Scryfall, verificar su formato
-    const originalSrc = target.src;
-    if (originalSrc.includes('api.scryfall.com/cards/')) {
-      // Verificar si es una URL de Scryfall mal formada (cardId&type=card en lugar del scryfallId)
-      if (originalSrc.includes('&type=card') && !originalSrc.includes('?format=image')) {
-        console.log(`URL de Scryfall incorrecta, usando respaldo de Gatherer`);
-      } else {
-        // Es una URL de Scryfall válida pero que falló por otra razón - posible problema de CORS
-        console.log(`URL de Scryfall válida pero falló la carga, posible problema de CORS`);
-        
-        // Extraer el ID de Scryfall de la URL
-        const scryfallIdMatch = originalSrc.match(/\/cards\/([^/?]+)/);
-        if (scryfallIdMatch && scryfallIdMatch[1]) {
-          const scryfallId = scryfallIdMatch[1];
-          // Intentar con el formato correcto de URL de Scryfall
-          const correctedUrl = `https://cards.scryfall.io/normal/front/${scryfallId[0]}/${scryfallId}.jpg`;
-          console.log(`Intentando URL alternativa de Scryfall: ${correctedUrl}`);
-          target.src = correctedUrl;
-          return; // Salir para darle la oportunidad a esta URL
-        }
-      }
-    }
-    
-    // Si llegamos aquí, usar respaldo de Gatherer
+    // Usar URL de respaldo de Gatherer
     const backupUrl = `https://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=${cardId}&type=card`;
-    console.log(`Usando URL de respaldo: ${backupUrl}`);
+    console.log(`Using backup URL: ${backupUrl}`);
     target.src = backupUrl;
     
-    // Si la imagen de respaldo también falla, usar placeholder genérico de mtg
+    // Si la imagen de respaldo también falla, usar placeholder genérico
     target.onerror = () => {
-      console.log(`Error en URL de respaldo, usando placeholder genérico`);
+      console.log(`Error with backup URL, using generic placeholder`);
       // Usar una URL externa genérica para el placeholder
       target.src = 'https://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=0&type=card';
       target.classList.add('image-error');

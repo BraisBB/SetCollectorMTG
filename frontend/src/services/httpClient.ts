@@ -10,7 +10,7 @@ class HttpClient {
     // Asegurarnos de que tenemos un baseURL adecuado
     this.api = axios.create({
       baseURL,
-      timeout: 20000, // Aumentamos el timeout a 20 segundos
+      timeout: 10000, // Reducimos el timeout a 10 segundos
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
@@ -24,8 +24,6 @@ class HttpClient {
         config.url = `/${config.url}`;
       }
       
-      console.log(`Enviando solicitud a: ${config.baseURL}${config.url}`);
-      
       // Actualizar token si está por expirar
       if (authService.isAuthenticated() && authService.isTokenExpiringSoon()) {
         const refreshed = await authService.refreshTokenIfNeeded();
@@ -38,14 +36,6 @@ class HttpClient {
       const token = authService.getToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
-        console.log('Token incluido en la solicitud');
-        
-        // Para depuración, mostrar parte del token (pero no completo por seguridad)
-        if (token.length > 20) {
-          console.log(`Token Auth: Bearer ${token.substring(0, 15)}...${token.substring(token.length - 5)}`);
-        }
-      } else {
-        console.warn('No hay token de autenticación disponible para la solicitud');
       }
       return config;
     }, (error) => {
@@ -56,8 +46,6 @@ class HttpClient {
     // Interceptor para manejar errores
     this.api.interceptors.response.use(
       (response) => {
-        // Log de respuesta exitosa para depuración
-        console.log(`Recibiendo respuesta: ${response.status} ${response.config.url}`);
         return response;
       },
       async (error: AxiosError) => {
@@ -68,9 +56,7 @@ class HttpClient {
           const status = error.response.status;
           const url = error.config?.url || '';
           
-          console.log(`Recibiendo respuesta: ${status} ${url}`);
           console.error(`Error en solicitud HTTP (${status}): ${url}`);
-          console.error('Detalles:', error.response.data);
           
           // Añadir información más descriptiva al error
           if (error.response.data && typeof error.response.data === 'object' && 'message' in error.response.data) {
@@ -81,15 +67,12 @@ class HttpClient {
           
           // Si es un error de autenticación, actualizar token o redirigir al login
           if (status === 401 || status === 403) {
-            console.warn('Error de autenticación o autorización. Considera renovar el token o redirigir al login.');
-            
             // En caso de 401, intentar refrescar el token y reintentar
             if (status === 401 && authService.isAuthenticated() && error.config) {
               const refreshed = await authService.refreshTokenIfNeeded();
               
               if (refreshed) {
                 // Si se refrescó el token con éxito, reintentar la solicitud original
-                console.log('Token refrescado, reintentando solicitud');
                 const newToken = authService.getToken();
                 
                 if (newToken && error.config.headers) {
@@ -102,8 +85,6 @@ class HttpClient {
             
             // Para errores 403, podría ser un problema de permisos o del ID de usuario
             if (status === 403 && error.config) {
-              console.log('Error 403: Verificando si podemos resolver usando ID alternativo...');
-              
               // Si hay un userId en el config, podríamos estar usando un ID numérico incorrecto
               const userId = authService.getUserIdentifier();
               const username = localStorage.getItem('username');
@@ -111,7 +92,6 @@ class HttpClient {
               if (username && userId && url.includes(`/user/${userId}`)) {
                 // Intentar con username en lugar de ID numérico
                 const newUrl = url.replace(`/user/${userId}`, `/user/byUsername/${username}`);
-                console.log(`Reintentando con URL alternativa: ${newUrl}`);
                 
                 error.config.url = newUrl;
                 return axios(error.config);
@@ -135,13 +115,11 @@ class HttpClient {
   // Métodos genéricos para las operaciones CRUD
   async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
     try {
-      console.log(`Enviando GET a: ${url}`);
       const response = await this.api.get(url, config);
       // Asegurar que tenemos datos válidos
       if (response && response.data !== undefined) {
         return response.data as T;
       } else {
-        console.warn(`Respuesta vacía o inválida para GET ${url}`, response);
         // Si estamos esperando un array, devolvemos un array vacío
         if (url.includes('/users') || url.includes('/sets') || url.includes('/cards') || url.includes('/decks')) {
           return [] as unknown as T;
@@ -159,32 +137,26 @@ class HttpClient {
   }
   
   async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    console.log(`Enviando POST a: ${url}`);
     const response = await this.api.post(url, data, config);
     if (response && response.data !== undefined) {
       return response.data as T;
     }
-    console.warn(`Respuesta vacía o inválida para POST ${url}`, response);
     return null as unknown as T;
   }
   
   async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    console.log(`Enviando PUT a: ${url}`);
     const response = await this.api.put(url, data, config);
     if (response && response.data !== undefined) {
       return response.data as T;
     }
-    console.warn(`Respuesta vacía o inválida para PUT ${url}`, response);
     return null as unknown as T;
   }
   
   async delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    console.log(`Enviando DELETE a: ${url}`);
     const response = await this.api.delete(url, config);
     if (response && response.data !== undefined) {
       return response.data as T;
     }
-    console.warn(`Respuesta vacía o inválida para DELETE ${url}`, response);
     return null as unknown as T;
   }
 }

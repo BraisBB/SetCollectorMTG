@@ -179,7 +179,10 @@ const apiService = {
   // Update card quantity in a deck
   updateCardInDeck: async (deckId: number, cardId: number, quantity: number): Promise<CardDeck> => {
     console.log(`Updating card ${cardId} in deck ${deckId} with quantity ${quantity}`);
-    return httpClient.put<CardDeck>(`/decks/${deckId}/cards/${cardId}`, { nCopies: quantity });
+    // Enviar quantity como parámetro de consulta (query parameter) en lugar de en el cuerpo
+    return httpClient.put<CardDeck>(`/decks/${deckId}/cards/${cardId}`, {}, {
+      params: { quantity }
+    });
   },
 
   // Remove a card from a deck
@@ -487,49 +490,49 @@ const apiService = {
   // Cartas
   getAllCards: async (page: number = 0, size: number = 50): Promise<Card[]> => {
     try {
-      console.log("Solicitando todas las cartas...");
+      console.log(`Requesting all cards (page: ${page}, size: ${size})...`);
       
-      // Obtener las cartas
+      // Get cards with pagination parameters
       const cards = await httpClient.get<Card[]>('/cards', {
         params: { page, size }
       });
       
-      console.log(`Recibidas ${cards.length} cartas del servidor`);
+      console.log(`Received ${cards.length} cards from server`);
       
-      // Si hay cartas, obtener todos los sets para enriquecer los datos
+      // If there are cards, get all sets to enrich the data
       if (cards && cards.length > 0) {
         try {
-          console.log("Obteniendo sets para enriquecer datos de cartas...");
+          console.log("Getting sets to enrich card data...");
           
-          // Obtener todos los sets
+          // Get all sets
           const sets = await httpClient.get<SetMtg[]>('/sets');
-          console.log(`Recibidos ${sets.length} sets del servidor`);
+          console.log(`Received ${sets.length} sets from server`);
           
-          // Crear un mapa de sets por ID para búsqueda rápida
+          // Create a map of sets by ID for quick lookup
           const setsMap = new Map<number, SetMtg>();
           sets.forEach(set => {
-            // Asegurarse de que el set tiene id/setId
+            // Make sure the set has id/setId
             const setId = set.id || set.setId;
             if (setId) {
               setsMap.set(setId, set);
-              // Asegurar aliases de compatibilidad
+              // Ensure compatibility aliases
               set.id = setId;
               set.code = set.code || set.setCode;
-              console.log(`Set mapeado: ID=${setId}, Nombre=${set.name}, Código=${set.code}`);
+              console.log(`Mapped set: ID=${setId}, Name=${set.name}, Code=${set.code}`);
             }
           });
           
-          // Enriquecer cada carta con los datos de su set
+          // Enrich each card with its set data
           const enrichedCards = cards.map(card => {
-            console.log(`Procesando carta: ID=${card.cardId}, Nombre=${card.name}, SetID=${card.setId}`);
+            console.log(`Processing card: ID=${card.cardId}, Name=${card.name}, SetID=${card.setId}`);
             
             const cardSet = card.setId ? setsMap.get(card.setId) : null;
             if (cardSet) {
-              console.log(`Set encontrado para carta ${card.name}: ${cardSet.name}`);
+              console.log(`Set found for card ${card.name}: ${cardSet.name}`);
             } else if (card.setId) {
-              console.log(`⚠️ No se encontró set con ID=${card.setId} para carta ${card.name}`);
+              console.log(`⚠️ No set found with ID=${card.setId} for card ${card.name}`);
             } else {
-              console.log(`La carta ${card.name} no tiene setId asignado`);
+              console.log(`Card ${card.name} has no setId assigned`);
             }
             
             return {
@@ -539,18 +542,18 @@ const apiService = {
             };
           });
           
-          console.log("Procesamiento de cartas completado");
+          console.log("Card processing completed");
           return enrichedCards;
         } catch (error) {
-          console.error('Error obteniendo sets para enriquecer cartas:', error);
-          // Si falla la obtención de sets, devolver las cartas sin enriquecer
+          console.error('Error getting sets to enrich cards:', error);
+          // If getting sets fails, return cards without enrichment
           return cards;
         }
       }
       
       return cards;
     } catch (error) {
-      console.error('Error obteniendo todas las cartas:', error);
+      console.error('Error getting all cards:', error);
       return [];
     }
   },

@@ -407,7 +407,7 @@
   font-weight: bold;
 }
 
-/* Responsive adjustments */
+/* Responsive adjustments - Reglas actualizadas y optimizadas */
 @media (max-width: 768px) {
   .card-modal-layout {
     flex-direction: column;
@@ -418,12 +418,15 @@
   
   .card-modal-image {
     flex: 0 0 auto;
-    max-width: 100%;
+    max-width: 300px;
     width: 90%;
+    margin: 0 auto;
   }
   
   .modal-image {
-    max-height: 350px;
+    max-height: 420px;
+    width: 100%;
+    object-fit: contain;
     margin: 0 auto;
   }
   
@@ -480,13 +483,27 @@
     padding: 0;
     border-radius: 12px;
     width: 98%;
-    max-height: 90vh;
+    max-height: 92vh;
   }
   
   .card-modal-layout {
     padding: 0.8rem;
+    gap: 1rem;
   }
-
+  
+  .card-modal-image {
+    max-width: 280px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  
+  .modal-image {
+    max-height: 400px;
+    width: 100%;
+    object-fit: contain;
+    margin: 0 auto;
+  }
+  
   .card-details-section {
     padding: 0.8rem;
   }
@@ -497,12 +514,6 @@
   
   .section-title {
     font-size: 1.1rem;
-  }
-
-  .modal-image {
-    max-height: 300px;
-    object-fit: contain;
-    margin: 0 auto;
   }
   
   .card-detail-row {
@@ -521,9 +532,46 @@
     top: 10px;
     right: 10px;
   }
+}
+
+/* Ajustes para dispositivos muy estrechos (formato vertical) */
+@media (max-width: 375px) {
+  .card-modal-content {
+    width: 100%;
+    border-radius: 10px;
+  }
+  
+  .card-modal-layout {
+    padding: 0.5rem;
+  }
   
   .card-modal-image {
+    max-width: 250px;
+    width: 95%;
+  }
+  
+  .modal-image {
+    max-height: 350px;
+    object-fit: contain;
     width: 100%;
+  }
+  
+  .modal-header {
+    padding: 1rem;
+  }
+  
+  .card-title {
+    font-size: 1.1rem;
+  }
+  
+  .card-mana-cost {
+    padding: 0.3rem 0.6rem;
+  }
+  
+  .close-button {
+    top: 8px;
+    right: 8px;
+    font-size: 16px;
   }
 }
 
@@ -706,7 +754,7 @@
   margin: 10px 0;
 }
 
-/* Media queries para ajustes responsivos */
+/* Media queries para ajustes responsivos de controles de colección */
 @media (max-width: 768px) {
   .compact-controls {
     flex-direction: column;
@@ -720,46 +768,15 @@
   .collection-controls {
     padding: 0.75rem;
   }
-
-  .card-modal-layout {
-    flex-direction: column;
-    padding: 1.5rem;
-    gap: 1.5rem;
+  
+  /* Media queries para ajustes responsivos de controles minimalistas */
+  .minimal-collection-controls {
+    justify-content: center;
   }
   
-  .card-modal-image {
-    flex: 0 0 auto;
-    max-width: 100%;
-  }
-  
-  .modal-content {
-    width: 95%;
-    max-height: 90vh;
-    overflow-y: auto;
-  }
-
-  .card-title {
-    font-size: 1.5rem;
-  }
-
-  .modal-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-    padding: 1.25rem 1.5rem;
-  }
-  
-  .close-button {
-    top: 12px;
-    right: 12px;
-    width: 36px;
-    height: 36px;
-    font-size: 20px;
-  }
-  
-  .card-mana-cost {
-    margin-right: 0;
-    margin-bottom: 0.5rem;
+  .minimal-collection-info {
+    width: 100%;
+    justify-content: center;
   }
 }
 
@@ -885,16 +902,4 @@
   font-size: 0.9rem;
   font-weight: 600;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-/* Media queries para ajustes responsivos */
-@media (max-width: 768px) {
-  .minimal-collection-controls {
-    justify-content: center;
-  }
-  
-  .minimal-collection-info {
-    width: 100%;
-    justify-content: center;
-  }
 }

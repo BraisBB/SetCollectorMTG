@@ -51,6 +51,20 @@ const CardModal: React.FC<CardModalProps> = ({
   const [copiesCount, setCopiesCount] = useState<number>(1);
   const [addingToCollection, setAddingToCollection] = useState<boolean>(false);
 
+  // Pre-cargar los sets cuando el componente se monta
+  useEffect(() => {
+    const fetchSets = async () => {
+      try {
+        const sets = await httpClient.get<SetInfo[]>('sets');
+        setSets(sets);
+      } catch (error) {
+        console.error('Error fetching sets:', error);
+      }
+    };
+
+    fetchSets();
+  }, []);
+
   // Manejar cierre al hacer clic en el overlay
   const handleOverlayClick = useCallback((e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -74,20 +88,6 @@ const CardModal: React.FC<CardModalProps> = ({
     };
   }, [onClose]);
 
-  // Cargar los sets disponibles
-  useEffect(() => {
-    const fetchSets = async () => {
-      try {
-        const sets = await httpClient.get<SetInfo[]>('sets');
-        setSets(sets);
-      } catch (error) {
-        console.error('Error fetching sets:', error);
-      }
-    };
-
-    fetchSets();
-  }, []);
-
   // Cargar los detalles completos de la carta y la cantidad en la colección cuando se selecciona
   useEffect(() => {
     if (card && card.cardId) {
@@ -96,50 +96,29 @@ const CardModal: React.FC<CardModalProps> = ({
       
       const fetchCardData = async () => {
         try {
-          console.log(`Fetching card details for ID: ${card.cardId}`);
-          const cardDetails = await httpClient.get<Card>(`cards/${card.cardId}`);
-          console.log('Fetched card data:', cardDetails);
+          // Hacer las solicitudes en paralelo para mejorar el rendimiento
+          const [cardDetails, collectionQuantity] = await Promise.all([
+            httpClient.get<Card>(`cards/${card.cardId}`),
+            isAuthenticated ? collectionService.getCardInCollection(card.cardId).catch(() => 0) : Promise.resolve(0)
+          ]);
+          
+          // Si la carta ya tiene un contador de colección, lo usamos en lugar del resultado de la API
+          const finalCollectionCount = card.collectionCount !== undefined ? card.collectionCount : collectionQuantity;
           
           // Mezclamos los datos de la carta que ya tenemos con los detalles adicionales
           const mergedData = {
             ...cardDetails,
-            // Si la carta ya tiene información sobre la cantidad en la colección, la conservamos
-            collectionCount: card.collectionCount
+            collectionCount: finalCollectionCount
           };
           
           setFullCardData(mergedData);
+          setCollectionCount(finalCollectionCount);
+          setCopiesCount(1);
           
-          // Si la carta ya tiene un contador de colección, lo usamos
-          if (card.collectionCount !== undefined) {
-            console.log(`Card already has collection count: ${card.collectionCount}`);
-            setCollectionCount(card.collectionCount);
-            // Si ya tiene copias, establecemos el contador en 1 para añadir más
-            setCopiesCount(1);
-          }
-          // Si el usuario está autenticado y no tenemos información de colección, la consultamos
-          else if (isAuthenticated) {
-            try {
-              console.log(`Checking if card ${card.cardId} is in user's collection`);
-              const quantity = await collectionService.getCardInCollection(card.cardId);
-              console.log(`Card ${card.cardId} quantity in collection: ${quantity}`);
-              setCollectionCount(quantity);
-              // Si ya tiene copias, establecemos el contador en 1 para añadir más
-              setCopiesCount(1);
-            } catch (collectionError: any) {
-              console.error('Error fetching collection info:', collectionError);
-              if (collectionError.message?.includes('Authentication failed')) {
-                setError('Your session has expired. Please login again.');
-              } else {
-                // Para errores de colección, simplemente asumimos que no tiene la carta
-                setCollectionCount(0);
-              }
-            }
-          } else {
-            console.log('User not authenticated, skipping collection info');
-          }
         } catch (err: any) {
           console.error('Error fetching card details:', err);
           setError('Could not load the complete card details');
+          
           // Usamos los datos parciales que ya tenemos
           setFullCardData(card);
           
