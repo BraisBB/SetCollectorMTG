@@ -68,8 +68,11 @@ public class CardDeckServiceImpl implements CardDeckService {
         // Guardar la relación
         CardDeck savedCardDeck = cardDeckRepository.save(cardDeck);
         
-        // Actualizar contador de cartas en el mazo
-        deck.setTotalCards(deck.getTotalCards() + quantity);
+        // Calcular el total actual de cartas en el mazo
+        Integer totalCardsInDeck = cardDeckRepository.sumCopiesByDeckId(deckId).orElse(0);
+        
+        // Actualizar contador de cartas en el mazo usando el valor calculado
+        deck.setTotalCards(totalCardsInDeck);
         deckRepository.save(deck);
 
         return cardDeckMapper.toDto(savedCardDeck);
@@ -114,7 +117,12 @@ public class CardDeckServiceImpl implements CardDeckService {
         
         // Actualizar contador de cartas en el mazo
         Deck deck = cardDeck.getDeck();
-        deck.setTotalCards(deck.getTotalCards() + (newQuantity - oldQuantity));
+        
+        // Calcular el total actual de cartas en el mazo
+        Integer totalCardsInDeck = cardDeckRepository.sumCopiesByDeckId(deckId).orElse(0);
+        
+        // Actualizar contador de cartas en el mazo usando el valor calculado
+        deck.setTotalCards(totalCardsInDeck);
         deckRepository.save(deck);
 
         return cardDeckMapper.toDto(updatedCardDeck);
