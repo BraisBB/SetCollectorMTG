@@ -83,7 +83,8 @@ public class SecurityConfig {
                                 "/h2-console/**",
                                 "/users", // POST será manejado por anotación
                                 "/cards/**", // Permitir acceso público a los endpoints de cartas
-                                "/sets/**" // Permitir acceso público a los endpoints de sets
+                                "/sets/**", // Permitir acceso público a los endpoints de sets
+                                "/admin/cards/import" // Permitir acceso al endpoint de importación (será manejado por anotación PreAuthorize)
                         ).permitAll()
 
                         // Configuración básica para endpoints protegidos

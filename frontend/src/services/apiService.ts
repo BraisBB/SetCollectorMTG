@@ -607,6 +607,29 @@ const apiService = {
       console.error(`Error eliminando mazo ${deckId}:`, error);
       throw error;
     }
+  },
+
+  // Import cards from JSON file
+  importCardsFromFile: async (file: File): Promise<any> => {
+    try {
+      console.log('Uploading card JSON file:', file.name);
+      
+      // Create FormData object for file upload
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await httpClient.post('/admin/cards/import', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      console.log('Cards imported successfully:', response);
+      return response;
+    } catch (error) {
+      console.error('Error importing cards:', error);
+      throw error;
+    }
   }
 };
 

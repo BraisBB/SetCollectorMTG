@@ -26,6 +26,10 @@ const Admin: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedSet, setSelectedSet] = useState<any>(null);
   const [selectedCard, setSelectedCard] = useState<any>(null);
+  // Estado para importación de cartas
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [importLoading, setImportLoading] = useState<boolean>(false);
+  const [importSuccess, setImportSuccess] = useState<boolean>(false);
 
   useEffect(() => {
     // Verify if user is administrator
@@ -435,6 +439,50 @@ const Admin: React.FC = () => {
       } catch (err: any) {
         setError(`Error deleting deck: ${err.message}`);
       }
+    }
+  };
+
+  // Import cards from JSON file
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      
+      // Check if file is JSON
+      if (!file.name.toLowerCase().endsWith('.json')) {
+        setError('Only JSON files are allowed');
+        return;
+      }
+      
+      setSelectedFile(file);
+      setError(null);
+    }
+  };
+
+  const handleImportCards = async () => {
+    if (!selectedFile) {
+      setError('Please select a file to upload');
+      return;
+    }
+
+    setImportLoading(true);
+    setError(null);
+    setImportSuccess(false);
+    
+    try {
+      const response = await apiService.importCardsFromFile(selectedFile);
+      
+      if (response.success) {
+        setImportSuccess(true);
+        setSelectedFile(null);
+        // Reload cards data
+        loadTabData('cards');
+      } else {
+        setError(response.message || 'Error importing cards');
+      }
+    } catch (err: any) {
+      setDetailedError('Error importing cards', err);
+    } finally {
+      setImportLoading(false);
     }
   };
 
@@ -995,28 +1043,14 @@ const Admin: React.FC = () => {
     <div className="admin-tab-content">
       <div className="admin-actions">
         <button className="btn-primary" onClick={() => {
-          // Ensure sets are loaded before showing the form
-          loadSets().then(() => {
-            // Initialize an empty card instead of null
-            setSelectedCard({
-              name: "",
-              cardType: "",
-              manaCost: "",
-              rarity: "common",
-              manaValue: 0,
-              oracleText: "",
-              cardImageUrl: "",
-              imageUrl: "",
-              setId: undefined,
-              isNewCard: true // Flag to identify this is a new card
-            });
-            setShowCardForm(true);
-          });
+          setSelectedCard(null);
+          loadSets();
+          setShowCardForm(true);
         }}>
           Create Card
         </button>
       </div>
-      
+
       {loading ? (
         <div className="loading">Loading cards...</div>
       ) : error ? (
@@ -1030,43 +1064,32 @@ const Admin: React.FC = () => {
               <th>Type</th>
               <th>Rarity</th>
               <th>Set</th>
-              <th>SetID</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {cards.map(card => {
-              console.log("Displaying card in table:", card); // Log for debugging in English
-              return (
-                <tr key={card.id || card.cardId} data-card-id={card.id || card.cardId}>
-                  <td>{card.id || card.cardId}</td>
-                  <td>{card.name}</td>
-                  <td>{card.cardType}</td>
-                  <td>{card.rarity}</td>
-                  <td>
-                    {card.setName || 'No set'} 
-                    {card.setCode && <span> ({card.setCode})</span>}
-                  </td>
-                  <td>
-                    {card.setId || card.set_id || 'N/A'}
-                    {card.setMtg && <span title="From setMtg object"> (✓)</span>}
-                  </td>
-                  <td className="actions">
-                    <button onClick={() => handleEditCard(card)}>Edit</button>
-                    <button 
-                      className="delete" 
-                      onClick={() => handleDeleteCard(card.id || card.cardId)}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
+            {cards.map(card => (
+              <tr key={card.id || card.cardId}>
+                <td>{card.id || card.cardId}</td>
+                <td>{card.name}</td>
+                <td>{card.cardType}</td>
+                <td>{card.rarity}</td>
+                <td>{card.setName || 'Unknown'}</td>
+                <td className="actions">
+                  <button onClick={() => handleEditCard(card)}>Edit</button>
+                  <button 
+                    className="delete" 
+                    onClick={() => handleDeleteCard(card.id || card.cardId)}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       )}
-      
+
       {showCardForm && renderCardForm()}
     </div>
   );
@@ -1111,6 +1134,60 @@ const Admin: React.FC = () => {
             ))}
           </tbody>
         </table>
+      )}
+    </div>
+  );
+
+  const renderImportCardsTab = () => (
+    <div className="admin-tab-content">
+      <h3>Import Cards from JSON File</h3>
+      <p>Upload a JSON file containing card data to import into the database.</p>
+      
+      <div className="form-group">
+        <label htmlFor="jsonFile">Select JSON File:</label>
+        <input 
+          type="file" 
+          id="jsonFile"
+          accept=".json" 
+          onChange={handleFileSelect}
+          disabled={importLoading} 
+        />
+      </div>
+      
+      {selectedFile && (
+        <div className="admin-info-box">
+          Selected file: <strong>{selectedFile.name}</strong>
+          <button 
+            className="btn-secondary"
+            onClick={() => setSelectedFile(null)}
+            disabled={importLoading}
+            style={{ marginLeft: '10px' }}
+          >
+            Clear
+          </button>
+        </div>
+      )}
+      
+      <div className="admin-actions">
+        <button 
+          className="btn-primary"
+          onClick={handleImportCards}
+          disabled={!selectedFile || importLoading}
+        >
+          {importLoading ? 'Importing...' : 'Import Cards'}
+        </button>
+      </div>
+      
+      {importSuccess && (
+        <div className="success">
+          Cards imported successfully!
+        </div>
+      )}
+      
+      {error && (
+        <div className="error">
+          {error}
+        </div>
       )}
     </div>
   );
@@ -1160,6 +1237,12 @@ const Admin: React.FC = () => {
           >
             Decks
           </button>
+          <button 
+            className={`tab-button ${activeTab === 'importCards' ? 'active' : ''}`}
+            onClick={() => setActiveTab('importCards')}
+          >
+            Import Cards
+          </button>
         </div>
         
         <div className="tab-content">
@@ -1167,6 +1250,7 @@ const Admin: React.FC = () => {
           {activeTab === 'sets' && renderSetsTab()}
           {activeTab === 'cards' && renderCardsTab()}
           {activeTab === 'decks' && renderDecksTab()}
+          {activeTab === 'importCards' && renderImportCardsTab()}
         </div>
       </div>
     </div>
