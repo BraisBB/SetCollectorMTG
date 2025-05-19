@@ -202,11 +202,35 @@ const Admin: React.FC = () => {
   // Cards functions
   const handleCreateCard = async (cardData: any) => {
     try {
-      await apiService.createCard(cardData);
+      // Formatear los datos según el DTO que espera el backend para creación
+      const cardCreateDto = {
+        name: cardData.name,
+        cardType: cardData.cardType,
+        manaCost: cardData.manaCost || "",
+        rarity: cardData.rarity,
+        manaValue: cardData.manaValue || 0,
+        oracleText: cardData.oracleText || "",
+        imageUrl: cardData.imageUrl || "",
+        setId: cardData.setId
+      };
+      
+      console.log("Enviando datos para crear carta:", cardCreateDto);
+      await apiService.createCard(cardCreateDto);
       setShowCardForm(false);
       loadTabData('cards');
     } catch (err: any) {
       setError(`Error creating card: ${err.message}`);
+    }
+  };
+
+  // Función para cargar los sets
+  const loadSets = async () => {
+    try {
+      const fetchedSets = await apiService.getAllSets();
+      setSets(fetchedSets);
+      console.log("Sets cargados exitosamente:", fetchedSets);
+    } catch (err: any) {
+      setError(`Error loading sets: ${err.message}`);
     }
   };
 
@@ -221,20 +245,147 @@ const Admin: React.FC = () => {
     }
   };
 
+  // Función para preparar una carta para edición
   const handleEditCard = (card: any) => {
-    setSelectedCard(card);
+    console.log("Preparando carta para edición:", card);
+    
+    // Asegurarnos de que los sets estén cargados primero
+    if (sets.length === 0) {
+      console.log("Cargando sets antes de editar...");
+      loadSets().then(() => {
+        prepareCardForEditing(card);
+      });
+    } else {
+      prepareCardForEditing(card);
+    }
+  };
+  
+  // Función auxiliar para preparar la carta para edición
+  const prepareCardForEditing = (card: any) => {
+    // Determinar el ID del set
+    let cardSetId = null;
+    
+    // Intentar obtener el setId de la forma más confiable primero
+    if (card.setId !== undefined && card.setId !== null) {
+      cardSetId = card.setId;
+      console.log("Usando setId directo:", cardSetId);
+    } else if (card.set_id !== undefined && card.set_id !== null) {
+      cardSetId = card.set_id;
+      console.log("Usando set_id de la BD:", cardSetId);
+    } else if (card.set && typeof card.set === 'object' && card.set.id) {
+      cardSetId = card.set.id;
+      console.log("Usando id del objeto set:", cardSetId);
+    } else if (card.setName || card.setCode) {
+      // Buscar por nombre o código
+      const matchingSet = sets.find(s => 
+        s.name === card.setName || s.code === card.setCode
+      );
+      if (matchingSet) {
+        cardSetId = matchingSet.id;
+        console.log("Set encontrado por nombre/código:", cardSetId);
+      }
+    }
+    
+    // Log de diagnóstico
+    console.log("Sets disponibles:", sets);
+    console.log("ID determinado del set:", cardSetId);
+    
+    // Crear un objeto normalizado para edición
+    const normalizedCard = {
+      id: card.id || card.cardId,
+      cardId: card.id || card.cardId,
+      name: card.name || "",
+      cardType: card.cardType || card.type || "",
+      manaCost: card.manaCost || "",
+      rarity: card.rarity || "common",
+      manaValue: card.manaValue || 0,
+      setId: cardSetId,
+      set_id: cardSetId,
+      oracleText: card.oracleText || "",
+      cardImageUrl: card.imageUrl || card.cardImageUrl || "",
+      imageUrl: card.imageUrl || card.cardImageUrl || "",
+    };
+    
+    console.log("Datos normalizados para edición:", normalizedCard);
+    setSelectedCard(normalizedCard);
     setShowCardForm(true);
   };
 
+  // Función para actualizar una carta existente
   const handleUpdateCard = async (cardData: any) => {
     try {
-      await apiService.updateCard(cardData.id, cardData);
+      const cardId = cardData.id || cardData.cardId;
+      if (!cardId) {
+        throw new Error("Cannot update card: Missing card ID");
+      }
+      
+      console.log("Datos completos para actualización:", cardData);
+      
+      // Crear un objeto DTO completo para asegurar que todos los campos estén presentes
+      // Usando una interfaz ampliada para permitir setId opcional
+      interface CardDto {
+        id: number;
+        name: string;
+        cardType: string;
+        manaCost: string;
+        rarity: string;
+        manaValue: number;
+        oracleText: string;
+        imageUrl: string;
+        setId?: number; // Propiedad opcional para el setId
+      }
+      
+      const cardDto: CardDto = {
+        id: cardId, // Incluimos el id en lugar de cardId
+        name: cardData.name,
+        cardType: cardData.cardType,
+        manaCost: cardData.manaCost || "",
+        rarity: cardData.rarity,
+        manaValue: cardData.manaValue || 0,
+        oracleText: cardData.oracleText || "",
+        imageUrl: cardData.imageUrl || cardData.cardImageUrl || "",
+      };
+      
+      // Solo incluir setId si está presente y es válido
+      if (cardData.setId) {
+        const setId = typeof cardData.setId === 'string' ? parseInt(cardData.setId) : cardData.setId;
+        if (!isNaN(setId)) {
+          cardDto.setId = setId;
+          console.log("Incluyendo setId en la actualización:", setId);
+        }
+      }
+      
+      console.log("Enviando datos de actualización al backend:", cardDto);
+      await apiService.updateCard(cardId, cardDto);
+      console.log("Carta actualizada con éxito");
       setShowCardForm(false);
       setSelectedCard(null);
       loadTabData('cards');
     } catch (err: any) {
-      setError(`Error updating card: ${err.message}`);
+      console.error("Error al actualizar carta:", err);
+      setError(`Error updating card: ${err.message || "Unknown error"}`);
     }
+  };
+
+  // Función auxiliar para calcular el valor de maná a partir del coste
+  const calculateManaValue = (manaCost: string): number => {
+    // Eliminar llaves y contar los símbolos
+    const cleanedCost = manaCost.replace(/[{}]/g, '');
+    let total = 0;
+    
+    // Contar símbolos numéricos
+    const numericMatch = cleanedCost.match(/\d+/g);
+    if (numericMatch) {
+      total += numericMatch.reduce((sum, num) => sum + parseInt(num), 0);
+    }
+    
+    // Contar símbolos de color (W, U, B, R, G)
+    const colorMatches = cleanedCost.match(/[WUBRG]/g);
+    if (colorMatches) {
+      total += colorMatches.length;
+    }
+    
+    return total;
   };
 
   // Decks functions (simpler, probably just view and delete)
@@ -463,18 +614,56 @@ const Admin: React.FC = () => {
       <form onSubmit={(e) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
+        
+        // Obtener los valores del formulario
+        const name = formData.get('name') as string;
+        const cardType = formData.get('cardType') as string;
+        const manaCost = formData.get('manaCost') as string || "";
+        const rarity = formData.get('rarity') as string;
+        const setIdStr = formData.get('setId') as string;
+        const oracleText = formData.get('oracleText') as string || "";
+        const cardImageUrl = formData.get('cardImageUrl') as string || "";
+        
+        // Calcular valor de maná a partir del coste
+        const manaValue = calculateManaValue(manaCost);
+        
+        // Procesar el setId
+        let setId = 0;
+        if (setIdStr && setIdStr !== '') {
+          setId = parseInt(setIdStr);
+        } else if (sets.length > 0) {
+          // Si no hay setId seleccionado pero hay sets disponibles, usar el primero
+          setId = sets[0].id;
+        }
+        
+        // Verificar si tenemos un setId válido
+        if (!setId && selectedCard?.setId) {
+          setId = selectedCard.setId;
+        }
+        
+        // Si estamos creando una carta, el setId es obligatorio
+        if (!setId && !selectedCard) {
+          setError("No se ha podido determinar un ID de set válido. Por favor, selecciona un set.");
+          return;
+        }
+        
+        // Preparar objeto de datos
         const cardData = {
-          id: selectedCard?.id,
-          name: formData.get('name') as string,
-          cardType: formData.get('cardType') as string,
-          manaCost: formData.get('manaCost') as string,
-          rarity: formData.get('rarity') as string,
-          setId: parseInt(formData.get('setId') as string),
-          oracleText: formData.get('oracleText') as string,
-          cardImageUrl: formData.get('cardImageUrl') as string,
-          // More fields as needed
+          ...(selectedCard ? { id: selectedCard.id, cardId: selectedCard.id } : {}),
+          name,
+          cardType,
+          manaCost,
+          manaValue,
+          rarity,
+          setId,
+          oracleText,
+          imageUrl: cardImageUrl,
+          cardImageUrl
         };
         
+        console.log("Datos del formulario procesados:", cardData);
+        
+        // Llamar a la función correspondiente
         if (selectedCard) {
           handleUpdateCard(cardData);
         } else {
@@ -515,13 +704,21 @@ const Admin: React.FC = () => {
           <select 
             id="rarity" 
             name="rarity" 
-            defaultValue={selectedCard?.rarity || 'common'} 
+            value={selectedCard?.rarity || 'common'} 
+            onChange={(e) => {
+              if (selectedCard) {
+                setSelectedCard({
+                  ...selectedCard,
+                  rarity: e.target.value
+                });
+              }
+            }}
             required
           >
-            <option value="common">Common</option>
-            <option value="uncommon">Uncommon</option>
-            <option value="rare">Rare</option>
-            <option value="mythic">Mythic Rare</option>
+            <option key="default-rarity" value="common">Common</option>
+            <option key="uncommon" value="uncommon">Uncommon</option>
+            <option key="rare" value="rare">Rare</option>
+            <option key="mythic" value="mythic">Mythic Rare</option>
           </select>
         </div>
         <div className="form-group">
@@ -529,10 +726,20 @@ const Admin: React.FC = () => {
           <select 
             id="setId" 
             name="setId" 
-            defaultValue={selectedCard?.setId || ''} 
-            required
+            value={selectedCard?.setId || ''} 
+            onChange={(e) => {
+              if (selectedCard) {
+                const newSetId = e.target.value ? parseInt(e.target.value) : null;
+                setSelectedCard({
+                  ...selectedCard,
+                  setId: newSetId,
+                  set_id: newSetId
+                });
+              }
+            }}
+            required={!selectedCard} // Solo requerido para nuevas cartas
           >
-            <option value="">Select Set</option>
+            <option key="default" value="">Select Set</option>
             {sets.map(set => (
               <option key={set.id} value={set.id}>{set.name}</option>
             ))}
@@ -553,7 +760,7 @@ const Admin: React.FC = () => {
             type="url" 
             id="cardImageUrl" 
             name="cardImageUrl" 
-            defaultValue={selectedCard?.cardImageUrl || ''} 
+            defaultValue={selectedCard?.cardImageUrl || selectedCard?.imageUrl || ''} 
           />
         </div>
         <div className="form-buttons">
@@ -566,6 +773,7 @@ const Admin: React.FC = () => {
             onClick={() => {
               setShowCardForm(false);
               setSelectedCard(null);
+              setError(null); // Limpiar errores
             }}
           >
             Cancel
@@ -691,7 +899,13 @@ const Admin: React.FC = () => {
   const renderCardsTab = () => (
     <div className="admin-tab-content">
       <div className="admin-actions">
-        <button className="btn-primary" onClick={() => setShowCardForm(true)}>
+        <button className="btn-primary" onClick={() => {
+          setShowCardForm(true);
+          // Asegurarse de que los sets estén cargados
+          if (sets.length === 0) {
+            loadSets();
+          }
+        }}>
           Create Card
         </button>
       </div>
@@ -709,28 +923,33 @@ const Admin: React.FC = () => {
               <th>Type</th>
               <th>Rarity</th>
               <th>Set</th>
+              <th>SetID</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {cards.map(card => (
-              <tr key={card.id || card.cardId}>
-                <td>{card.id || card.cardId}</td>
-                <td>{card.name}</td>
-                <td>{card.cardType}</td>
-                <td>{card.rarity}</td>
-                <td>{card.setName || card.setCode}</td>
-                <td className="actions">
-                  <button onClick={() => handleEditCard(card)}>Edit</button>
-                  <button 
-                    className="delete" 
-                    onClick={() => handleDeleteCard(card.id || card.cardId)}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {cards.map(card => {
+              console.log("Mostrando carta en tabla:", card); // Log para depuración
+              return (
+                <tr key={card.id || card.cardId} data-card-id={card.id || card.cardId}>
+                  <td>{card.id || card.cardId}</td>
+                  <td>{card.name}</td>
+                  <td>{card.cardType}</td>
+                  <td>{card.rarity}</td>
+                  <td>{card.setName || card.setCode}</td>
+                  <td>{card.setId || card.set_id}</td>
+                  <td className="actions">
+                    <button onClick={() => handleEditCard(card)}>Edit</button>
+                    <button 
+                      className="delete" 
+                      onClick={() => handleDeleteCard(card.id || card.cardId)}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}

@@ -12,16 +12,18 @@
   backdrop-filter: blur(8px);
   font-family: 'Noto Sans', sans-serif;
   padding: 1rem;
+  overflow-y: auto;
 }
 
 .card-modal-content {
-  background:  #494949;
+  background: #494949;
   border-radius: 16px;
-  max-width: 850px;
+  max-width: 800px;
   width: 90%;
+  max-height: 85vh;
   position: relative;
   border: 1px solid rgba(51, 51, 51, 0.1);
-  overflow: hidden;
+  overflow-y: auto;
   animation: modalFadeIn 0.3s ease-out;
 }
 
@@ -94,16 +96,20 @@
   display: flex;
   gap: 2rem;
   padding: 2rem;
+  flex-wrap: wrap;
 }
 
 .card-modal-image {
-  flex: 0 0 40%;
+  flex: 0 0 250px;
+  max-width: 250px;
   position: relative;
   align-self: flex-start;
 }
 
 .modal-image {
   width: 100%;
+  max-height: 350px;
+  object-fit: contain;
   border-radius: 16px;
   box-shadow: 
     0 10px 25px rgba(0, 0, 0, 0.4),
@@ -405,13 +411,20 @@
 @media (max-width: 768px) {
   .card-modal-layout {
     flex-direction: column;
-    padding: 1.5rem;
+    padding: 1rem;
     gap: 1.5rem;
+    align-items: center;
   }
   
   .card-modal-image {
     flex: 0 0 auto;
     max-width: 100%;
+    width: 90%;
+  }
+  
+  .modal-image {
+    max-height: 350px;
+    margin: 0 auto;
   }
   
   .collection-controls {
@@ -429,7 +442,7 @@
 
   .card-modal-content {
     width: 95%;
-    max-height: 90vh;
+    max-height: 85vh;
     overflow-y: auto;
   }
 
@@ -456,24 +469,30 @@
     margin-right: 0;
     margin-bottom: 0.5rem;
   }
+  
+  .card-modal-details {
+    width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
   .card-modal-content {
     padding: 0;
     border-radius: 12px;
+    width: 98%;
+    max-height: 90vh;
   }
   
   .card-modal-layout {
-    padding: 1rem;
+    padding: 0.8rem;
   }
 
   .card-details-section {
-    padding: 1rem;
+    padding: 0.8rem;
   }
 
   .card-title {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
   }
   
   .section-title {
@@ -481,7 +500,7 @@
   }
 
   .modal-image {
-    max-height: 350px;
+    max-height: 300px;
     object-fit: contain;
     margin: 0 auto;
   }
@@ -492,7 +511,7 @@
   }
   
   .oracle-text-content {
-    padding: 1rem;
+    padding: 0.8rem;
   }
   
   .close-button {
@@ -501,6 +520,10 @@
     font-size: 18px;
     top: 10px;
     right: 10px;
+  }
+  
+  .card-modal-image {
+    width: 100%;
   }
 }
 

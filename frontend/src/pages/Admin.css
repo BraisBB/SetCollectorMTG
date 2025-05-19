@@ -134,12 +134,14 @@
   left: 50%;
   transform: translate(-50%, -50%);
   width: 90%;
-  max-width: 500px;
+  max-width: 600px;
   background-color: white;
   padding: 2rem;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 1000;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .admin-form h3 {
@@ -171,13 +173,38 @@
 
 .form-buttons {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 1rem;
   margin-top: 1.5rem;
 }
 
 .form-buttons button {
-  flex: 1;
+  padding: 0.8rem 1.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  flex: initial;
+}
+
+.form-buttons .btn-primary {
+  background-color: #e65100;
+  color: white;
+  border: none;
+}
+
+.form-buttons .btn-secondary {
+  background-color: transparent;
+  border: 1px solid #999;
+  color: #333;
+}
+
+.form-buttons .btn-primary:hover {
+  background-color: #ff8f00;
+}
+
+.form-buttons .btn-secondary:hover {
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 /* Estilos para mensajes */
@@ -216,4 +243,44 @@
   border-left: 3px solid #dc3545;
   font-size: 12px;
   white-space: pre-wrap;
+}
+
+/* Estilos para los desplegables (select) */
+.admin-form select {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: #ffffff;
+  color: #333;
+  appearance: auto;
+}
+
+.admin-form select option {
+  background-color: #ffffff;
+  color: #333;
+  padding: 10px;
+}
+
+/* Incrementar contraste para mejor visibilidad */
+.admin-form label {
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.admin-form input, .admin-form textarea {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: #ffffff;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
 } 

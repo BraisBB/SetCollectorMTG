@@ -33,6 +33,5 @@ public class CardDto {
     
     private String imageUrl;
     
-    @NotNull(message = "The set ID is mandatory")
     private Long setId;
 }

@@ -487,9 +487,47 @@ const apiService = {
   // Cartas
   getAllCards: async (page: number = 0, size: number = 50): Promise<Card[]> => {
     try {
-      return httpClient.get<Card[]>('/cards', {
+      // Obtener las cartas
+      const cards = await httpClient.get<Card[]>('/cards', {
         params: { page, size }
       });
+      
+      // Si hay cartas, obtener todos los sets para enriquecer los datos
+      if (cards && cards.length > 0) {
+        try {
+          // Obtener todos los sets
+          const sets = await httpClient.get<SetMtg[]>('/sets');
+          
+          // Crear un mapa de sets por ID para búsqueda rápida
+          const setsMap = new Map<number, SetMtg>();
+          sets.forEach(set => {
+            // Asegurarse de que el set tiene id/setId
+            const setId = set.id || set.setId;
+            if (setId) {
+              setsMap.set(setId, set);
+              // Asegurar aliases de compatibilidad
+              set.id = setId;
+              set.code = set.code || set.setCode;
+            }
+          });
+          
+          // Enriquecer cada carta con los datos de su set
+          return cards.map(card => {
+            const cardSet = setsMap.get(card.setId);
+            return {
+              ...card,
+              setName: cardSet?.name || 'Unknown Set',
+              setCode: cardSet?.setCode || cardSet?.code || 'UNK'
+            };
+          });
+        } catch (error) {
+          console.error('Error obteniendo sets para enriquecer cartas:', error);
+          // Si falla la obtención de sets, devolver las cartas sin enriquecer
+          return cards;
+        }
+      }
+      
+      return cards;
     } catch (error) {
       console.error('Error obteniendo todas las cartas:', error);
       return [];
@@ -507,7 +545,10 @@ const apiService = {
 
   updateCard: async (cardId: number, cardData: Partial<Card>): Promise<Card> => {
     try {
-      return httpClient.put<Card>(`/cards/${cardId}`, cardData);
+      console.log(`Actualizando carta con ID ${cardId}, datos:`, JSON.stringify(cardData, null, 2));
+      const response = await httpClient.put<Card>(`/cards/${cardId}`, cardData);
+      console.log(`Carta ${cardId} actualizada con éxito. Respuesta:`, response);
+      return response;
     } catch (error) {
       console.error(`Error actualizando carta ${cardId}:`, error);
       throw error;

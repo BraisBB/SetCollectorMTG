@@ -3,8 +3,10 @@
 // Cartas y colecciones
 export interface SetMtg {
   setId: number;
+  id?: number; // Alias para setId para compatibilidad
   name: string;
   setCode: string;
+  code?: string; // Alias para setCode para compatibilidad
   totalCards: number;
   releaseDate: string;
 }

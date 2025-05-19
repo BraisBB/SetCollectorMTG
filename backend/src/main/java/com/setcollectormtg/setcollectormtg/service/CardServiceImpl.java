@@ -101,11 +101,14 @@ public class CardServiceImpl implements CardService {
         Card existingCard = cardRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Card not found with id: " + id));
 
+        // Log para depuración
+        System.out.println("Actualizando carta: " + id + ", DTO recibido: " + cardDto);
         cardMapper.updateCardFromDto(cardDto, existingCard);
 
-        // Actualizar setMtg solo si es diferente
+        // Actualizar setMtg solo si setId está presente y es diferente
         if (cardDto.getSetId() != null &&
                 (existingCard.getSetMtg() == null || !existingCard.getSetMtg().getSetId().equals(cardDto.getSetId()))) {
+            System.out.println("Actualizando set de carta a: " + cardDto.getSetId());
             SetMtg setMtg = setMtgRepository.findById(cardDto.getSetId())
                     .orElseThrow(() -> new ResourceNotFoundException("Set not found with id: " + cardDto.getSetId()));
             existingCard.setSetMtg(setMtg);

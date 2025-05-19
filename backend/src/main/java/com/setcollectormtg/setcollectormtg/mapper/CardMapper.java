@@ -17,10 +17,10 @@ public interface CardMapper {
     @Mapping(target = "setMtg", ignore = true)
     @Mapping(target = "cardId", ignore = true)
     @Mapping(target = "scryfallId", ignore = true)
-    @Mapping(target = "oracleText", ignore = true)
     @Mapping(target = "userCollectionCards", ignore = true)
     @Mapping(target = "manaValueFromNode", ignore = true)
     @Mapping(target = "manaValue", expression = "java(cardCreateDto.getManaValue() != null ? cardCreateDto.getManaValue().doubleValue() : null)")
+    @Mapping(target = "oracleText", source = "oracleText")
     Card toEntity(CardCreateDto cardCreateDto);
 
     @Mapping(target = "setId", source = "setMtg.setId")
@@ -30,10 +30,16 @@ public interface CardMapper {
     CardDto toDto(Card card);
 
     @Mapping(target = "setMtg", ignore = true)
+    @Mapping(target = "cardId", ignore = true)
     @Mapping(target = "scryfallId", ignore = true)
-    @Mapping(target = "oracleText", ignore = true)
     @Mapping(target = "userCollectionCards", ignore = true)
     @Mapping(target = "manaValueFromNode", ignore = true)
     @Mapping(target = "manaValue", expression = "java(cardDto.getManaValue() != null ? cardDto.getManaValue().doubleValue() : null)")
+    @Mapping(target = "oracleText", source = "oracleText")
+    @Mapping(target = "cardType", source = "cardType")
+    @Mapping(target = "name", source = "name")
+    @Mapping(target = "manaCost", source = "manaCost")
+    @Mapping(target = "rarity", source = "rarity")
+    @Mapping(target = "imageUrl", source = "imageUrl")
     void updateCardFromDto(CardDto cardDto, @MappingTarget Card card);
 }
