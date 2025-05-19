@@ -89,15 +89,36 @@ public class UserSecurity {
     public boolean canAccessUserResource(Authentication authentication, Long resourceId) {
         try {
             if (authentication == null || !authentication.isAuthenticated()) {
+                log.warn("Authentication null or not authenticated");
                 return false;
             }
 
+            log.debug("Verificando acceso: usuario={}, roles={}", 
+                authentication.getName(),
+                authentication.getAuthorities());
+
             boolean isAdmin = authentication.getAuthorities().stream()
-                    .anyMatch(auth -> "ADMIN".equals(auth.getAuthority()));
+                    .anyMatch(auth -> {
+                        boolean matches = "ADMIN".equals(auth.getAuthority());
+                        log.debug("Comprobando autoridad: {} == 'ADMIN' => {}", 
+                            auth.getAuthority(), matches);
+                        return matches;
+                    });
 
-            log.debug("User {} isAdmin: {}", authentication.getName(), isAdmin);
+            log.info("Usuario {} isAdmin: {}", authentication.getName(), isAdmin);
 
-            return isAdmin || isOwner(authentication, resourceId);
+            // Si es admin, permitir acceso
+            if (isAdmin) {
+                log.info("Acceso concedido a usuario {} por rol ADMIN", authentication.getName());
+                return true;
+            }
+
+            // Si no es admin, verificar propiedad
+            boolean isOwner = isOwner(authentication, resourceId);
+            log.info("Usuario {} es propietario del recurso {}: {}", 
+                authentication.getName(), resourceId, isOwner);
+            
+            return isOwner;
         } catch (Exception e) {
             log.error("Error inesperado en canAccessUserResource", e);
             // En caso de error, siempre rechazar por seguridad

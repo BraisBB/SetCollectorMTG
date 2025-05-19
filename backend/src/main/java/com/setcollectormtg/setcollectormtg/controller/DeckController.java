@@ -151,7 +151,7 @@ public class DeckController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #id) or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #id) or hasAuthority('ADMIN')")
     public ResponseEntity<Void> deleteDeck(@PathVariable Long id) {
         deckService.deleteDeck(id);
         return ResponseEntity.noContent().build();
