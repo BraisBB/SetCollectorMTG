@@ -34,6 +34,8 @@ export interface UserCollectionCard {
   cardType?: string;
   manaCost?: string;
   rarity?: string;
+  setId?: number;
+  setCode?: string;
 }
 
 export interface UserCollection {

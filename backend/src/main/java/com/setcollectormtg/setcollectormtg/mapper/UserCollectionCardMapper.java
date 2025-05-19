@@ -15,6 +15,8 @@ public interface UserCollectionCardMapper {
     @Mapping(source = "card.cardType", target = "cardType")
     @Mapping(source = "card.manaCost", target = "manaCost")
     @Mapping(source = "card.rarity", target = "rarity")
+    @Mapping(source = "card.setMtg.setId", target = "setId")
+    @Mapping(source = "card.setMtg.setCode", target = "setCode")
     UserCollectionCardDto toDto(UserCollectionCard userCollectionCard);
 
     @Mapping(target = "id", expression = "java(new UserCollectionCardId(dto.getCollectionId(), dto.getCardId()))")

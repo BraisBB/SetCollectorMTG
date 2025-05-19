@@ -21,7 +21,7 @@ public class CardDeckController {
     private final CardDeckService cardDeckService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #deckId) or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #deckId)")
     public ResponseEntity<List<CardDeckDto>> getAllCardsInDeck(
             @PathVariable Long deckId, 
             Authentication authentication) {

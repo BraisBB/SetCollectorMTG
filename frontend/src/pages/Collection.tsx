@@ -250,7 +250,7 @@ const Collection = () => {
               imageUrl: imageUrl,
               type: item.cardType || 'Unknown',
               rarity: item.rarity || 'common',
-              set: item.collectionId?.toString() || '0',
+              set: item.setCode || '',
               color: determineCardColor(item.manaCost || ''),
               manaValue: calculateManaValue(item.manaCost || ''),
               manaCost: item.manaCost || '',

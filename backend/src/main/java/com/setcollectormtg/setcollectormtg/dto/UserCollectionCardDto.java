@@ -21,4 +21,6 @@ public class UserCollectionCardDto {
     private String cardType;
     private String manaCost;
     private String rarity;
+    private Long setId;
+    private String setCode;
 }
