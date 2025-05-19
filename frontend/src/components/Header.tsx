@@ -44,11 +44,11 @@ const Header: React.FC = () => {
         <nav>
           <div className="nav-links">
             <Link to="/">Home</Link>
-            {isAuthenticated && (
+            {isAuthenticated && !isAdmin && (
               <Link to="/collection" className="collection-link">My Collection</Link>
             )}
             {isAuthenticated && isAdmin && (
-              <Link to="/admin" className="admin-link">Panel Admin</Link>
+              <Link to="/admin" className="admin-link">Admin Panel</Link>
             )}
             {isAuthenticated ? (
               <div className="user-menu">
@@ -58,9 +58,11 @@ const Header: React.FC = () => {
                 {dropdownOpen && (
                   <div className="dropdown-menu">
                     <Link to="/profile" onClick={() => setDropdownOpen(false)}>My Profile</Link>
-                    <Link to="/collection" onClick={() => setDropdownOpen(false)}>My Collection</Link>
+                    {!isAdmin && (
+                      <Link to="/collection" onClick={() => setDropdownOpen(false)}>My Collection</Link>
+                    )}
                     {isAdmin && (
-                      <Link to="/admin" onClick={() => setDropdownOpen(false)}>Panel Admin</Link>
+                      <Link to="/admin" onClick={() => setDropdownOpen(false)}>Admin Panel</Link>
                     )}
                     <button className="dropdown-item" onClick={handleLogout}>
                       Logout

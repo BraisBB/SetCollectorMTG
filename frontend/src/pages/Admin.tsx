@@ -11,24 +11,24 @@ const Admin: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Estados para cada sección
+  // States for each section
   const [users, setUsers] = useState<any[]>([]);
   const [sets, setSets] = useState<any[]>([]);
   const [cards, setCards] = useState<any[]>([]);
   const [decks, setDecks] = useState<any[]>([]);
   
-  // Estados para formularios
+  // States for forms
   const [showUserForm, setShowUserForm] = useState<boolean>(false);
   const [showSetForm, setShowSetForm] = useState<boolean>(false);
   const [showCardForm, setShowCardForm] = useState<boolean>(false);
   
-  // Estados para elementos seleccionados
+  // States for selected items
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedSet, setSelectedSet] = useState<any>(null);
   const [selectedCard, setSelectedCard] = useState<any>(null);
 
   useEffect(() => {
-    // Verificar si el usuario es administrador
+    // Verify if user is administrator
     console.log("Verifying administrator permissions...");
     const isAdmin = authService.isAdmin();
     console.log("Is administrator?", isAdmin);
@@ -40,7 +40,7 @@ const Admin: React.FC = () => {
     }
     
     console.log("User authenticated as administrator, loading panel");
-    // Cargar datos iniciales según la pestaña activa
+    // Load initial data based on active tab
     loadTabData(activeTab);
   }, [activeTab, navigate]);
 
@@ -263,7 +263,7 @@ const Admin: React.FC = () => {
     }
   };
 
-  // Función para preparar una carta para edición
+  // Function to prepare a card for editing
   const handleEditCard = (card: any) => {
     console.log("Preparing card for editing:", card);
     
@@ -274,7 +274,7 @@ const Admin: React.FC = () => {
     });
   };
   
-  // Función auxiliar para preparar la carta para edición
+  // Helper function to prepare the card for editing
   const prepareCardForEditing = (card: any) => {
     // Determine the ID of the set from the setMtg directly
     let cardSetId = null;
@@ -293,7 +293,7 @@ const Admin: React.FC = () => {
       console.log("Using direct setId:", cardSetId);
     } else if (card.set_id !== undefined && card.set_id !== null) {
       cardSetId = card.set_id;
-      console.log("Using set_id from BD:", cardSetId);
+      console.log("Using set_id from DB:", cardSetId);
     }
     
     // Log for diagnostic
@@ -332,7 +332,7 @@ const Admin: React.FC = () => {
     setShowCardForm(true);
   };
 
-  // Función para actualizar una carta existente
+  // Function to update an existing card
   const handleUpdateCard = async (cardData: any) => {
     try {
       const cardId = cardData.id || cardData.cardId;
@@ -405,19 +405,19 @@ const Admin: React.FC = () => {
     }
   };
 
-  // Función auxiliar para calcular el valor de maná a partir del coste
+  // Helper function to calculate mana value from mana cost
   const calculateManaValue = (manaCost: string): number => {
-    // Eliminar llaves y contar los símbolos
+    // Remove braces and count symbols
     const cleanedCost = manaCost.replace(/[{}]/g, '');
     let total = 0;
     
-    // Contar símbolos numéricos
+    // Count numeric symbols
     const numericMatch = cleanedCost.match(/\d+/g);
     if (numericMatch) {
       total += numericMatch.reduce((sum, num) => sum + parseInt(num), 0);
     }
     
-    // Contar símbolos de color (W, U, B, R, G)
+    // Count color symbols (W, U, B, R, G)
     const colorMatches = cleanedCost.match(/[WUBRG]/g);
     if (colorMatches) {
       total += colorMatches.length;
@@ -785,6 +785,7 @@ const Admin: React.FC = () => {
           <select 
             id="rarity" 
             name="rarity" 
+            className="admin-rarity-select"
             value={selectedCard?.rarity || 'common'} 
             onChange={(e) => {
               if (selectedCard) {

@@ -263,6 +263,41 @@
   padding: 10px;
 }
 
+/* Estilo específico para el selector de rareza */
+.admin-form select#rarity,
+.admin-form select#rarity option {
+  background-color: #ffffff !important;
+  color: #333 !important;
+  font-weight: normal !important;
+}
+
+/* Anular los estilos específicos de rareza de SearchBar.css */
+.admin-form .rarity-mythic,
+.admin-form .rarity-mythic option,
+.admin-form .rarity-rare,
+.admin-form .rarity-rare option,
+.admin-form .rarity-uncommon,
+.admin-form .rarity-uncommon option,
+.admin-form .rarity-common,
+.admin-form .rarity-common option,
+.admin-form select#rarity option {
+  background-color: #ffffff !important;
+  color: #333 !important;
+  font-weight: normal !important;
+  padding: 5px !important;
+}
+
+.admin-form select#rarity option:hover {
+  background-color: #f0f0f0 !important;
+}
+
+/* Anular cualquier otro estilo que pueda estar afectando a los selects */
+.admin-form .form-group select {
+  background-color: #ffffff !important;
+  color: #333 !important;
+  border: 1px solid #ddd;
+}
+
 /* Incrementar contraste para mejor visibilidad */
 .admin-form label {
   color: #333;
@@ -283,4 +318,32 @@
 
 .form-group {
   margin-bottom: 1.5rem;
+}
+
+/* Estilo específico para el selector de rareza con la clase específica */
+.admin-form .admin-rarity-select,
+.admin-form .admin-rarity-select option {
+  background-color: #ffffff !important;
+  color: #333 !important;
+  font-weight: normal !important;
+  border: 1px solid #ddd !important;
+}
+
+/* Hacer que el hover en las opciones tenga un color de fondo claro */
+.admin-form .admin-rarity-select option:hover {
+  background-color: #f0f0f0 !important;
+}
+
+/* Anular los estilos específicos de rareza para la clase admin-rarity-select */
+.admin-form .admin-rarity-select.rarity-mythic,
+.admin-form .admin-rarity-select.rarity-mythic option,
+.admin-form .admin-rarity-select.rarity-rare,
+.admin-form .admin-rarity-select.rarity-rare option,
+.admin-form .admin-rarity-select.rarity-uncommon,
+.admin-form .admin-rarity-select.rarity-uncommon option,
+.admin-form .admin-rarity-select.rarity-common,
+.admin-form .admin-rarity-select.rarity-common option {
+  background-color: #ffffff !important;
+  color: #333 !important;
+  font-weight: normal !important;
 } 
