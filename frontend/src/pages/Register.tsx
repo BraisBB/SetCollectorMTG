@@ -15,6 +15,7 @@ interface RegisterData {
 interface ErrorResponse {
   message: string;
   errors?: Record<string, string>;
+  details?: string;
 }
 
 const Register: React.FC = () => {
@@ -29,7 +30,26 @@ const Register: React.FC = () => {
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [passwordRequirements, setPasswordRequirements] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+    special: false,
+    spaces: true
+  });
   const navigate = useNavigate();
+
+  const validatePassword = (password: string) => {
+    setPasswordRequirements({
+      length: password.length >= 8 && password.length <= 16,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@?./#$%]/.test(password),
+      spaces: !password.includes(' ')
+    });
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -38,7 +58,10 @@ const Register: React.FC = () => {
       [name]: value
     });
     
-    // Limpiar error del campo cuando el usuario modifica su valor
+    if (name === 'password') {
+      validatePassword(value);
+    }
+    
     if (fieldErrors[name]) {
       const updatedErrors = { ...fieldErrors };
       delete updatedErrors[name];
@@ -47,8 +70,6 @@ const Register: React.FC = () => {
   };
 
   const validateForm = (): boolean => {
-    // Sólo verificamos que las contraseñas coincidan ya que el resto de validaciones
-    // se harán en el backend
     if (formData.password !== confirmPassword) {
       setFieldErrors({
         ...fieldErrors,
@@ -72,80 +93,90 @@ const Register: React.FC = () => {
     setFieldErrors({});
     
     try {
-      // La URL correcta según el controlador en el backend
       const response = await axios.post('http://localhost:8080/users', formData);
       
       if (response.status === 201) {
-        // Registro exitoso, redirigir a la página de inicio de sesión
         navigate('/login', { state: { message: 'Registration successful! Please log in.' } });
       }
     } catch (error: unknown) {
       console.error('Error during registration:', error);
       
       if (axios.isAxiosError(error) && error.response) {
-        // Ya verificamos que error.response existe, podemos usar non-null assertion
-        const responseData = error.response!.data as ErrorResponse;
-        const responseStatus = error.response!.status;
+        const responseData = error.response.data as ErrorResponse;
+        const responseStatus = error.response.status;
         
         console.log('Backend response:', responseData);
         
-        // Errores de validación (400 Bad Request)
+        if (responseStatus === 500 && 
+            responseData.details && 
+            responseData.details.toLowerCase().includes('username already exists')) {
+          setError('');
+          setFieldErrors(prev => ({
+            ...prev,
+            username: 'This username is already taken. Please choose a different one.'
+          }));
+          const usernameInput = document.getElementById('username');
+          if (usernameInput) {
+            usernameInput.focus();
+            usernameInput.classList.add('error-input');
+          }
+          return;
+        }
+        
         if (responseStatus === 400) {
           if (responseData.errors) {
-            // Errores de validación específicos por campo
-            setFieldErrors(responseData.errors);
+            const processedErrors: Record<string, string> = {};
+            
+            Object.entries(responseData.errors).forEach(([field, message]) => {
+              let translatedMessage = message;
+              
+              if (field === 'password') {
+                if (message.includes('uppercase')) {
+                  translatedMessage = 'Password must contain at least one uppercase letter';
+                } else if (message.includes('lowercase')) {
+                  translatedMessage = 'Password must contain at least one lowercase letter';
+                } else if (message.includes('number')) {
+                  translatedMessage = 'Password must contain at least one number';
+                } else if (message.includes('special')) {
+                  translatedMessage = 'Password must contain at least one special character (!@?./#$%)';
+                } else if (message.includes('spaces')) {
+                  translatedMessage = 'Password cannot contain spaces';
+                } else if (message.includes('length')) {
+                  translatedMessage = 'Password must be between 8 and 16 characters';
+                }
+              }
+              
+              processedErrors[field] = translatedMessage;
+            });
+            
+            setFieldErrors(processedErrors);
             setError('Please correct the highlighted fields');
           } else if (responseData.message) {
-            // Mensaje general de error
             setError(responseData.message);
-            
-            // Si el mensaje contiene información sobre un campo específico, intentamos extraerla
-            const usernameRegex = /username\s+(\w+)\s+is\s+already\s+taken/i;
-            const emailRegex = /email\s+(\w+@[\w.]+)\s+is\s+already\s+registered/i;
-            
-            const usernameMatch = typeof responseData.message === 'string' 
-              ? responseData.message.match(usernameRegex) 
-              : null;
-              
-            const emailMatch = typeof responseData.message === 'string'
-              ? responseData.message.match(emailRegex)
-              : null;
-            
-            if (usernameMatch) {
-              setFieldErrors({
-                ...fieldErrors,
-                username: `Username "${usernameMatch[1]}" is already taken`
-              });
-            } else if (emailMatch) {
-              setFieldErrors({
-                ...fieldErrors,
-                email: `Email "${emailMatch[1]}" is already registered`
-              });
-            }
           }
-        } 
-        // Conflicto (409)
-        else if (responseStatus === 409) {
+        } else if (responseStatus === 409) {
           const message = responseData.message || 'Username or email already exists';
-          setError(message);
+          setError('');
           
-          // Intentar determinar cuál campo es el que está en conflicto
           if (typeof message === 'string') {
             if (message.toLowerCase().includes('username')) {
-              setFieldErrors({
-                ...fieldErrors,
-                username: 'Username already exists'
-              });
+              setFieldErrors(prev => ({
+                ...prev,
+                username: 'This username is already taken. Please choose a different one.'
+              }));
+              const usernameInput = document.getElementById('username');
+              if (usernameInput) {
+                usernameInput.focus();
+                usernameInput.classList.add('error-input');
+              }
             } else if (message.toLowerCase().includes('email')) {
-              setFieldErrors({
-                ...fieldErrors,
-                email: 'Email already exists'
-              });
+              setFieldErrors(prev => ({
+                ...prev,
+                email: 'This email is already registered. Please use a different email address.'
+              }));
             }
           }
-        }
-        // Otros códigos de error
-        else {
+        } else {
           setError(responseData.message || 'Registration failed. Please try again.');
         }
       } else {
@@ -175,8 +206,14 @@ const Register: React.FC = () => {
                 onChange={handleInputChange}
                 disabled={loading}
                 className={fieldErrors.username ? 'error-input' : ''}
+                aria-invalid={!!fieldErrors.username}
+                aria-describedby={fieldErrors.username ? 'username-error' : undefined}
               />
-              {fieldErrors.username && <div className="field-error">{fieldErrors.username}</div>}
+              {fieldErrors.username && (
+                <div className="field-error" id="username-error" role="alert">
+                  <i className="fas fa-exclamation-circle"></i> {fieldErrors.username}
+                </div>
+              )}
             </div>
             
             <div className="form-row">
@@ -235,6 +272,30 @@ const Register: React.FC = () => {
                 className={fieldErrors.password ? 'error-input' : ''}
               />
               {fieldErrors.password && <div className="field-error">{fieldErrors.password}</div>}
+              
+              <div className="password-requirements">
+                <p className="requirements-title">Password requirements:</p>
+                <ul>
+                  <li className={passwordRequirements.length ? 'met' : 'unmet'}>
+                    8-16 characters
+                  </li>
+                  <li className={passwordRequirements.uppercase ? 'met' : 'unmet'}>
+                    At least one uppercase letter
+                  </li>
+                  <li className={passwordRequirements.lowercase ? 'met' : 'unmet'}>
+                    At least one lowercase letter
+                  </li>
+                  <li className={passwordRequirements.number ? 'met' : 'unmet'}>
+                    At least one number
+                  </li>
+                  <li className={passwordRequirements.special ? 'met' : 'unmet'}>
+                    At least one special character (!@?./#$%)
+                  </li>
+                  <li className={passwordRequirements.spaces ? 'met' : 'unmet'}>
+                    No spaces allowed
+                  </li>
+                </ul>
+              </div>
             </div>
             
             <div className="form-group">
