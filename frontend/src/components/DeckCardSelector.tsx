@@ -524,14 +524,19 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
                               </button>
                             </div>
                             <span className="card-name">
-                              {card.cardName} {renderManaSymbols(card.manaCost)}
+                              {card.cardName}
                             </span>
-                            <button 
-                              className="remove-card-btn" 
-                              onClick={() => handleRemoveCard(card.cardId)}
-                            >
-                              ×
-                            </button>
+                            <div className="action-icons">
+                              <div className="mana-symbols">
+                                {renderManaSymbols(card.manaCost)}
+                              </div>
+                              <button 
+                                className="remove-card-btn" 
+                                onClick={() => handleRemoveCard(card.cardId)}
+                              >
+                                ×
+                              </button>
+                            </div>
                           </li>
                         ))}
                     </ul>
@@ -571,8 +576,19 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
                             >
                               <span className="quantity">{card.nCopies}</span>
                               <span className="card-name">
-                                {card.cardName} {renderManaSymbols(card.manaCost)}
+                                {card.cardName}
                               </span>
+                              <div className="action-icons">
+                                <div className="mana-symbols">
+                                  {renderManaSymbols(card.manaCost)}
+                                </div>
+                                <button 
+                                  className="remove-card-btn" 
+                                  onClick={() => handleRemoveCard(card.cardId)}
+                                >
+                                  ×
+                                </button>
+                              </div>
                             </li>
                           ))}
                       </ul>

@@ -4,12 +4,20 @@
   background-color: #f8f9fa;
   padding-bottom: 40px;
   font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  top: 0;
+  left: 0;
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .deck-editor-header {
@@ -21,6 +29,14 @@
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex-wrap: wrap;
+}
+
+.deck-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
 }
 
 .deck-info h1 {
@@ -29,6 +45,8 @@
   font-size: 1.8rem;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  word-break: break-word;
 }
 
 .deck-meta {
@@ -38,18 +56,32 @@
   margin-top: 0.5rem;
   font-size: 0.95rem;
   color: #ccc;
+  justify-content: space-between;
+  flex-wrap: wrap;
 }
 
-.deck-type, .deck-color, .card-count {
+.deck-type, .deck-color {
   display: inline-block;
   padding: 5px 10px;
   border-radius: 15px;
   background-color: #f8f9fa;
 }
 
+.card-count {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 15px;
+  background-color: #f8f9fa;
+  color: #000000;
+  font-size: 1.4rem;
+  font-weight: bold;
+  margin-left: auto;
+}
+
 .deck-actions {
   display: flex;
   gap: 10px;
+  margin-top: 10px;
 }
 
 .save-button, .back-button {
@@ -154,10 +186,12 @@
   display: flex;
   gap: 2rem;
   margin-top: 2rem;
+  flex-wrap: wrap;
 }
 
 .card-list-container {
   flex: 1;
+  width: 100%;
 }
 
 .card-list-container h2 {
@@ -183,6 +217,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
+  width: 100%;
 }
 
 .card-list-item {
@@ -195,23 +230,23 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   transition: transform 0.2s, box-shadow 0.2s;
   font-family: 'Noto Sans', sans-serif;
-}
-
-.card-list-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .card-info {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+  flex: 1;
+  width: 100%;
 }
 
 .card-name {
   font-weight: 600;
   font-size: 1.1rem;
   color: #333;
+  word-break: break-word;
 }
 
 .card-type {
@@ -228,6 +263,7 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .quantity-control {
@@ -297,12 +333,14 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  padding: 15px;
+  box-sizing: border-box;
 }
 
 .modal-content.edit-modal {
   background-color: #494949;
   border-radius: 8px;
-  padding: 2rem;
+  padding: 1.5rem;
   width: 90%;
   max-width: 800px;
   max-height: 90vh;
@@ -320,6 +358,7 @@
   font-size: 1.8rem;
   text-align: center;
   font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
+  word-break: break-word;
 }
 
 .search-container {
@@ -329,24 +368,29 @@
 .search-results-container {
   max-height: 300px;
   overflow-y: auto;
-  background-color: #333;
+  background-color: #444;
   border-radius: 6px;
   padding: 1rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .search-results {
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
+  width: 100%;
 }
 
 .search-result-item {
   padding: 1rem;
-  background-color: #444;
+  background-color: #5c5c5c;
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.2s;
   font-family: 'Noto Sans', sans-serif;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .search-result-item:hover,
@@ -358,11 +402,48 @@
   border-left: 4px solid #e65100;
 }
 
+/* Estilos para el nombre de la carta - modificado a color blanco */
+.search-result-item .card-name {
+  color: #ffffff;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+/* Contenedor para metadatos de la carta */
+.search-result-item .card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Tipo de carta - modificado a gris más claro */
+.search-result-item .card-type {
+  color: #cccccc;
+  font-size: 0.85rem;
+}
+
+/* Costo de mana - modificado a negro */
+.search-result-item .card-cost {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex-wrap: wrap;
+}
+
+.search-result-item .card-cost .ms {
+  color: #000000;
+}
+
 .selected-card-info {
   background-color: rgba(230, 81, 0, 0.1);
   padding: 1rem;
   border-radius: 6px;
   border: 1px solid rgba(230, 81, 0, 0.3);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .selected-card-info h3 {
@@ -370,12 +451,14 @@
   margin-bottom: 1rem;
   color: #ffffff;
   font-size: 1.2rem;
+  word-break: break-word;
 }
 
 .quantity-selector {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .quantity-selector label {
@@ -397,6 +480,7 @@
   justify-content: flex-end;
   gap: 1rem;
   margin-top: 1rem;
+  flex-wrap: wrap;
 }
 
 .cancel-button,
@@ -435,6 +519,25 @@
   cursor: not-allowed;
 }
 
+/* Estilos mejorados para responsive */
+@media (max-width: 992px) {
+  .container {
+    padding: 15px;
+  }
+  
+  .deck-editor-header {
+    padding: 15px;
+  }
+  
+  .deck-content {
+    gap: 1.5rem;
+  }
+  
+  .card-list-container {
+    flex-basis: 100%;
+  }
+}
+
 /* Responsive styles */
 @media (max-width: 768px) {
   .deck-editor-header {
@@ -444,6 +547,7 @@
   .deck-actions {
     margin-top: 15px;
     width: 100%;
+    justify-content: space-between;
   }
   
   .save-button, .back-button {
@@ -451,35 +555,236 @@
   }
   
   .card-list-item {
-    flex-direction: column;
+    padding: 0.8rem;
     align-items: flex-start;
-    gap: 1rem;
+  }
+  
+  .card-info {
+    align-items: flex-start;
   }
   
   .card-actions {
     width: 100%;
     justify-content: space-between;
+    margin-top: 0.5rem;
+  }
+  
+  .deck-info h1 {
+    font-size: 1.5rem;
+  }
+  
+  .modal-content.edit-modal {
+    padding: 1rem;
+    width: 95%;
+  }
+  
+  .modal-content h2 {
+    font-size: 1.5rem;
+  }
+  
+  .selected-card-info {
+    padding: 0.8rem;
+  }
+  
+  .search-result-item {
+    padding: 0.8rem;
+  }
+  
+  .search-results-container {
+    max-height: 250px;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 576px) {
+  .container {
+    padding: 10px;
+  }
+  
+  .deck-editor-header {
+    padding: 12px;
+  }
+  
   .deck-meta {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
+    width: 100%;
   }
   
-  .deck-meta span {
-    width: fit-content;
+  .deck-meta > * {
+    width: 100%;
+  }
+  
+  .card-count {
+    margin-left: 0;
+    font-size: 1.2rem;
   }
   
   .modal-actions {
     flex-direction: column;
+    width: 100%;
+    gap: 0.5rem;
   }
   
   .cancel-button,
   .add-button {
     width: 100%;
+    text-align: center;
+    padding: 0.6rem 1rem;
+  }
+  
+  .deck-name-input {
+    width: 100%;
+    min-width: unset;
+    font-size: 1.2rem;
+  }
+  
+  .name-edit-actions {
+    margin-top: 0.5rem;
+    width: 100%;
+    justify-content: space-between;
+    display: flex;
+  }
+  
+  .search-results-container {
+    padding: 0.8rem;
+    max-height: 200px;
+  }
+  
+  .search-result-item {
+    padding: 0.6rem;
+    align-items: flex-start;
+  }
+  
+  .card-list-item {
+    padding: 0.7rem;
+    align-items: flex-start;
+  }
+  
+  .card-info {
+    align-items: flex-start;
+  }
+  
+  .card-actions {
+    align-items: flex-start;
+  }
+  
+  .quantity-control {
+    align-items: flex-start;
+  }
+  
+  .card-name {
+    font-size: 1rem;
+  }
+  
+  .card-type {
+    font-size: 0.8rem;
+  }
+  
+  .quantity-btn {
+    width: 25px;
+    height: 25px;
+  }
+}
+
+@media (max-width: 480px) {
+  .deck-info h1 {
+    font-size: 1.2rem;
+  }
+  
+  .quantity-selector {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+  
+  .quantity-selector input {
+    width: 100%;
+    margin-top: 0.3rem;
+  }
+  
+  .card-type, .deck-color {
+    font-size: 0.8rem;
+  }
+  
+  .edit-name-button {
+    padding: 3px;
+  }
+  
+  .name-save-button,
+  .name-cancel-button {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+  }
+  
+  .deck-color .color-check-label {
+    width: 2rem;
+    height: 2rem;
+  }
+  
+  .deck-color .color-icon {
+    font-size: 1.5rem;
+  }
+  
+  .modal-content h2 {
+    font-size: 1.3rem;
+  }
+  
+  .selected-card-info h3 {
+    font-size: 1.1rem;
+  }
+  
+  .quantity-control {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .remove-btn {
+    width: 100%;
+    margin-top: 0.5rem;
+    text-align: center;
+  }
+  
+  .card-list-item {
+    padding: 0.6rem;
+    align-items: flex-start;
+  }
+  
+  .card-info {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 350px) {
+  .deck-editor-header {
+    padding: 8px;
+  }
+  
+  .deck-info h1 {
+    font-size: 1.1rem;
+  }
+  
+  .card-name {
+    font-size: 0.9rem;
+  }
+  
+  .card-list-item {
+    padding: 0.5rem;
+    align-items: flex-start;
+  }
+  
+  .card-info {
+    align-items: flex-start;
+  }
+  
+  .quantity-btn {
+    width: 22px;
+    height: 22px;
+    font-size: 1rem;
+  }
+  
+  .search-results-container {
+    max-height: 180px;
   }
 }
 
@@ -487,6 +792,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 /* Estilos para label de los símbolos de mana */
@@ -553,6 +859,8 @@
   display: flex;
   align-items: center;
   margin-bottom: 10px;
+  flex-wrap: wrap;
+  width: 100%;
 }
 
 .deck-name-input {
@@ -562,6 +870,8 @@
   border-radius: 4px;
   font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
   min-width: 300px;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .name-edit-actions {
@@ -608,6 +918,7 @@
   border: 1px solid #ddd;
   border-radius: 4px;
   margin-bottom: 0.5rem;
+  box-sizing: border-box;
 }
 
 .edit-name-button-style {

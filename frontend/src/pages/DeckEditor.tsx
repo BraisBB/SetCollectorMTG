@@ -293,14 +293,7 @@ const DeckEditor: React.FC = () => {
               </span>
             </div>
           </div>
-          <div className="deck-actions">
-            <button className="save-button" onClick={handleSaveDeck}>
-              Save
-            </button>
-            <button className="back-button" onClick={handleBackToCollection}>
-              Back
-            </button>
-          </div>
+          
         </div>
         
         {error && (

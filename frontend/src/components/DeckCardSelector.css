@@ -102,42 +102,40 @@
 /* Sistema de layout principal con flexbox */
 .deck-card-selector-flex {
   display: flex;
-  flex-wrap: wrap;
-  gap: clamp(1rem, 3vw, 2.5rem);
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 1.5rem;
   width: 100%;
 }
 
 /* Panel de lista de cartas */
 .deck-card-list-panel {
-  flex: 1 1 350px;
+  flex: 1;
   min-width: 0;
 }
 
 /* Panel de imagen */
 .deck-card-image-panel {
-  flex: 0 1 250px;
+  flex: 0 0 240px; /* Ancho fijo */
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  position: sticky;
-  top: 20px;
-  align-self: flex-start;
+  top: 1rem;
   height: fit-content;
+  background-color: #f8f9fa;
+  padding: 0.5rem;
+  border-radius: 8px;
+  box-sizing: border-box; /* Asegura que el padding se incluya en el ancho */
 }
 
 /* Imagen de carta */
 .side-card-image {
   width: 100%;
-  max-width: 250px;
-  height: auto;
-  border-radius: 12px;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   background: #fff;
-  border: 2px solid #e65100;
-  object-fit: contain;
-  display: block;
-  margin: 0 auto;
+  border: 1px solid #e65100;
+  aspect-ratio: 745/1040;
+
 }
 
 /* Modo visualización */
@@ -207,391 +205,122 @@
   text-overflow: ellipsis;
 }
 
-/* Modo edición */
+/* Modo edición - Rediseño completo con CSS Grid */
 .deck-edit-mode {
-  display: flex;
-  flex-wrap: wrap;
-  gap: clamp(15px, 3vw, 30px);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  width: 100%;
 }
 
 .search-section {
+  grid-column: 1 / -1; /* Ocupa todo el ancho */
   width: 100%;
 }
 
 .card-selection-area {
-  flex: 1 1 280px;
-  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .current-deck-list {
-  flex: 1 1 280px;
+  display: flex;
+  flex-direction: column;
   background-color: white;
   border: 1px solid #ddd;
-  border-radius: 5px;
-  padding: clamp(10px, 2vw, 15px);
-  min-width: 0;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-/* Ajustes para los resultados de búsqueda */
+/* Resultados de búsqueda - Contenedor de tarjetas mejorado */
 .search-results-container {
-  max-height: clamp(300px, 50vh, 500px);
+  max-height: 500px;
   overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #333;
+  margin-top: 10px;
 }
 
 .search-results-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
-  gap: 10px;
-}
-
-/* Media queries para adaptaciones específicas */
-@media (max-width: 992px) {
-  .deck-card-selector-flex {
-    gap: 1rem;
-  }
-  
-  .deck-edit-mode .search-container {
-    padding: 0.75rem;
-  }
-  
-  .deck-edit-mode .filter-group {
-    margin-bottom: 0.5rem;
-  }
-  
-  .side-card-image {
-    max-width: 200px;
-  }
-}
-
-@media (max-width: 768px) {
-  .deck-selector-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .search-results-list {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .deck-card-image-panel {
-    flex: 0 1 180px;
-  }
-  
-  .side-card-image {
-    max-width: 180px;
-  }
-  
-  .deck-edit-mode .search-container {
-    margin-top: 0.5rem;
-  }
-  
-  .deck-edit-mode .search-input-group {
-    flex-direction: row;
-  }
-  
-  .deck-edit-mode .color-checkboxes {
-    justify-content: flex-start;
-    flex-wrap: wrap;
-  }
-}
-
-@media (max-width: 600px) {
-  .deck-selector-header {
-    padding-bottom: 0.5rem;
-    gap: 0.5rem;
-  }
-  
-  .deck-selector-actions-style {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    width: 100%;
-    justify-content: space-between;
-  }
-  
-  .toggle-edit-button,
-  .delete-deck-button-style {
-    flex: 1;
-    min-width: 120px;
-    font-size: 0.8rem;
-    padding: 6px 12px;
-  }
-  
-  .search-results-list {
-    grid-template-columns: 1fr;
-  }
-  
-  .deck-card-image-panel {
-    position: static;
-    margin-bottom: 1rem;
-    width: 100%;
-  }
-  
-  .side-card-image {
-    max-width: 160px;
-  }
-  
-  .deck-edit-mode .search-container {
-    padding: 0.5rem;
-  }
-  
-  .deck-edit-mode .search-input-group {
-    flex-direction: column;
-  }
-  
-  .deck-edit-mode .search-input {
-    border-radius: 4px;
-    margin-bottom: 0.5rem;
-    width: 100%;
-  }
-  
-  .deck-edit-mode .search-button {
-    border-radius: 4px;
-    width: 100%;
-  }
-  
-  .deck-edit-mode .filters-container {
-    grid-template-columns: 1fr;
-  }
-  
-  .deck-edit-mode .color-filter-group {
-    grid-column: 1;
-  }
-}
-
-@media (max-width: 480px) {
-  .deck-card-image-panel {
-    align-items: center;
-  }
-  
-  .side-card-image {
-    max-width: 140px;
-  }
-  
-  .deck-edit-mode .search-input-group {
-    flex-direction: column;
-  }
-  
-  .deck-edit-mode .search-input {
-    border-radius: 4px;
-    margin-bottom: 0.5rem;
-  }
-  
-  .deck-edit-mode .search-button {
-    border-radius: 4px;
-    width: 100%;
-  }
-  
-  .deck-edit-mode .filter-group label {
-    font-size: 0.85rem;
-  }
-  
-  .deck-edit-mode .filter-group select, 
-  .deck-edit-mode .filter-group input {
-    font-size: 0.85rem;
-    padding: 0.4rem;
-  }
-  
-  .card-quantity-controls {
-    flex-wrap: wrap;
-  }
-}
-
-/* Ajustes para dispositivos muy pequeños */
-@media (max-width: 380px) {
-  .deck-edit-mode .color-check-label {
-    width: 1.8rem;
-    height: 1.8rem;
-  }
-  
-  .deck-edit-mode .color-icon {
-    font-size: 1.3rem;
-  }
-  
-  .deck-card-item {
-    padding: 0.4rem 0.5rem;
-  }
-  
-  .deck-card-item .card-name {
-    font-size: 0.85rem;
-  }
-  
-  .quantity-btn {
-    width: 24px;
-    height: 24px;
-    font-size: 0.85rem;
-  }
-  
-  .quantity {
-    font-size: 0.85rem;
-    width: 24px;
-  }
-}
-
-/* Resultados de búsqueda */
-.loading-spinner {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100px;
-  color: #ddd;
-  background-color: #333;
-}
-
-.no-results {
-  padding: 20px;
-  text-align: center;
-  color: #ddd;
-  background-color: #333;
-}
-
-.search-hint {
-  padding: 30px;
-  text-align: center;
-  color: #bbb;
-  font-style: italic;
-  background-color: #333;
-}
-
-.search-result-item {
-  padding: 12px;
-  border: 1px solid #555;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background-color: #494949;
-  color: #eee;
-}
-
-.search-result-item:hover {
-  background-color: #555;
-  transform: translateY(-2px);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-  border-color: #666;
-}
-
-.search-result-item.selected {
-  background-color: #555;
-  border-left: 3px solid #e65100;
-}
-
-.search-result-item .card-name {
-  font-weight: bold;
-  color: #fff;
-  transition: color 0.2s ease;
-  cursor: pointer;
-}
-
-.search-result-item:hover .card-name {
-  color: #e65100;
-}
-
-.search-result-item .card-meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.85rem;
-  color: #bbb;
-  margin-top: 5px;
-}
-
-.search-result-item .card-type {
-  color: #000000;
-  font-weight: 500;
-}
-
-/* Estilos para iconos de mana en los resultados de búsqueda */
-.search-result-item .card-cost .ms {
-  font-size: 16px;
-  margin-right: 2px;
-  vertical-align: middle;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  border-radius: 50%;
-}
-
-/* Resaltar iconos de mana al pasar el cursor sobre la carta */
-.search-result-item:hover .card-cost .ms {
-  transform: scale(1.1);
-  transition: transform 0.2s ease;
-}
-
-/* Controles de carta seleccionada */
-.selected-card-controls {
-  background-color: #e3f2fd;
-  border: 1px solid #bbdefb;
-  border-radius: 5px;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
   padding: 15px;
-  margin-top: 10px;
 }
 
-.selected-card-name {
-  font-weight: bold;
-  font-size: 1.1rem;
-  margin-bottom: 10px;
-}
-
-.quantity-control {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.quantity-control input {
-  width: 60px;
-  padding: 5px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.add-card-button {
-  background-color: #28a745;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 6px 12px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.add-card-button:hover {
-  background-color: #218838;
-}
-
-/* Lista actual de cartas del mazo */
-.current-deck-list h3 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  font-size: 1.2rem;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 10px;
-}
-
+/* Lista de cartas en el mazo - Diseño mejorado */
 .cards-by-type {
   list-style-type: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px; /* Espaciado entre cartas */
 }
 
+/* Estilo mejorado para cada carta en la lista */
 .deck-card-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  padding: 5px 10px;
+  padding: 8px 10px;
+  border-radius: 4px;
   border-bottom: 1px solid #f0f0f0;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.deck-card-item:hover {
+  background-color: #f9f9f9;
 }
 
 .deck-card-item:last-child {
   border-bottom: none;
 }
 
+/* Controles de cantidad */
+.card-quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-right: 10px;
+}
+
+.quantity-btn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0;
+}
+
+.quantity-btn:hover {
+  background-color: #e9ecef;
+}
+
+.quantity {
+  margin: 0 3px;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* Nombre de la carta */
 .deck-card-item .card-name {
   color: #333;
-  transition: color 0.2s ease;
   cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-grow: 1;
-  margin-right: 10px;
+  padding: 0 5px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -601,88 +330,103 @@
   color: #e65100;
 }
 
-.card-quantity-controls {
+/* Contenedor de símbolos de mana y botón de eliminar */
+.action-icons {
   display: flex;
   align-items: center;
-  margin-right: 10px;
+  gap: 8px;
+  justify-self: end;
 }
 
-.quantity-btn {
-  width: 24px;
-  height: 24px;
+/* Símbolos de mana */
+.mana-symbols {
   display: flex;
   align-items: center;
-  justify-content: center;
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 3px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  padding: 0;
+  gap: 2px;
 }
 
-.quantity-btn:hover {
-  background-color: #e9ecef;
+.ms {
+  font-size: 0.95rem;
 }
 
-.quantity {
-  margin: 0 6px;
-}
-
+/* Botón de eliminar */
 .remove-card-btn {
-  margin-left: auto;
   background: none;
   border: none;
   color: #dc3545;
-  font-size: 1.2rem;
+  font-size: 1rem;
   cursor: pointer;
-  padding: 0 5px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
 }
 
 .remove-card-btn:hover {
   color: #bd2130;
 }
 
-/* Estilo para los símbolos de mana */
-.mana-symbols {
-  display: flex;
-  align-items: center;
-  margin-left: auto;
-  gap: 2px;
-}
+/* Media queries */
+@media (max-width: 576px) {
+  .deck-card-selector-flex {
+    flex-direction: column;
+    gap: 1rem;
+  }
 
-.ms {
-  margin-left: 2px;
-}
+  .deck-card-list-panel {
+    width: 100%;
+  }
 
-/* Responsive para pantallas más pequeñas */
-@media (max-width: 900px) {
-  .hovered-card-image {
-    top: 1rem;
-    right: 1rem;
-    max-height: 180px;
-    max-width: 120px;
+  .deck-card-image-panel {
+    flex: none;
+    width: 50%;
+    position: relative;
+    top: 0;
+    margin: 0 auto;
+    padding: 0.3rem; /* Padding más pequeño en móvil */
+  }
+
+  .side-card-image {
+    width: 100%;
+    border-radius: 6px; /* Bordes más pequeños en móvil */
   }
 }
 
+/* Actualizar los estilos específicos del SearchBar cuando está en modo de edición */
+.deck-edit-mode .search-container {
+  background-color: transparent;
+  padding: 10px;
+  margin-bottom: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.deck-edit-mode .search-container form {
+  background: #494949;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid #333;
+}
+
+/* Estilos específicos para tamaños pequeños */
 @media (max-width: 600px) {
-  .hovered-card-image {
-    top: unset;
-    bottom: 1rem;
-    right: 50%;
-    transform: translateX(50%);
-    max-height: 120px;
-    max-width: 90vw;
-    border-radius: 8px;
+  .deck-edit-mode .search-input-group {
+    flex-direction: column;
   }
-}
-
-/* Layout principal: lista a la izquierda, imagen a la derecha */
-.deck-card-selector-flex {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 2.5rem;
+  
+  .deck-edit-mode .search-input {
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    width: 100%;
+  }
+  
+  .deck-edit-mode .search-button {
+    border-radius: 4px;
+    width: 100%;
+  }
 }
 
 /* Estilos adicionales para DeckCardSelector */
@@ -826,4 +570,13 @@
   background-color: rgba(128, 128, 128, 0.2);
   position: relative;
   border-radius: 4px;
+}
+
+/* Estilo para el mensaje de búsqueda inicial */
+.search-hint {
+  color: #ffffff;
+  text-align: center;
+  padding: 2rem;
+  font-size: 1rem;
+  font-family: 'Noto Sans', sans-serif;
 } 
