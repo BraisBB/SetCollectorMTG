@@ -4,6 +4,8 @@ import Header from '../components/Header';
 import authService from '../services/authService';
 import { apiService } from '../services';
 import './Admin.css';
+// Importar el CSS de Collection para reutilizar sus estilos
+import './Collection.css';
 
 const Admin: React.FC = () => {
   const navigate = useNavigate();
@@ -1204,16 +1206,21 @@ const Admin: React.FC = () => {
   );
 
   return (
-    <div className="admin-page">
+    <div className="collection-container">
       <Header />
-      <div className="admin-container">
-        <h1>Admin Panel</h1>
+      <main className="container collection-main">
+        <div className="collection-header">
+          <h1 className="collection-title">Admin Panel</h1>
+          <p className="collection-description">
+            Gestiona usuarios, sets, cartas y mazos de Magic: The Gathering.
+          </p>
+        </div>
         
         {error && (
           <div className="error">{error}</div>
         )}
         
-        <div className="admin-tabs">
+        <div className="collection-tabs">
           <button 
             className={`tab-button ${activeTab === 'users' ? 'active' : ''}`}
             onClick={() => setActiveTab('users')}
@@ -1253,7 +1260,7 @@ const Admin: React.FC = () => {
           {activeTab === 'decks' && renderDecksTab()}
           {activeTab === 'importCards' && renderImportCardsTab()}
         </div>
-      </div>
+      </main>
     </div>
   );
 };

@@ -48,7 +48,7 @@ const Header: React.FC = () => {
               <Link to="/collection" className="collection-link">My Collection</Link>
             )}
             {isAuthenticated && isAdmin && (
-              <Link to="/admin" className="admin-link">Admin Panel</Link>
+              <Link to="/admin" className="collection-link">Admin Panel</Link>
             )}
             {isAuthenticated ? (
               <div className="user-menu">
@@ -62,7 +62,7 @@ const Header: React.FC = () => {
                       <Link to="/collection" onClick={() => setDropdownOpen(false)}>My Collection</Link>
                     )}
                     {isAdmin && (
-                      <Link to="/admin" onClick={() => setDropdownOpen(false)}>Admin Panel</Link>
+                      <Link to="/admin" onClick={() => setDropdownOpen(false)} style={{color: '#ff8f00', fontWeight: 500}}>Admin Panel</Link>
                     )}
                     <button className="dropdown-item" onClick={handleLogout}>
                       Logout
