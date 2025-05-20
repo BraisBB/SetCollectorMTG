@@ -106,25 +106,32 @@
   align-items: flex-start;
   gap: 1.5rem;
   width: 100%;
+  position: relative;
+  min-height: 100vh;
 }
 
 /* Panel de lista de cartas */
 .deck-card-list-panel {
   flex: 1;
   min-width: 0;
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
 }
 
 /* Panel de imagen */
 .deck-card-image-panel {
-  flex: 0 0 240px; /* Ancho fijo */
+  flex: 0 0 240px;
   display: flex;
   flex-direction: column;
+  position: sticky;
   top: 1rem;
   height: fit-content;
   background-color: #f8f9fa;
   padding: 0.5rem;
   border-radius: 8px;
-  box-sizing: border-box; /* Asegura que el padding se incluya en el ancho */
+  box-sizing: border-box;
+  align-self: flex-start;
+  z-index: 1;
 }
 
 /* Imagen de carta */
@@ -373,24 +380,26 @@
   .deck-card-selector-flex {
     flex-direction: column;
     gap: 1rem;
+    min-height: auto;
   }
 
   .deck-card-list-panel {
     width: 100%;
+    max-height: none;
+    overflow-y: visible;
   }
 
   .deck-card-image-panel {
     flex: none;
     width: 50%;
-    position: relative;
-    top: 0;
+    position: static;
     margin: 0 auto;
-    padding: 0.3rem; /* Padding más pequeño en móvil */
+    padding: 0.3rem;
   }
 
   .side-card-image {
     width: 100%;
-    border-radius: 6px; /* Bordes más pequeños en móvil */
+    border-radius: 6px;
   }
 }
 
@@ -569,4 +578,26 @@
   padding: 2rem;
   font-size: 1rem;
   font-family: 'Noto Sans', sans-serif;
+}
+
+/* Ajuste de iconos en el searchbar del editor */
+.deck-edit-mode .search-input-group i,
+.deck-edit-mode .search-input-group .ms,
+.deck-edit-mode .search-input-group .fas,
+.deck-edit-mode .search-input-group .far,
+.deck-edit-mode .search-input-group .mana-symbols .ms,
+.deck-edit-mode .filter-group i,
+.deck-edit-mode .color-check-label i {
+  font-size: 0.5em; /* Reducción al 50% del tamaño original */
+}
+
+/* Ajuste específico para los iconos de colores */
+.deck-edit-mode .search-input-group .color-icon {
+  font-size: 0.8em; /* Ajustado proporcionalmente */
+}
+
+/* Ajuste para los iconos de filtros y controles */
+.deck-edit-mode .filter-group i,
+.deck-edit-mode .search-input-group .control-icon {
+  font-size: 0.5em;
 } 
