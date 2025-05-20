@@ -12,12 +12,15 @@ import org.mapstruct.*;
 public interface SetMtgMapper {
 
     @Mapping(target = "cards", ignore = true)
+    @Mapping(source = "setCode", target = "setCode")
     SetMtg toEntity(SetMtgCreateDto setMtgCreateDto);
 
-    @Mapping(target = "cards", ignore = true) 
+    @Mapping(target = "cards", ignore = true)
+    @Mapping(source = "setCode", target = "setCode")
     SetMtgDto toDto(SetMtg setMtg);
 
     @Mapping(target = "setId", ignore = true)
     @Mapping(target = "cards", ignore = true)
+    @Mapping(source = "setCode", target = "setCode")
     void updateSetFromDto(SetMtgCreateDto setMtgCreateDto, @MappingTarget SetMtg setMtg);
 }

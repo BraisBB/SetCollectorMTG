@@ -188,18 +188,38 @@ const Admin: React.FC = () => {
   };
 
   const handleEditSet = (set: any) => {
-    setSelectedSet(set);
+    // Asegurarnos de que tenemos un ID válido
+    const setId = set.id || set.setId;
+    if (!setId) {
+      console.error("No se puede editar el set: Falta el ID");
+      setError("No se puede editar el set: Falta el ID");
+      return;
+    }
+    
+    console.log("Editando set con ID:", setId, set);
+    setSelectedSet({
+      ...set,
+      id: setId,
+      setId: setId // Mantener compatibilidad
+    });
     setShowSetForm(true);
   };
 
   const handleUpdateSet = async (setData: any) => {
     try {
-      await apiService.updateSet(setData.id, setData);
+      // Asegurarnos de que tenemos un ID válido
+      const setId = setData.id || setData.setId;
+      if (!setId) {
+        throw new Error("No se puede actualizar el set: Falta el ID");
+      }
+      
+      console.log(`Actualizando set con ID ${setId}:`, setData);
+      await apiService.updateSet(setId, setData);
       setShowSetForm(false);
       setSelectedSet(null);
       loadTabData('sets');
     } catch (err: any) {
-      setError(`Error updating set: ${err.message}`);
+      setError(`Error actualizando set: ${err.message}`);
     }
   };
 
@@ -513,25 +533,6 @@ const Admin: React.FC = () => {
     setError(`${message}: ${errorDetail}`);
   };
 
-  const testConnection = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      console.log("Testing connection to the server...");
-      
-      // Try to get the list of users as a test
-      const users = await apiService.getAllUsers();
-      console.log("Connection test successful:", users);
-      
-      setError(null);
-      alert("Connection successful to the server. Received " + users.length + " users.");
-    } catch (err: any) {
-      setDetailedError("Error testing connection", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const renderUserForm = () => (
     <div className="admin-form">
       <h3>{selectedUser ? 'Edit User' : 'Create User'}</h3>
@@ -631,13 +632,21 @@ const Admin: React.FC = () => {
       <form onSubmit={(e) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
+        
+        // Obtener el ID del set (puede estar en id o setId)
+        const setId = selectedSet?.id || selectedSet?.setId;
+        console.log("ID del set seleccionado:", setId);
+        
         const setData = {
-          id: selectedSet?.id,
+          id: setId,
+          setId: setId, // Mantener compatibilidad
           name: formData.get('name') as string,
-          code: formData.get('code') as string,
+          setCode: formData.get('setCode') as string,
           releaseDate: formData.get('releaseDate') as string,
-          // Add more fields as needed
+          totalCards: selectedSet?.totalCards || 0
         };
+        
+        console.log("Datos del set para actualización:", setData);
         
         if (selectedSet) {
           handleUpdateSet(setData);
@@ -656,12 +665,12 @@ const Admin: React.FC = () => {
           />
         </div>
         <div className="form-group">
-          <label htmlFor="code">Code</label>
+          <label htmlFor="setCode">Set Code</label>
           <input 
             type="text" 
-            id="code" 
-            name="code" 
-            defaultValue={selectedSet?.code || ''} 
+            id="setCode" 
+            name="setCode" 
+            defaultValue={selectedSet?.setCode || ''} 
             required 
           />
         </div>
@@ -671,7 +680,7 @@ const Admin: React.FC = () => {
             type="date" 
             id="releaseDate" 
             name="releaseDate" 
-            defaultValue={selectedSet?.releaseDate || ''} 
+            defaultValue={selectedSet?.releaseDate ? new Date(selectedSet.releaseDate).toISOString().split('T')[0] : ''} 
             required 
           />
         </div>
@@ -1008,23 +1017,25 @@ const Admin: React.FC = () => {
             <tr>
               <th>ID</th>
               <th>Name</th>
-              <th>Code</th>
+              <th>Set Code</th>
               <th>Release Date</th>
+              <th>Total Cards</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {sets.map(set => (
-              <tr key={set.id}>
-                <td>{set.id}</td>
+              <tr key={set.id || set.setId}>
+                <td>{set.id || set.setId}</td>
                 <td>{set.name}</td>
-                <td>{set.code}</td>
-                <td>{new Date(set.releaseDate).toLocaleDateString()}</td>
+                <td>{set.setCode}</td>
+                <td>{set.releaseDate ? new Date(set.releaseDate).toLocaleDateString() : 'N/A'}</td>
+                <td>{set.totalCards || 0}</td>
                 <td className="actions">
                   <button onClick={() => handleEditSet(set)}>Edit</button>
                   <button 
                     className="delete" 
-                    onClick={() => handleDeleteSet(set.id)}
+                    onClick={() => handleDeleteSet(set.id || set.setId)}
                   >
                     Delete
                   </button>
@@ -1201,16 +1212,6 @@ const Admin: React.FC = () => {
         {error && (
           <div className="error">{error}</div>
         )}
-        
-        <div className="admin-actions" style={{ marginBottom: '20px' }}>
-          <button 
-            className="btn-secondary" 
-            onClick={testConnection}
-            disabled={loading}
-          >
-            {loading ? 'Testing...' : 'Test Server Connection'}
-          </button>
-        </div>
         
         <div className="admin-tabs">
           <button 
