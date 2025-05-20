@@ -62,7 +62,7 @@ const Header: React.FC = () => {
                       <Link to="/collection" onClick={() => setDropdownOpen(false)}>My Collection</Link>
                     )}
                     {isAdmin && (
-                      <Link to="/admin" onClick={() => setDropdownOpen(false)} style={{color: '#ff8f00', fontWeight: 500}}>Admin Panel</Link>
+                      <Link to="/admin" onClick={() => setDropdownOpen(false)} className="dropdown-admin-link">Admin Panel</Link>
                     )}
                     <button className="dropdown-item" onClick={handleLogout}>
                       Logout

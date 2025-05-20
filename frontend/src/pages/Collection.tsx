@@ -679,22 +679,6 @@ const Collection = () => {
                 console.log("Collection: Botón 'Create Deck' en tabs clickeado");
                 openCreateModal();
               }}
-              style={{ 
-                padding: '0.5rem 0.8rem',
-                fontSize: '0.9rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                backgroundColor: '#e65100',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                marginLeft: 'auto',
-                height: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                alignSelf: 'flex-end',
-                marginBottom: '2px'
-              }}
             >
               Create +
             </button>
@@ -805,61 +789,24 @@ const Collection = () => {
             e.stopPropagation();
             closeModal();
           }}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 9999
-          }}
         >
           <div 
             className="modal-content" 
             onClick={(e) => e.stopPropagation()}
-            style={{
-              backgroundColor: '#494949',
-              borderRadius: '8px',
-              padding: '2rem',
-              width: '90%',
-              maxWidth: '500px',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-              color: '#ffffff',
-              zIndex: 10000,
-              position: 'relative'
-            }}
           >
-            <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Create New Deck</h2>
+            <h2 className="modal-title">Create New Deck</h2>
             
             {createDeckError && (
-              <div 
-                className="error-message"
-                style={{
-                  backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                  border: '1px solid rgba(220, 53, 69, 0.3)',
-                  color: '#dc3545',
-                  padding: '0.8rem',
-                  borderRadius: '4px',
-                  marginBottom: '1.5rem'
-                }}
-              >
+              <div className="modal-error">
                 {createDeckError}
               </div>
             )}
             
             <form id="create-deck-form" onSubmit={handleCreateDeck}>
-              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+              <div className="modal-form-group">
                 <label 
                   htmlFor="deckName"
-                  style={{ 
-                    display: 'block', 
-                    marginBottom: '0.5rem',
-                    fontWeight: 'bold'
-                  }}
+                  className="modal-form-label"
                 >
                   Deck Name
                 </label>
@@ -874,26 +821,14 @@ const Collection = () => {
                   minLength={3}
                   maxLength={50}
                   required
-                  style={{
-                    width: '100%',
-                    padding: '0.8rem',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    fontSize: '1rem',
-                    backgroundColor: '#ffffff',
-                    color: '#333'
-                  }}
+                  className="modal-form-input"
                 />
               </div>
               
-              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+              <div className="modal-form-group">
                 <label 
                   htmlFor="gameType"
-                  style={{ 
-                    display: 'block', 
-                    marginBottom: '0.5rem',
-                    fontWeight: 'bold'
-                  }}
+                  className="modal-form-label"
                 >
                   Game Type
                 </label>
@@ -904,33 +839,17 @@ const Collection = () => {
                   onChange={handleInputChange}
                   disabled={createDeckLoading}
                   required
-                  style={{
-                    width: '100%',
-                    padding: '0.8rem',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    fontSize: '1rem',
-                    backgroundColor: '#ffffff',
-                    color: '#333'
-                  }}
+                  className="modal-form-select"
                 >
                   <option value="STANDARD">Standard</option>
                   <option value="COMMANDER">Commander</option>
                 </select>
               </div>
               
-              <div 
-                className="form-actions"
-                style={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  gap: '1rem',
-                  marginTop: '2rem'
-                }}
-              >
+              <div className="modal-form-actions">
                 <button 
                   type="button" 
-                  className="cancel-button" 
+                  className="modal-cancel-button" 
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -938,34 +857,13 @@ const Collection = () => {
                     closeModal();
                   }}
                   disabled={createDeckLoading}
-                  style={{
-                    padding: '0.8rem 1.5rem',
-                    borderRadius: '4px',
-                    fontSize: '1rem',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    backgroundColor: 'transparent',
-                    border: '1px solid #ddd',
-                    color: '#ddd'
-                  }}
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
-                  className="create-button"
+                  className="modal-submit-button"
                   disabled={createDeckLoading}
-                  style={{
-                    padding: '0.8rem 1.5rem',
-                    borderRadius: '4px',
-                    fontSize: '1rem',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    backgroundColor: '#e65100',
-                    color: 'white',
-                    border: 'none',
-                    minWidth: '120px'
-                  }}
                 >
                   {createDeckLoading ? 'Creating...' : 'Create Deck'}
                 </button>

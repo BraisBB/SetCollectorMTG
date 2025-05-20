@@ -1171,10 +1171,9 @@ const Admin: React.FC = () => {
         <div className="admin-info-box">
           Selected file: <strong>{selectedFile.name}</strong>
           <button 
-            className="btn-secondary"
+            className="btn-secondary clear-button-margin"
             onClick={() => setSelectedFile(null)}
             disabled={importLoading}
-            style={{ marginLeft: '10px' }}
           >
             Clear
           </button>

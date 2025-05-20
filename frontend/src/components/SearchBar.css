@@ -355,11 +355,11 @@
   
   .search-container {
     padding: 1rem;
-    margin: 0;
   }
   
   .color-checkboxes {
-    gap: 0.7rem;
+    gap: 0.5rem;
+    justify-content: center;
   }
   
   .color-check-label {
@@ -368,7 +368,19 @@
   }
   
   .color-icon {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
+  }
+  
+  /* Mejora para el contenedor de SearchBar cuando está en DeckCardSelector */
+  .deck-edit-mode .search-container {
+    margin: 0;
+    border: none;
+    box-shadow: none;
+    padding: 0.75rem;
+  }
+  
+  .deck-edit-mode .filters-container {
+    gap: 0.5rem;
   }
 }
 
@@ -379,20 +391,25 @@
   
   .search-input-group {
     flex-direction: column;
+    margin-bottom: 1rem;
   }
   
   .search-input {
+    width: 100%;
     border-radius: 4px;
     margin-bottom: 0.5rem;
   }
   
   .search-button {
-    border-radius: 4px;
     width: 100%;
+    border-radius: 4px;
+    padding: 0.5rem;
   }
   
   .color-checkboxes {
-    gap: 0.5rem;
+    padding: 0.25rem;
+    gap: 0.25rem;
+    justify-content: center;
   }
   
   .color-check-label {
@@ -401,6 +418,110 @@
   }
   
   .color-icon {
+    font-size: 1.5rem;
+  }
+  
+  /* Mejoras específicas para DeckCardSelector */
+  .deck-edit-mode .search-container {
+    padding: 0.5rem;
+  }
+  
+  .deck-edit-mode .filter-group select,
+  .deck-edit-mode .search-input {
+    font-size: 0.9rem;
+    padding: 0.5rem;
+  }
+  
+  .deck-edit-mode .filters-container {
+    margin-top: 0.5rem;
+  }
+  
+  .deck-edit-mode .filter-group label {
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  /* Mejora para que los selectores no se desborden */
+  .filter-group select {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+/* Ajustes específicos para cuando SearchBar está dentro de DeckCardSelector */
+.deck-edit-mode .search-container {
+  background: transparent;
+  border: 1px solid #ddd;
+}
+
+.deck-edit-mode .filter-group label {
+  color: #333;
+}
+
+.deck-edit-mode .filter-group select {
+  background-color: #fff;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.deck-edit-mode .filter-group select:focus {
+  border-color: #e65100;
+}
+
+/* Estilos específicos para tablets y dispositivos pequeños */
+@media (max-width: 992px) {
+  .deck-edit-mode .filters-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .color-filter-group {
+    grid-column: 1 / 3;
+  }
+  
+  .color-checkboxes {
+    justify-content: center;
+  }
+}
+
+/* Estilos para versiones más compactas en dispositivos muy pequeños */
+@media (max-width: 380px) {
+  .color-check-label {
+    width: 1.8rem;
+    height: 1.8rem;
+  }
+  
+  .color-icon {
     font-size: 1.3rem;
+  }
+  
+  .search-input, 
+  .search-button,
+  .filter-group select {
+    padding: 0.4rem;
+    font-size: 0.85rem;
+  }
+  
+  .filter-group label {
+    font-size: 0.8rem;
+  }
+  
+  .deck-edit-mode .search-container {
+    padding: 0.4rem;
+  }
+  
+  .search-input-group {
+    flex-direction: column;
+  }
+  
+  .search-input {
+    width: 100%;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+  }
+  
+  .search-button {
+    width: 100%;
+    border-radius: 4px;
   }
 } 

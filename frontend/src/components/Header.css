@@ -141,47 +141,48 @@ header nav a:hover::before {
   position: absolute;
   top: 100%;
   right: 0;
-  background: #2d2d2d;
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  width: 180px;
-  z-index: 200;
-  overflow: hidden;
-  margin-top: 0.5rem;
-  border: 1px solid rgba(230, 81, 0, 0.3);
-}
-
-.dropdown-menu a,
-.dropdown-menu button {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 0.75rem 1rem;
-  color: #e0e0e0;
+  width: 200px;
+  background-color: #494949;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  border-radius: 0 0 4px 4px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
   font-family: 'Noto Sans', sans-serif;
-  font-size: 1rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Destacar el enlace de colección en el menú desplegable */
-.dropdown-menu a[href="/collection"] {
-  color: #ff8f00;
+.dropdown-menu a {
+  padding: 12px 16px;
+  color: white;
+  text-decoration: none;
+  transition: background-color 0.3s;
+  font-size: 14px;
+}
+
+.dropdown-menu a:hover {
+  background-color: #2d2d2d;
+}
+
+.dropdown-admin-link {
+  color: #ff8f00 !important;
   font-weight: 500;
 }
 
-.dropdown-menu a:last-child,
-.dropdown-menu button:last-child {
-  border-bottom: none;
+.dropdown-item {
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  color: white;
+  text-align: left;
+  width: 100%;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-family: 'Noto Sans', sans-serif;
 }
 
-.dropdown-menu a:hover,
-.dropdown-menu button:hover {
-  background-color: rgba(230, 81, 0, 0.15);
-  color: #fff;
+.dropdown-item:hover {
+  background-color: #2d2d2d;
 }
 
 /* Responsive styles */
