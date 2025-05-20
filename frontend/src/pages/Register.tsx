@@ -15,7 +15,11 @@ interface RegisterData {
 interface ErrorResponse {
   message: string;
   errors?: Record<string, string>;
+  code?: string;
   details?: string;
+  timestamp?: string;
+  path?: string;
+  status?: number;
 }
 
 const Register: React.FC = () => {
@@ -62,7 +66,42 @@ const Register: React.FC = () => {
       validatePassword(value);
     }
     
-    if (fieldErrors[name]) {
+    // Validación en tiempo real para firstName
+    if (name === 'firstName' && value && value.length > 0) {
+      if (!/^[A-Z]/.test(value)) {
+        setFieldErrors(prev => ({
+          ...prev,
+          firstName: 'First name must start with a capital letter'
+        }));
+      } else {
+        // Limpiar el error si se corrige
+        if (fieldErrors.firstName) {
+          const updatedErrors = { ...fieldErrors };
+          delete updatedErrors.firstName;
+          setFieldErrors(updatedErrors);
+        }
+      }
+    }
+    
+    // Validación en tiempo real para lastName
+    if (name === 'lastName' && value && value.length > 0) {
+      if (!/^[A-Z]/.test(value)) {
+        setFieldErrors(prev => ({
+          ...prev,
+          lastName: 'Last name must start with a capital letter'
+        }));
+      } else {
+        // Limpiar el error si se corrige
+        if (fieldErrors.lastName) {
+          const updatedErrors = { ...fieldErrors };
+          delete updatedErrors.lastName;
+          setFieldErrors(updatedErrors);
+        }
+      }
+    }
+    
+    // Limpiar el error si se modifica un campo con error
+    if (fieldErrors[name] && name !== 'firstName' && name !== 'lastName') {
       const updatedErrors = { ...fieldErrors };
       delete updatedErrors[name];
       setFieldErrors(updatedErrors);
@@ -79,6 +118,37 @@ const Register: React.FC = () => {
     }
     
     return true;
+  };
+
+  const handleFieldError = (field: string, message: string) => {
+    console.log(`Estableciendo error para campo ${field}:`, message);
+    setFieldErrors(prev => {
+      const newErrors = {
+        ...prev,
+        [field]: message
+      };
+      console.log("Nuevos errores:", newErrors);
+      return newErrors;
+    });
+    
+    const inputField = document.getElementById(field);
+    if (inputField) {
+      inputField.focus();
+      inputField.classList.add('error-input');
+    } else {
+      console.warn(`No se encontró el elemento con ID ${field}`);
+    }
+  };
+
+  const handleValidationErrors = (errors: Record<string, string>) => {
+    // Limpiar errores previos
+    setError('');
+    setFieldErrors({});
+    
+    // Procesar cada error
+    Object.entries(errors).forEach(([field, message]) => {
+      handleFieldError(field, message);
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -105,87 +175,87 @@ const Register: React.FC = () => {
         const responseData = error.response.data as ErrorResponse;
         const responseStatus = error.response.status;
         
-        console.log('Backend response:', responseData);
+        console.log('Backend response status:', responseStatus);
+        console.log('Backend response data:', responseData);
         
-        if (responseStatus === 500 && 
-            responseData.details && 
-            responseData.details.toLowerCase().includes('username already exists')) {
-          setError('');
-          setFieldErrors(prev => ({
-            ...prev,
-            username: 'This username is already taken. Please choose a different one.'
-          }));
-          const usernameInput = document.getElementById('username');
-          if (usernameInput) {
-            usernameInput.focus();
-            usernameInput.classList.add('error-input');
+        // Limpiar errores previos
+        setError('');
+        
+        // Crear un objeto para almacenar todos los errores de campo
+        const newFieldErrors: Record<string, string> = {};
+        
+        // CASO 1: Errores de validación estándar (400 Bad Request)
+        if (responseStatus === 400) {
+          // Si la respuesta contiene un mapa de errores por campo
+          if (responseData.errors && typeof responseData.errors === 'object') {
+            Object.entries(responseData.errors).forEach(([field, message]) => {
+              // Normalizar nombres de campo (camelCase para frontend)
+              let normalizedField = field;
+              if (field.toLowerCase() === 'firstname') normalizedField = 'firstName';
+              if (field.toLowerCase() === 'lastname') normalizedField = 'lastName';
+              
+              // Guardar el mensaje de error para este campo
+              newFieldErrors[normalizedField] = message as string;
+            });
           }
-          return;
         }
         
-        if (responseStatus === 400) {
-          if (responseData.errors) {
-            const processedErrors: Record<string, string> = {};
-            
-            Object.entries(responseData.errors).forEach(([field, message]) => {
-              let translatedMessage = message;
-              
-              if (field === 'password') {
-                if (message.includes('uppercase')) {
-                  translatedMessage = 'Password must contain at least one uppercase letter';
-                } else if (message.includes('lowercase')) {
-                  translatedMessage = 'Password must contain at least one lowercase letter';
-                } else if (message.includes('number')) {
-                  translatedMessage = 'Password must contain at least one number';
-                } else if (message.includes('special')) {
-                  translatedMessage = 'Password must contain at least one special character (!@?./#$%)';
-                } else if (message.includes('spaces')) {
-                  translatedMessage = 'Password cannot contain spaces';
-                } else if (message.includes('length')) {
-                  translatedMessage = 'Password must be between 8 and 16 characters';
-                }
-              }
-              
-              processedErrors[field] = translatedMessage;
-            });
-            
-            setFieldErrors(processedErrors);
-            setError('Please correct the highlighted fields');
-          } else if (responseData.message) {
-            setError(responseData.message);
-          }
-        } else if (responseStatus === 409) {
-          const message = responseData.message || 'Username or email already exists';
-          setError('');
+        // CASO 2: Error de usuario duplicado (500 o 409)
+        if ((responseStatus === 500 && responseData.details?.includes('Username already exists')) ||
+            (responseStatus === 409 && responseData.message?.includes('Username already exists'))) {
+          newFieldErrors.username = 'This username is already taken. Please choose a different one.';
+        }
+        
+        // CASO 3: Error de email duplicado
+        if ((responseStatus === 500 && responseData.details?.includes('Email already in use')) ||
+            (responseStatus === 409 && responseData.message?.includes('Email already in use'))) {
+          newFieldErrors.email = 'This email is already registered. Please use a different email address.';
+        }
+        
+        // CASO 4: Buscar errores específicos en el mensaje o detalles (para firstName y lastName)
+        const fullResponseText = JSON.stringify(responseData).toLowerCase();
+        
+        // Buscar errores relacionados con firstName
+        if (fullResponseText.includes('first name') && fullResponseText.includes('capital letter')) {
+          newFieldErrors.firstName = 'First name must start with a capital letter';
+        }
+        
+        // Buscar errores relacionados con lastName
+        if (fullResponseText.includes('last name') && fullResponseText.includes('capital letter')) {
+          newFieldErrors.lastName = 'Last name must start with a capital letter';
+        }
+        
+        // Actualizar el estado con todos los errores encontrados
+        if (Object.keys(newFieldErrors).length > 0) {
+          console.log('Setting field errors:', newFieldErrors);
+          setFieldErrors(newFieldErrors);
           
-          if (typeof message === 'string') {
-            if (message.toLowerCase().includes('username')) {
-              setFieldErrors(prev => ({
-                ...prev,
-                username: 'This username is already taken. Please choose a different one.'
-              }));
-              const usernameInput = document.getElementById('username');
-              if (usernameInput) {
-                usernameInput.focus();
-                usernameInput.classList.add('error-input');
-              }
-            } else if (message.toLowerCase().includes('email')) {
-              setFieldErrors(prev => ({
-                ...prev,
-                email: 'This email is already registered. Please use a different email address.'
-              }));
-            }
+          // Enfocar el primer campo con error
+          const firstErrorField = Object.keys(newFieldErrors)[0];
+          const inputField = document.getElementById(firstErrorField);
+          if (inputField) {
+            setTimeout(() => {
+              inputField.focus();
+              inputField.classList.add('error-input');
+            }, 100);
           }
         } else {
-          setError(responseData.message || 'Registration failed. Please try again.');
+          // Si no se identificó ningún error específico pero hay un mensaje general
+          setError(responseData.message || 'Registration failed. Please check your information and try again.');
         }
       } else {
-        setError('An error occurred. Please try again later.');
+        // Error no relacionado con Axios (probablemente de red)
+        setError('Connection error. Please check your internet connection and try again.');
       }
     } finally {
       setLoading(false);
     }
   };
+
+  // Log errors cada vez que cambian
+  React.useEffect(() => {
+    console.log('Estado actual de fieldErrors:', fieldErrors);
+  }, [fieldErrors]);
 
   return (
     <div className="register-page">
@@ -193,7 +263,6 @@ const Register: React.FC = () => {
       <div className="register-container">
         <div className="register-card">
           <h2>Create Account</h2>
-          {error && <div className="error-message">{error}</div>}
           
           <form onSubmit={handleSubmit}>
             <div className="form-group">
@@ -227,8 +296,19 @@ const Register: React.FC = () => {
                   onChange={handleInputChange}
                   disabled={loading}
                   className={fieldErrors.firstName ? 'error-input' : ''}
+                  aria-invalid={!!fieldErrors.firstName}
+                  aria-describedby={fieldErrors.firstName ? 'firstName-error' : undefined}
                 />
-                {fieldErrors.firstName && <div className="field-error">{fieldErrors.firstName}</div>}
+                {fieldErrors.firstName && (
+                  <div 
+                    className="field-error" 
+                    id="firstName-error" 
+                    role="alert"
+                    data-testid="firstName-error"
+                  >
+                    <i className="fas fa-exclamation-circle"></i> {fieldErrors.firstName}
+                  </div>
+                )}
               </div>
               
               <div className="form-group">
@@ -241,8 +321,19 @@ const Register: React.FC = () => {
                   onChange={handleInputChange}
                   disabled={loading}
                   className={fieldErrors.lastName ? 'error-input' : ''}
+                  aria-invalid={!!fieldErrors.lastName}
+                  aria-describedby={fieldErrors.lastName ? 'lastName-error' : undefined}
                 />
-                {fieldErrors.lastName && <div className="field-error">{fieldErrors.lastName}</div>}
+                {fieldErrors.lastName && (
+                  <div 
+                    className="field-error" 
+                    id="lastName-error" 
+                    role="alert"
+                    data-testid="lastName-error"
+                  >
+                    <i className="fas fa-exclamation-circle"></i> {fieldErrors.lastName}
+                  </div>
+                )}
               </div>
             </div>
             

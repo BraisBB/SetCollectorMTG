@@ -68,15 +68,55 @@
 }
 
 .register-card .form-group input.error-input {
-  border-color: #e53e3e;
-  background-color: #fff5f5;
+  border: 2px solid #e53e3e;
+  background-color: rgba(229, 62, 62, 0.05);
+  box-shadow: 0 0 0 1px rgba(229, 62, 62, 0.3);
+  animation: error-pulse 1.5s ease-in-out;
 }
 
-.register-card .field-error {
+@keyframes error-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(229, 62, 62, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0); }
+}
+
+/* Estilos para el mensaje de error bajo el campo */
+.field-error {
   color: #e53e3e;
-  font-size: 14px;
-  margin-top: 4px;
-  font-family: 'Noto Sans', sans-serif;
+  background-color: rgba(229, 62, 62, 0.1);
+  border-left: 3px solid #e53e3e;
+  font-size: 0.9rem;
+  margin-top: 6px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: slide-in 0.3s ease-out;
+  font-weight: 500;
+}
+
+@keyframes slide-in {
+  0% { transform: translateY(-10px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.field-error i {
+  color: #e53e3e;
+  font-size: 1rem;
+}
+
+/* Mensaje de error general */
+.error-message {
+  background-color: rgba(229, 62, 62, 0.1);
+  color: #e53e3e;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  text-align: center;
+  border-left: 3px solid #e53e3e;
+  animation: slide-in 0.3s ease-out;
+  font-weight: 500;
 }
 
 .register-button {
@@ -100,16 +140,6 @@
 .register-button:disabled {
   background-color: #a0aec0;
   cursor: not-allowed;
-}
-
-.error-message {
-  background-color: #fed7d7;
-  color: #c53030;
-  padding: 10px;
-  border-radius: 4px;
-  margin-bottom: 20px;
-  text-align: center;
-  font-family: 'Noto Sans', sans-serif;
 }
 
 .register-footer {
@@ -173,57 +203,4 @@
 .password-requirements li.met::before {
   content: "✓";
   color: #48bb78;
-}
-
-/* Mejorar la visibilidad de los mensajes de error */
-.field-error {
-  color: #e53e3e;
-  font-size: 0.9rem;
-  margin-top: 4px;
-  padding: 8px 12px;
-  background-color: rgba(229, 62, 62, 0.1);
-  border-radius: 4px;
-  border-left: 3px solid #e53e3e;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  animation: shake 0.5s ease-in-out;
-}
-
-.field-error i {
-  font-size: 1.1em;
-}
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
-}
-
-.error-message {
-  background-color: rgba(229, 62, 62, 0.1);
-  color: #e53e3e;
-  padding: 12px;
-  border-radius: 4px;
-  margin-bottom: 20px;
-  border-left: 3px solid #e53e3e;
-  font-size: 0.95rem;
-}
-
-/* Mejorar el estilo de los inputs con error */
-.error-input {
-  border-color: #e53e3e !important;
-  background-color: rgba(229, 62, 62, 0.05) !important;
-  animation: error-pulse 1s ease-in-out;
-}
-
-@keyframes error-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.4); }
-  70% { box-shadow: 0 0 0 6px rgba(229, 62, 62, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0); }
-}
-
-.error-input:focus {
-  box-shadow: 0 0 0 2px rgba(229, 62, 62, 0.2) !important;
-  outline: none;
 }
