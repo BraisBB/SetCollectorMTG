@@ -24,7 +24,7 @@
 }
 
 .profile-card h2 {
-  color: #e65100;
+  color: #ffffff;
   font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
   text-align: center;
   margin-bottom: 1.5rem;
@@ -34,19 +34,20 @@
   text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.form-group {
+/* Haciendo los selectores CSS más específicos */
+.profile-card .form-group {
   margin-bottom: 1.5rem;
 }
 
-.form-group label {
+.profile-card .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #e0e0e0;
-  font-weight: 500;
+  color: #e65100 !important; /* Forzar el color naranja */
+  font-weight: 600;
   font-family: 'Noto Sans', sans-serif;
 }
 
-.form-group input {
+.profile-card .form-group input {
   width: 100%;
   padding: 0.75rem;
   border: 1px solid #444;
@@ -58,23 +59,23 @@
   transition: all 0.3s ease;
 }
 
-.form-group input:focus {
+.profile-card .form-group input:focus {
   outline: none;
   border-color: #e65100;
   box-shadow: 0 0 0 2px rgba(230, 81, 0, 0.2);
 }
 
-.form-group input:disabled {
+.profile-card .form-group input:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
 
-.disabled-input {
+.profile-card .disabled-input {
   background-color: #1a1a1a !important;
   border-color: #333 !important;
 }
 
-.form-group small {
+.profile-card .form-group small {
   display: block;
   margin-top: 0.25rem;
   color: #999;
@@ -82,11 +83,11 @@
   font-family: 'Noto Sans', sans-serif;
 }
 
-.error-input {
+.profile-card .error-input {
   border-color: #f44336 !important;
 }
 
-.field-error {
+.profile-card .field-error {
   color: #f44336;
   font-size: 0.85rem;
   margin-top: 0.25rem;
@@ -190,7 +191,7 @@ button:disabled {
 .field-label {
   font-weight: 600;
   width: 30%;
-  color: #e0e0e0;
+  color: #e65100 !important; /* Forzar el color naranja */
   font-family: 'Noto Sans', sans-serif;
 }
 

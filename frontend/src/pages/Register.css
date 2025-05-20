@@ -30,28 +30,29 @@
   font-family: 'Palatino', 'URW Palladio L', 'Palatino Linotype', serif;
 }
 
-.form-row {
+.register-card .form-row {
   display: flex;
   gap: 15px;
 }
 
-.form-row .form-group {
+.register-card .form-row .form-group {
   flex: 1;
 }
 
-.form-group {
+.register-card .form-group {
   margin-bottom: 20px;
 }
 
-.form-group label {
+/* Estilo específico para las etiquetas del formulario de registro */
+.register-card .form-group label {
   display: block;
   margin-bottom: 6px;
-  font-weight: 500;
-  color: #ffffff;
+  font-weight: 600;
+  color: #e65100 !important; /* Forzar el color naranjo */
   font-family: 'Noto Sans', sans-serif;
 }
 
-.form-group input {
+.register-card .form-group input {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid #ddd;
@@ -61,17 +62,17 @@
   font-family: 'Noto Sans', sans-serif;
 }
 
-.form-group input:focus {
+.register-card .form-group input:focus {
   border-color: #192a56;
   outline: none;
 }
 
-.form-group input.error-input {
+.register-card .form-group input.error-input {
   border-color: #e53e3e;
   background-color: #fff5f5;
 }
 
-.field-error {
+.register-card .field-error {
   color: #e53e3e;
   font-size: 14px;
   margin-top: 4px;
