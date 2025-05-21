@@ -31,7 +31,6 @@ const Register: React.FC = () => {
     lastName: ''
   });
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [passwordRequirements, setPasswordRequirements] = useState({
@@ -120,37 +119,6 @@ const Register: React.FC = () => {
     return true;
   };
 
-  const handleFieldError = (field: string, message: string) => {
-    console.log(`Estableciendo error para campo ${field}:`, message);
-    setFieldErrors(prev => {
-      const newErrors = {
-        ...prev,
-        [field]: message
-      };
-      console.log("Nuevos errores:", newErrors);
-      return newErrors;
-    });
-    
-    const inputField = document.getElementById(field);
-    if (inputField) {
-      inputField.focus();
-      inputField.classList.add('error-input');
-    } else {
-      console.warn(`No se encontró el elemento con ID ${field}`);
-    }
-  };
-
-  const handleValidationErrors = (errors: Record<string, string>) => {
-    // Limpiar errores previos
-    setError('');
-    setFieldErrors({});
-    
-    // Procesar cada error
-    Object.entries(errors).forEach(([field, message]) => {
-      handleFieldError(field, message);
-    });
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -159,8 +127,6 @@ const Register: React.FC = () => {
     }
     
     setLoading(true);
-    setError('');
-    setFieldErrors({});
     
     try {
       const response = await axios.post('http://localhost:8080/users', formData);
@@ -177,9 +143,6 @@ const Register: React.FC = () => {
         
         console.log('Backend response status:', responseStatus);
         console.log('Backend response data:', responseData);
-        
-        // Limpiar errores previos
-        setError('');
         
         // Crear un objeto para almacenar todos los errores de campo
         const newFieldErrors: Record<string, string> = {};
@@ -241,11 +204,11 @@ const Register: React.FC = () => {
           }
         } else {
           // Si no se identificó ningún error específico pero hay un mensaje general
-          setError(responseData.message || 'Registration failed. Please check your information and try again.');
+          console.error('Registration failed. Please check your information and try again.');
         }
       } else {
         // Error no relacionado con Axios (probablemente de red)
-        setError('Connection error. Please check your internet connection and try again.');
+        console.error('Connection error. Please check your internet connection and try again.');
       }
     } finally {
       setLoading(false);

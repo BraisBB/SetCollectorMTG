@@ -13,6 +13,7 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - setcollector-network
     healthcheck:
@@ -22,18 +23,66 @@ services:
       retries: 5
 
   keycloak:
-    build:
-      context: ..
-      dockerfile: podman/keycloak/Dockerfile
+    image: quay.io/keycloak/keycloak:24.0.1
     container_name: setcollector-keycloak
+    command: start-dev --import-realm
     ports:
       - "8181:8080"
     environment:
       KEYCLOAK_ADMIN: ADMIN
       KEYCLOAK_ADMIN_PASSWORD: admin
-      KC_IMPORT_REALM: setcollector-realm
+      KC_DB: mysql
+      KC_DB_URL: jdbc:mysql://mysql:3306/keycloak
+      KC_DB_USERNAME: setcollector
+      KC_DB_PASSWORD: password
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
     networks:
       - setcollector-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: ../podman/backend/Dockerfile
+    image: localhost/setcollector-backend:latest
+    container_name: setcollector-backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/setcollector?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: setcollector
+      SPRING_DATASOURCE_PASSWORD: password
+      KEYCLOAK_AUTH_SERVER_URL: http://setcollector-keycloak:8080
+      KEYCLOAK_RESOURCE: setcollector-backend
+      KEYCLOAK_PUBLIC_KEY: ${KEYCLOAK_PUBLIC_KEY}
+    networks:
+      - setcollector-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: podman/frontend/Dockerfile
+    image: localhost/setcollector-frontend:latest
+    container_name: setcollector-frontend
+    ports:
+      - "5173:80"
+    environment:
+      VITE_API_URL: http://localhost:8080
+      VITE_KEYCLOAK_URL: http://localhost:8181
+      VITE_KEYCLOAK_REALM: setcollector-realm
+      VITE_KEYCLOAK_CLIENT_ID: setcollector-frontend
+    networks:
+      - setcollector-network
+    depends_on:
+      - backend
 
 networks:
   setcollector-network:
@@ -41,4 +90,6 @@ networks:
 
 volumes:
   mysql_data:
-    name: setcollector-mysql-data 
+    name: setcollector-mysql-data
+  keycloak_realm:
+    name: setcollector-keycloak-realm 

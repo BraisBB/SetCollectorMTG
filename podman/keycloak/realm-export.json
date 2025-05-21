@@ -702,7 +702,7 @@
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "secret": "**********",
+      "secret": "nGvEF3wldhQop1KawwbDeplmsFG4aWjk",
       "redirectUris": [
         "/*"
       ],
@@ -947,7 +947,7 @@
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "secret": "**********",
+      "secret": "Jeq9KKOqImIO7IkaS3CfXpAd3pSjtLQv",
       "redirectUris": [
         "http://localhost:8080/swagger-ui/oauth2-redirect.html",
         "http://localhost:3000/*",
