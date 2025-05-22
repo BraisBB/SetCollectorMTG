@@ -2,25 +2,40 @@ import { httpClient } from './httpClient';
 import authService from './authService';
 import { SetMtg, Card, Deck, DeckCreateDto, CardDeck, User, UserCollectionCard } from './types';
 import { SearchParams } from '../components/SearchBar';
-import { API_BASE_URL } from './config';
+import { API_BASE_URL, ENV } from './config';
 import axios from 'axios';
+
+// Función helper para construir la ruta de API correctamente según el entorno
+function apiPath(path: string): string {
+  // Si estamos en desarrollo, añadimos /api al principio
+  // En producción, no es necesario porque ya está incluido en API_BASE_URL
+  if (ENV.isDev) {
+    // Asegurarnos de no duplicar /api si ya está en la ruta
+    if (path.startsWith('/api/')) {
+      return path;
+    }
+    return path.startsWith('/') ? `/api${path}` : `/api/${path}`;
+  }
+  // En producción, devolver la ruta sin modificar
+  return path;
+}
 
 // Servicio para operaciones de la API
 const apiService = {
   // Sets
   getAllSets: async (): Promise<SetMtg[]> => {
     console.log('Requesting all sets');
-    return httpClient.get<SetMtg[]>('/api/sets');
+    return httpClient.get<SetMtg[]>(apiPath('/sets'));
   },
 
   getSetById: async (id: number): Promise<SetMtg> => {
     console.log(`Requesting set ${id}`);
-    return httpClient.get<SetMtg>(`/api/sets/${id}`);
+    return httpClient.get<SetMtg>(apiPath(`/sets/${id}`));
   },
 
   getCardsBySet: async (setId: number): Promise<Card[]> => {
     console.log(`Requesting cards from set ${setId}`);
-    return httpClient.get<Card[]>(`/api/sets/${setId}/cards`);
+    return httpClient.get<Card[]>(apiPath(`/sets/${setId}/cards`));
   },
 
   // Decks
@@ -31,8 +46,8 @@ const apiService = {
       if (keycloakId) {
         console.log(`Intentando obtener mazos con Keycloak ID: ${keycloakId}`);
         try {
-          console.log(`Llamando endpoint: /api/decks/user/keycloak/${keycloakId}`);
-          const decks = await httpClient.get<Deck[]>(`/api/decks/user/keycloak/${keycloakId}`);
+          console.log(`Llamando endpoint: /decks/user/keycloak/${keycloakId}`);
+          const decks = await httpClient.get<Deck[]>(apiPath(`/decks/user/keycloak/${keycloakId}`));
           
           if (Array.isArray(decks) && decks.length > 0) {
             console.log(`¡Éxito! Encontrados ${decks.length} mazos con Keycloak ID`);
@@ -48,7 +63,7 @@ const apiService = {
       // Intento 2: Usar el endpoint del usuario actual
       try {
         console.log(`Intentando obtener mazos con el endpoint de usuario actual`);
-        const decks = await httpClient.get<Deck[]>(`/api/decks/current-user`);
+        const decks = await httpClient.get<Deck[]>(apiPath(`/decks/current-user`));
         
         if (Array.isArray(decks) && decks.length > 0) {
           console.log(`¡Éxito! Encontrados ${decks.length} mazos con el endpoint de usuario actual`);
@@ -65,7 +80,7 @@ const apiService = {
       if (username) {
         console.log(`Intentando obtener mazos con username: ${username}`);
         try {
-          const decks = await httpClient.get<Deck[]>(`/api/decks/user/byUsername/${username}`);
+          const decks = await httpClient.get<Deck[]>(apiPath(`/decks/user/byUsername/${username}`));
           
           if (Array.isArray(decks) && decks.length > 0) {
             console.log(`¡Éxito! Encontrados ${decks.length} mazos con username`);
@@ -82,7 +97,7 @@ const apiService = {
       if (userId) {
         console.log(`Intentando obtener mazos con userId: ${userId}`);
         try {
-          const decks = await httpClient.get<Deck[]>(`/api/decks/user/${userId}`);
+          const decks = await httpClient.get<Deck[]>(apiPath(`/decks/user/${userId}`));
           
           if (Array.isArray(decks) && decks.length > 0) {
             console.log(`¡Éxito! Encontrados ${decks.length} mazos con userId`);
@@ -106,17 +121,17 @@ const apiService = {
 
   getDeckById: async (deckId: number): Promise<Deck> => {
     console.log(`Requesting deck ${deckId}`);
-    return httpClient.get<Deck>(`/api/decks/${deckId}`);
+    return httpClient.get<Deck>(apiPath(`/decks/${deckId}`));
   },
 
   createDeck: async (deck: DeckCreateDto): Promise<Deck> => {
     console.log('Creating deck:', deck);
-    return httpClient.post<Deck>('/api/decks', deck);
+    return httpClient.post<Deck>(apiPath('/decks'), deck);
   },
   
   updateDeck: async (deckId: number, deck: Partial<Deck>): Promise<Deck> => {
     console.log(`Updating deck ${deckId}:`, deck);
-    return httpClient.put<Deck>(`/api/decks/${deckId}`, deck);
+    return httpClient.put<Deck>(apiPath(`/decks/${deckId}`), deck);
   },
 
   // Cards in Deck
@@ -131,7 +146,7 @@ const apiService = {
       
       while (retryCount < MAX_RETRIES) {
         try {
-          const cards = await httpClient.get<CardDeck[]>(`/api/decks/${deckId}/cards`);
+          const cards = await httpClient.get<CardDeck[]>(apiPath(`/decks/${deckId}/cards`));
           console.log(`Retrieved ${cards.length} cards for deck ${deckId}`);
           // Log para depuración - Mostrar nCopies de cada carta
           cards.forEach(card => {
@@ -143,7 +158,7 @@ const apiService = {
           
           // If error is 404, endpoint might not exist in backend
           if (error.response && error.response.status === 404) {
-            console.warn(`Endpoint /api/decks/${deckId}/cards not found. The backend might not have implemented this endpoint.`);
+            console.warn(`Endpoint /decks/${deckId}/cards not found. The backend might not have implemented this endpoint.`);
             // No point in retrying if the endpoint doesn't exist
             return [];
           }
@@ -175,14 +190,14 @@ const apiService = {
   // Add a card to a deck
   addCardToDeck: async (deckId: number, cardId: number): Promise<CardDeck> => {
     console.log(`Adding card ${cardId} to deck ${deckId}`);
-    return httpClient.post<CardDeck>(`/api/decks/${deckId}/cards/${cardId}`, {});
+    return httpClient.post<CardDeck>(apiPath(`/decks/${deckId}/cards/${cardId}`), {});
   },
 
   // Update card quantity in a deck
   updateCardInDeck: async (deckId: number, cardId: number, quantity: number): Promise<CardDeck> => {
     console.log(`Updating card ${cardId} in deck ${deckId} with quantity ${quantity}`);
     // Enviar quantity como parámetro de consulta (query parameter) en lugar de en el cuerpo
-    return httpClient.put<CardDeck>(`/api/decks/${deckId}/cards/${cardId}`, {}, {
+    return httpClient.put<CardDeck>(apiPath(`/decks/${deckId}/cards/${cardId}`), {}, {
       params: { quantity }
     });
   },
@@ -190,7 +205,7 @@ const apiService = {
   // Remove a card from a deck
   removeCardFromDeck: async (deckId: number, cardId: number): Promise<void> => {
     console.log(`Removing card ${cardId} from deck ${deckId}`);
-    await httpClient.delete(`/api/decks/${deckId}/cards/${cardId}`);
+    await httpClient.delete(apiPath(`/decks/${deckId}/cards/${cardId}`));
   },
 
   // User Collection
@@ -201,7 +216,7 @@ const apiService = {
       if (keycloakId) {
         try {
           console.log(`Requesting collection for user with Keycloak ID: ${keycloakId}`);
-          const data = await httpClient.get<UserCollectionCard[]>(`/api/collections/user/keycloak/${keycloakId}/cards`);
+          const data = await httpClient.get<UserCollectionCard[]>(apiPath(`/collections/user/keycloak/${keycloakId}/cards`));
           if (data && data.length > 0) {
             console.log(`Collection found with Keycloak ID. Cards: ${data.length}`);
             return data;
@@ -216,7 +231,7 @@ const apiService = {
       if (username) {
         try {
           console.log(`Requesting collection for user with username: ${username}`);
-          const data = await httpClient.get<UserCollectionCard[]>(`/api/collections/user/byUsername/${username}/cards`);
+          const data = await httpClient.get<UserCollectionCard[]>(apiPath(`/collections/user/byUsername/${username}/cards`));
           if (data && data.length > 0) {
             console.log(`Collection found with username. Cards: ${data.length}`);
             return data;
@@ -231,7 +246,7 @@ const apiService = {
       if (userId && userId.match(/^\d+$/)) {
         try {
           console.log(`Requesting collection for user with ID: ${userId}`);
-          const data = await httpClient.get<UserCollectionCard[]>(`/api/collections/user/${userId}/cards`);
+          const data = await httpClient.get<UserCollectionCard[]>(apiPath(`/collections/user/${userId}/cards`));
           console.log(`Collection found with user ID. Cards: ${data.length}`);
           return data;
         } catch (error) {
@@ -257,7 +272,7 @@ const apiService = {
       if (keycloakId) {
         try {
           const data = await httpClient.put<UserCollectionCard>(
-            `/api/collections/user/keycloak/${keycloakId}/cards/${cardId}`, 
+            apiPath(`/collections/user/keycloak/${keycloakId}/cards/${cardId}`), 
             { copies }
           );
           console.log(`Card updated in collection using Keycloak ID`);
@@ -272,7 +287,7 @@ const apiService = {
       if (username) {
         try {
           const data = await httpClient.put<UserCollectionCard>(
-            `/api/collections/user/byUsername/${username}/cards/${cardId}`, 
+            apiPath(`/collections/user/byUsername/${username}/cards/${cardId}`), 
             { copies }
           );
           console.log(`Card updated in collection using username`);
@@ -286,7 +301,7 @@ const apiService = {
       const userId = authService.getUserIdentifier();
       if (userId && userId.match(/^\d+$/)) {
         const data = await httpClient.put<UserCollectionCard>(
-          `/api/collections/user/${userId}/cards/${cardId}`, 
+          apiPath(`/collections/user/${userId}/cards/${cardId}`), 
           { copies }
         );
         console.log(`Card updated in collection using user ID`);
@@ -304,7 +319,7 @@ const apiService = {
   getUserByUsername: async (username: string): Promise<User> => {
     try {
       console.log(`Requesting user ${username}`);
-      return httpClient.get<User>(`/api/users/username/${username}`);
+      return httpClient.get<User>(apiPath(`/users/username/${username}`));
     } catch (error) {
       console.error(`Error getting user by username ${username}:`, error);
       throw error;
@@ -314,7 +329,7 @@ const apiService = {
   updateUserProfile: async (username: string, userData: Partial<User>): Promise<User> => {
     try {
       console.log(`Updating profile for user ${username}:`, userData);
-      return httpClient.put<User>(`/api/users/username/${username}`, userData);
+      return httpClient.put<User>(apiPath(`/users/username/${username}`), userData);
     } catch (error) {
       console.error(`Error updating user profile for ${username}:`, error);
       throw error;
@@ -347,7 +362,7 @@ const apiService = {
         }
       }
       
-      const results = await httpClient.get<Card[]>('/api/cards/search', { params });
+      const results = await httpClient.get<Card[]>(apiPath('/cards/search'), { params });
       console.log(`Search successful: ${results.length} cards found`);
       return results;
     } catch (error) {
@@ -363,7 +378,7 @@ const apiService = {
   updateDeckColor: async (deckId: number): Promise<Deck> => {
     try {
       console.log(`Actualizando color del mazo ${deckId} basado en sus cartas`);
-      return httpClient.get<Deck>(`/api/decks/${deckId}/update-color`);
+      return httpClient.get<Deck>(apiPath(`/decks/${deckId}/update-color`));
     } catch (error) {
       console.error(`Error actualizando el color del mazo ${deckId}:`, error);
       throw error;
@@ -376,7 +391,7 @@ const apiService = {
   getAllUsers: async (): Promise<User[]> => {
     try {
       console.log('Requesting all users from the backend');
-      const response = await httpClient.get<User[]>('/api/users');
+      const response = await httpClient.get<User[]>(apiPath('/users'));
       
       // Verificar que tenemos datos válidos
       if (response === null || response === undefined) {
@@ -412,8 +427,12 @@ const apiService = {
       
       console.log('Formatted data for backend:', createDto);
       
+      // Construir la URL correcta según el entorno
+      const apiUrl = ENV.isDev ? '/api/users' : `${API_BASE_URL}/users`;
+      console.log('URL para crear usuario:', apiUrl);
+      
       // Uso de axios directo para evitar interceptores de autenticación
-      const response = await axios.post(`${API_BASE_URL}/api/users`, createDto, {
+      const response = await axios.post(apiUrl, createDto, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
@@ -451,7 +470,7 @@ const apiService = {
         lastName: userData.lastName
       };
       console.log('Formatted data for backend:', userDto);
-      const response = await httpClient.put<User>(`/api/users/${userId}`, userDto);
+      const response = await httpClient.put<User>(apiPath(`/users/${userId}`), userDto);
       console.log('User updated successfully:', response);
       return response;
     } catch (error) {
@@ -463,7 +482,7 @@ const apiService = {
   deleteUser: async (userId: number): Promise<void> => {
     try {
       console.log(`Deleting user with ID: ${userId}`);
-      await httpClient.delete(`/api/users/${userId}`);
+      await httpClient.delete(apiPath(`/users/${userId}`));
       console.log(`User ${userId} deleted successfully`);
     } catch (error) {
       console.error(`Error deleting user ${userId}:`, error);
@@ -474,7 +493,7 @@ const apiService = {
   // Sets
   createSet: async (setData: Partial<SetMtg>): Promise<SetMtg> => {
     try {
-      return httpClient.post<SetMtg>('/api/sets', setData);
+      return httpClient.post<SetMtg>(apiPath('/sets'), setData);
     } catch (error) {
       console.error('Error creando set:', error);
       throw error;
@@ -483,7 +502,7 @@ const apiService = {
 
   updateSet: async (setId: number, setData: Partial<SetMtg>): Promise<SetMtg> => {
     try {
-      return httpClient.put<SetMtg>(`/api/sets/${setId}`, setData);
+      return httpClient.put<SetMtg>(apiPath(`/sets/${setId}`), setData);
     } catch (error) {
       console.error(`Error actualizando set ${setId}:`, error);
       throw error;
@@ -492,7 +511,7 @@ const apiService = {
 
   deleteSet: async (setId: number): Promise<void> => {
     try {
-      await httpClient.delete(`/api/sets/${setId}`);
+      await httpClient.delete(apiPath(`/sets/${setId}`));
     } catch (error) {
       console.error(`Error eliminando set ${setId}:`, error);
       throw error;
@@ -505,7 +524,7 @@ const apiService = {
       console.log(`Requesting all cards (page: ${page}, size: ${size})...`);
       
       // Get cards with pagination parameters
-      const cards = await httpClient.get<Card[]>('/api/cards', {
+      const cards = await httpClient.get<Card[]>(apiPath('/cards'), {
         params: { page, size }
       });
       
@@ -517,7 +536,7 @@ const apiService = {
           console.log("Getting sets to enrich card data...");
           
           // Get all sets
-          const sets = await httpClient.get<SetMtg[]>('/api/sets');
+          const sets = await httpClient.get<SetMtg[]>(apiPath('/sets'));
           console.log(`Received ${sets.length} sets from server`);
           
           // Create a map of sets by ID for quick lookup
@@ -572,7 +591,7 @@ const apiService = {
 
   createCard: async (cardData: Partial<Card>): Promise<Card> => {
     try {
-      return httpClient.post<Card>('/api/cards', cardData);
+      return httpClient.post<Card>(apiPath('/cards'), cardData);
     } catch (error) {
       console.error('Error creando carta:', error);
       throw error;
@@ -582,7 +601,7 @@ const apiService = {
   updateCard: async (cardId: number, cardData: Partial<Card>): Promise<Card> => {
     try {
       console.log(`Actualizando carta con ID ${cardId}, datos:`, JSON.stringify(cardData, null, 2));
-      const response = await httpClient.put<Card>(`/api/cards/${cardId}`, cardData);
+      const response = await httpClient.put<Card>(apiPath(`/cards/${cardId}`), cardData);
       console.log(`Carta ${cardId} actualizada con éxito. Respuesta:`, response);
       return response;
     } catch (error) {
@@ -593,7 +612,7 @@ const apiService = {
 
   deleteCard: async (cardId: number): Promise<void> => {
     try {
-      await httpClient.delete(`/api/cards/${cardId}`);
+      await httpClient.delete(apiPath(`/cards/${cardId}`));
     } catch (error) {
       console.error(`Error eliminando carta ${cardId}:`, error);
       throw error;
@@ -603,7 +622,7 @@ const apiService = {
   // Mazos (funciones administrativas)
   getAllDecks: async (page: number = 0, size: number = 50): Promise<Deck[]> => {
     try {
-      return httpClient.get<Deck[]>('/api/decks', {
+      return httpClient.get<Deck[]>(apiPath('/decks'), {
         params: { page, size }
       });
     } catch (error) {
@@ -614,7 +633,7 @@ const apiService = {
 
   deleteDeck: async (deckId: number): Promise<void> => {
     try {
-      await httpClient.delete(`/api/decks/${deckId}`);
+      await httpClient.delete(apiPath(`/decks/${deckId}`));
     } catch (error) {
       console.error(`Error eliminando mazo ${deckId}:`, error);
       throw error;
@@ -630,7 +649,7 @@ const apiService = {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await httpClient.post('/api/admin/cards/import', formData, {
+      const response = await httpClient.post(apiPath('/admin/cards/import'), formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }

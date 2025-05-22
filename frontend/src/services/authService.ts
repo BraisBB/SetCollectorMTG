@@ -400,12 +400,40 @@ class AuthService {
     
     if (token && refreshToken) {
       console.log('Token encontrado al iniciar, intentando renovar sesión...');
+      
+      // Verificar la validez del token actual
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const expTime = payload.exp * 1000; // Convertir a milisegundos
+        const currentTime = Date.now();
+        const timeToExpiry = expTime - currentTime;
+        
+        console.log('Estado del token:');
+        console.log(`- Tiempo actual: ${new Date(currentTime).toISOString()}`);
+        console.log(`- Expiración: ${new Date(expTime).toISOString()}`);
+        console.log(`- Tiempo hasta expiración: ${Math.floor(timeToExpiry / 1000 / 60)} minutos`);
+        
+        if (timeToExpiry <= 0) {
+          console.warn('Token expirado, intentando renovar...');
+        }
+      } catch (error) {
+        console.error('Error al verificar token:', error);
+      }
+      
       // Intentar renovar el token siempre al iniciar la app o recargar la página
       // Esto asegura que siempre tengamos un token fresco al comenzar
       this.refreshTokenIfNeeded(true)
         .then(success => {
           if (success) {
             console.log('Sesión renovada correctamente al iniciar');
+            // Recargar la página para asegurar que todos los componentes tengan el token fresco
+            // Solo si no es una carga inicial (detectar con sessionStorage)
+            if (sessionStorage.getItem('app_initialized')) {
+              console.log('Recargando página para aplicar nuevo token...');
+              window.location.reload();
+            } else {
+              sessionStorage.setItem('app_initialized', 'true');
+            }
           } else {
             console.warn('No se pudo renovar la sesión al iniciar, cerrando sesión...');
             this.clearSession();
