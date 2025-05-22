@@ -37,6 +37,9 @@ services:
       DB_DATABASE: keycloak
       DB_USER: setcollector
       DB_PASSWORD: password
+      # Variables para crear usuario administrador
+      KC_BOOTSTRAP_ADMIN_USERNAME: ADMIN
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
       # Configuración para resolver problemas de CORS y redirecciones
       KC_HOSTNAME_STRICT: "false"
       KC_HTTP_ENABLED: "true"

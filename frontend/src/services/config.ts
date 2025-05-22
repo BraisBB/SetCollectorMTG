@@ -12,8 +12,8 @@ const isDocker = typeof window !== 'undefined' &&
 
 // Determinar las URLs base según el entorno
 const getApiUrl = () => {
-  // En cualquier entorno usamos los proxies
-  return '/api';
+  // Cambiamos para eliminar el prefijo /api para evitar duplicaciones
+  return '';
 };
 
 const getKeycloakUrl = () => {
