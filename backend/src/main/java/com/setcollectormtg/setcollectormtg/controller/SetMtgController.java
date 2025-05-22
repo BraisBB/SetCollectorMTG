@@ -25,13 +25,11 @@ public class SetMtgController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<SetMtgDto> getSetById(@PathVariable Long id) {
         return ResponseEntity.ok(setMtgService.getSetById(id));
     }
 
     @GetMapping("/code/{setCode}")
-    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<SetMtgDto> getSetByCode(@PathVariable String setCode) {
         return ResponseEntity.ok(setMtgService.getSetByCode(setCode));
     }

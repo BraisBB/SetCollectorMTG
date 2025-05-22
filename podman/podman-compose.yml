@@ -8,7 +8,6 @@ services:
       MYSQL_USER: setcollector
       MYSQL_PASSWORD: password
       MYSQL_ROOT_PASSWORD: root
-      # Agregar base de datos para Keycloak
       MYSQL_DATABASE_KEYCLOAK: keycloak
     ports:
       - "3306:3306"
@@ -31,16 +30,17 @@ services:
       - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
       - ./keycloak/keycloak.conf:/opt/keycloak/conf/keycloak.conf
     environment:
+      # Configuración de base de datos
       DB_VENDOR: mysql
       DB_ADDR: mysql
       DB_PORT: 3306
       DB_DATABASE: keycloak
       DB_USER: setcollector
       DB_PASSWORD: password
-      # Variables para crear usuario administrador
+      # Configuración de admin
       KC_BOOTSTRAP_ADMIN_USERNAME: ADMIN
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
-      # Configuración para resolver problemas de CORS y redirecciones
+      # Configuración simplificada para entorno local
       KC_HOSTNAME_STRICT: "false"
       KC_HTTP_ENABLED: "true"
       KC_HTTP_PORT: "8080"
@@ -48,10 +48,10 @@ services:
       KC_HOSTNAME_ADMIN_URL: "http://localhost:8181"
       KC_PROXY: "edge"
       KC_CORS: "true"
-      KC_CORS_ORIGINS: "http://localhost:5173,http://localhost:8080,http://localhost:3000,http://127.0.0.1:5173,http://setcollector-frontend,*"
+      KC_CORS_ORIGINS: "*"
       KC_CORS_METHODS: "GET,POST,PUT,DELETE,OPTIONS,PATCH"
-      KC_CORS_HEADERS: "Origin,Content-Type,Accept,Authorization,X-Requested-With,X-CSRF-Token,X-XSRF-Token,Cache-Control,Pragma,*"
-      KC_CORS_EXPOSED_HEADERS: "Authorization,Content-Disposition,X-CSRF-Token,Content-Type,*"
+      KC_CORS_HEADERS: "*"
+      KC_CORS_EXPOSED_HEADERS: "*"
       KC_CORS_ALLOW_CREDENTIALS: "true"
     ports:
       - "8181:8080"
@@ -73,25 +73,29 @@ services:
     working_dir: /app
     command: java -jar app.jar
     environment:
-      # Variables de entorno para conexión a MySQL
+      # Configuración simplificada para MySQL
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/setcollector?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: setcollector
       SPRING_DATASOURCE_PASSWORD: password
-      # Variables de entorno para Keycloak - ACTUALIZADO para consistencia
+      # Configuración de Keycloak - URLs internas para comunicación entre contenedores
       KEYCLOAK_AUTH_SERVER_URL: http://setcollector-keycloak:8080
-      KEYCLOAK_PUBLIC_SERVER_URL: http://localhost:8181
       KEYCLOAK_REALM: setcollector-realm
       KEYCLOAK_RESOURCE: setcollector-backend
       KEYCLOAK_CREDENTIALS_SECRET: Jeq9KKOqImIO7IkaS3CfXpAd3pSjtLQv
       KEYCLOAK_ADMIN_CLIENT_CLIENT_ID: backend-admin-client
       KEYCLOAK_ADMIN_CLIENT_CLIENT_SECRET: nGvEF3wldhQop1KawwbDeplmsFG4aWjk
-      # Configuración de JWT para Spring Security - ACTUALIZADO para consistencia
+      # Configuración JWT para Spring Security
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://setcollector-keycloak:8080/realms/setcollector-realm
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://setcollector-keycloak:8080/realms/setcollector-realm/protocol/openid-connect/certs
-      # Configuración de logging
-      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: DEBUG
-      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: DEBUG
+      # Configuración de logs más simplificada
+      LOGGING_LEVEL_ROOT: INFO
       LOGGING_LEVEL_COM_SETCOLLECTORMTG: DEBUG
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: INFO
+      # Activar propiedades CORS en Spring Boot
+      SPRING_WEB_CORS_ALLOWED_ORIGINS: "*"
+      SPRING_WEB_CORS_ALLOWED_METHODS: "GET,POST,PUT,DELETE,OPTIONS,PATCH"
+      SPRING_WEB_CORS_ALLOWED_HEADERS: "*"
+      SPRING_WEB_CORS_ALLOW_CREDENTIALS: "true"
     ports:
       - "8080:8080"
     depends_on:
@@ -107,7 +111,7 @@ services:
       - ../frontend/dist:/usr/share/nginx/html
       - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf
     ports:
-      - "5173:80"  # Cambiado a puerto no privilegiado
+      - "5173:80"
     depends_on:
       - backend
       - keycloak

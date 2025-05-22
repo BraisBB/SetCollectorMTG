@@ -2,17 +2,6 @@ import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import { API_BASE_URL } from './config';
 import authService from './authService';
 
-/**
- * Normaliza una URL relativa o absoluta
- * @param url URL a normalizar
- * @param baseUrl URL base para URLs relativas
- * @returns URL normalizada
- */
-function normalizeUrl(url: string, baseUrl: string): string {
-  if (url.startsWith('http')) return url;
-  return url.startsWith('/') ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
-}
-
 // Cliente HTTP centralizado para todas las peticiones a la API
 class HttpClient {
   private api;
@@ -24,20 +13,16 @@ class HttpClient {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
-        // REMOVIDO: No enviar Origin manualmente, lo maneja el navegador
       },
-      withCredentials: true
+      // Para despliegue local con CORS simplificado (Access-Control-Allow-Origin: *)
+      // no podemos usar withCredentials: true
+      withCredentials: false
     });
     
     // Interceptor para añadir token de autorización
     this.api.interceptors.request.use(async (config: any) => {
       // Log para debugging
       console.log(`Making ${config.method?.toUpperCase()} request to:`, config.url || config.baseURL);
-      
-      // Normalizar la URL solo si no estamos usando proxy
-      if (!import.meta.env.DEV && config.url && !config.url.startsWith('http')) {
-        config.url = normalizeUrl(config.url, API_BASE_URL);
-      }
       
       // Verificar estado de autenticación para debugging
       console.log('Estado de autenticación antes de la petición:', authService.isAuthenticated());

@@ -118,6 +118,12 @@ public class SecurityConfig {
                         // Permitir operaciones específicas en /users sin autenticación (para registro)
                         .requestMatchers(HttpMethod.GET, "/users/username/**").permitAll() // Verificar username
                         
+                        // Endpoints públicos para sets y cards
+                        .requestMatchers(HttpMethod.GET, "/sets").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/sets/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/cards").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/cards/**").permitAll()
+                        
                         // El resto de operaciones en /users requieren autenticación
                         .requestMatchers("/users/**").authenticated()
                         

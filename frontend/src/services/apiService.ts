@@ -2,22 +2,18 @@ import { httpClient } from './httpClient';
 import authService from './authService';
 import { SetMtg, Card, Deck, DeckCreateDto, CardDeck, User, UserCollectionCard } from './types';
 import { SearchParams } from '../components/SearchBar';
-import { API_BASE_URL, ENV } from './config';
-import axios from 'axios';
 
-// Función helper para construir la ruta de API correctamente según el entorno
+// Función helper para construir la ruta de API correctamente
 function apiPath(path: string): string {
-  // Si estamos en desarrollo, añadimos /api al principio
-  // En producción, no es necesario porque ya está incluido en API_BASE_URL
-  if (ENV.isDev) {
-    // Asegurarnos de no duplicar /api si ya está en la ruta
-    if (path.startsWith('/api/')) {
-      return path;
-    }
-    return path.startsWith('/') ? `/api${path}` : `/api/${path}`;
+  // Si la ruta ya comienza con /api/, no añadir nada más
+  if (path.startsWith('/api/')) {
+    return path;
   }
-  // En producción, devolver la ruta sin modificar
-  return path;
+  
+  // Asegurar que la ruta comience con /api/
+  // Eliminar la barra inicial si existe para evitar duplicar barras
+  const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+  return `/api/${cleanPath}`;
 }
 
 // Servicio para operaciones de la API
@@ -427,22 +423,11 @@ const apiService = {
       
       console.log('Formatted data for backend:', createDto);
       
-      // Construir la URL correcta según el entorno
-      const apiUrl = ENV.isDev ? '/api/users' : `${API_BASE_URL}/users`;
-      console.log('URL para crear usuario:', apiUrl);
+      // Usar httpClient para mantener consistencia con el resto de peticiones
+      const response = await httpClient.post<User>(apiPath('/users'), createDto);
       
-      // Uso de axios directo para evitar interceptores de autenticación
-      const response = await axios.post(apiUrl, createDto, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        timeout: 20000, // 20 segundos
-        withCredentials: false // importante: sin credentials para evitar problemas CORS
-      });
-      
-      console.log('User created successfully:', response.data);
-      return response.data;
+      console.log('User created successfully:', response);
+      return response;
     } catch (error: any) {
       if (error.response) {
         console.error('Error from server:', error.response.status, error.response.data);
