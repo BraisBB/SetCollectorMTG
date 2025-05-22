@@ -24,16 +24,13 @@ services:
       retries: 5
 
   keycloak:
-    build:
-      context: ./keycloak
-      dockerfile: Dockerfile
+    image: quay.io/keycloak/keycloak:26.0.4
     container_name: setcollector-keycloak
+    command: start-dev --import-realm --features=preview
     volumes:
       - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
       - ./keycloak/keycloak.conf:/opt/keycloak/conf/keycloak.conf
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
       DB_VENDOR: mysql
       DB_ADDR: mysql
       DB_PORT: 3306
