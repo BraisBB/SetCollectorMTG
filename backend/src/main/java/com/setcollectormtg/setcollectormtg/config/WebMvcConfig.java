@@ -10,7 +10,13 @@ import jakarta.servlet.MultipartConfigElement;
 import org.springframework.util.unit.DataSize;
 
 /**
- * Configuración de Spring MVC para establecer límites en la carga de archivos
+ * Configuración global de Spring MVC.
+ * 
+ * Esta clase proporciona configuraciones para:
+ * 1. Configuración para la carga de archivos
+ * 2. Registrar interceptores, convertidores, formateadores, etc. si fueran necesarios
+ * 
+ * Nota: La configuración CORS ha sido centralizada en SecurityConfig
  */
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {

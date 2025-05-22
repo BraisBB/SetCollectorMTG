@@ -1,5 +1,4 @@
 version: '3.8'
-
 services:
   mysql:
     image: mysql:8.0.42
@@ -9,6 +8,8 @@ services:
       MYSQL_USER: setcollector
       MYSQL_PASSWORD: password
       MYSQL_ROOT_PASSWORD: root
+      # Agregar base de datos para Keycloak
+      MYSQL_DATABASE_KEYCLOAK: keycloak
     ports:
       - "3306:3306"
     volumes:
@@ -25,7 +26,7 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.1
     container_name: setcollector-keycloak
-    command: start-dev --import-realm
+    command: start-dev --import-realm --features=preview,token-exchange,admin-fine-grained-authz --spi-connections-http-client-default-disable-trust-manager=true --http-relative-path=/ --hostname-strict=false
     ports:
       - "8181:8080"
     environment:
@@ -36,8 +37,22 @@ services:
       KC_DB_USERNAME: setcollector
       KC_DB_PASSWORD: password
       KC_HTTP_PORT: 8080
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
+      KC_PROXY: "edge"
+      KC_HTTP_RELATIVE_PATH: "/"
+      KC_SPI_CONNECTIONS_HTTP_CLIENT_DEFAULT_DISABLE_TRUST_MANAGER: "true"
+      # Configuración CORS mejorada
+      KC_CORS: "true"
+      KC_CORS_ORIGINS: "http://localhost:5173,http://localhost:8080,http://localhost:3000,http://127.0.0.1:5173,*"
+      KC_CORS_METHODS: "GET,POST,PUT,DELETE,OPTIONS,PATCH"
+      KC_CORS_HEADERS: "Origin,Content-Type,Accept,Authorization,X-Requested-With,X-CSRF-Token,X-XSRF-Token"
+      KC_CORS_EXPOSED_HEADERS: "Authorization,Content-Disposition,X-CSRF-Token"
+      KC_CORS_MAX_AGE: "3600"
+      KC_CORS_ALLOW_CREDENTIALS: "true"
     volumes:
       - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+      - ./keycloak/keycloak.conf:/opt/keycloak/conf/keycloak.conf:ro
     networks:
       - setcollector-network
     depends_on:
@@ -53,12 +68,41 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/setcollector?useSSL=false&allowPublicKeyRetrieval=true
+      # Conexión a base de datos
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/setcollector?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: setcollector
       SPRING_DATASOURCE_PASSWORD: password
-      KEYCLOAK_AUTH_SERVER_URL: http://setcollector-keycloak:8080
+      
+      # Configuración de Keycloak para contenedores
+      # Para comunicación interna entre contenedores y también para el JWK Set URI
+      KEYCLOAK_INTERNAL_SERVER_URL: http://keycloak:8080
+      # Para comunicación desde el navegador (URL externa accesible)
+      KEYCLOAK_AUTH_SERVER_URL: http://localhost:8181
+      
+      # Configuración del Realm y cliente
+      KEYCLOAK_REALM: setcollector-realm
       KEYCLOAK_RESOURCE: setcollector-backend
-      KEYCLOAK_PUBLIC_KEY: ${KEYCLOAK_PUBLIC_KEY}
+      KEYCLOAK_CREDENTIALS_SECRET: Jeq9KKOqImIO7IkaS3CfXpAd3pSjtLQv
+      
+      # URLs para Spring Security OAuth2 (usar la comunicación interna)
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/setcollector-realm
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/setcollector-realm/protocol/openid-connect/certs
+      
+      # Cliente de administración
+      KEYCLOAK_ADMIN_CLIENT_CLIENT_ID: backend-admin-client
+      KEYCLOAK_ADMIN_CLIENT_CLIENT_SECRET: nGvEF3wldhQop1KawwbDeplmsFG4aWjk
+      
+      # CORS configuración - asegurar que está alineada con SecurityConfig
+      SPRING_WEB_CORS_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000
+      SPRING_WEB_CORS_ALLOWED_METHODS: GET,POST,PUT,DELETE,OPTIONS,PATCH
+      SPRING_WEB_CORS_ALLOWED_HEADERS: "*"
+      SPRING_WEB_CORS_ALLOW_CREDENTIALS: "true"
+      SPRING_WEB_CORS_MAX_AGE: "3600"
+      
+      # Logging
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB_CORS: DEBUG
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: DEBUG
+      LOGGING_LEVEL_COM_SETCOLLECTORMTG: DEBUG
     networks:
       - setcollector-network
     depends_on:
@@ -84,6 +128,7 @@ services:
       - setcollector-network
     depends_on:
       - backend
+      - keycloak
 
 networks:
   setcollector-network:
@@ -93,4 +138,4 @@ volumes:
   mysql_data:
     name: setcollector-mysql-data
   keycloak_realm:
-    name: setcollector-keycloak-realm 
+    name: setcollector-keycloak-realm

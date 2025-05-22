@@ -5,6 +5,16 @@ import { LoginCredentials, AuthTokens } from './types';
 class AuthService {
   // Gestión de nombres de usuario
   private knownUsernames: Map<string, string> = new Map();
+  
+  // Configuración unificada para solicitudes a Keycloak
+  private keycloakRequestConfig = {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'application/json'
+    },
+    withCredentials: true,
+    timeout: 10000 // Añadir timeout
+  };
 
   constructor() {
     this.loadKnownUsernames();
@@ -71,21 +81,18 @@ class AuthService {
       
       const params = new URLSearchParams();
       params.append('client_id', KEYCLOAK_CONFIG.CLIENT_ID);
-      params.append('client_secret', KEYCLOAK_CONFIG.CLIENT_SECRET);
+      // No se necesita client_secret para clientes públicos
       params.append('grant_type', 'password');
       params.append('username', credentials.username);
       params.append('password', credentials.password);
       params.append('scope', 'openid profile email');
 
+      console.log('Enviando solicitud de autenticación a:', `${KEYCLOAK_CONFIG.URL}/realms/${KEYCLOAK_CONFIG.REALM}/protocol/openid-connect/token`);
+      
       const response = await axios.post<AuthTokens>(
         `${KEYCLOAK_CONFIG.URL}/realms/${KEYCLOAK_CONFIG.REALM}/protocol/openid-connect/token`,
-        params,
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json'
-          },
-        }
+        params.toString(),
+        this.keycloakRequestConfig
       );
       
       // Registro el formato exacto y limpio indicadores de error
@@ -96,7 +103,16 @@ class AuthService {
       this.setSession(response.data);
       return true;
     } catch (error: any) {
-      console.error('Login failed:', error.message);
+      console.error('Login failed:', error);
+      if (error.response) {
+        console.error('Status:', error.response.status);
+        console.error('Data:', error.response.data);
+        console.error('Headers:', error.response.headers);
+      } else if (error.request) {
+        console.error('No response received:', error.request);
+      } else {
+        console.error('Error config:', error.config);
+      }
       return false;
     }
   }
@@ -114,27 +130,54 @@ class AuthService {
   async logout(): Promise<void> {
     const refreshToken = localStorage.getItem('refresh_token');
     
-    if (refreshToken) {
-      try {
-        const params = new URLSearchParams();
-        params.append('client_id', KEYCLOAK_CONFIG.CLIENT_ID);
-        params.append('refresh_token', refreshToken);
-
-        await axios.post(
-          `${KEYCLOAK_CONFIG.URL}/realms/${KEYCLOAK_CONFIG.REALM}/protocol/openid-connect/logout`,
-          params,
-          {
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-          }
-        );
-      } catch (error) {
-        console.error('Logout error:', error);
-      }
+    // Siempre limpiamos la sesión local, independientemente de si la petición a Keycloak tiene éxito o no
+    this.clearSession();
+    
+    // Si no hay refresh token, no necesitamos hacer la petición a Keycloak
+    if (!refreshToken) {
+      console.log('No hay refresh token, sesión limpiada localmente');
+      return;
     }
     
-    this.clearSession();
+    try {
+      const params = new URLSearchParams();
+      params.append('client_id', KEYCLOAK_CONFIG.CLIENT_ID);
+      params.append('refresh_token', refreshToken);
+
+      // Configuramos un timeout para evitar que la petición se quede colgada
+      const logoutConfig = {
+        ...this.keycloakRequestConfig,
+        timeout: 5000 // 5 segundos de timeout
+      };
+      
+      await axios.post(
+        `${KEYCLOAK_CONFIG.URL}/realms/${KEYCLOAK_CONFIG.REALM}/protocol/openid-connect/logout`,
+        params.toString(),
+        logoutConfig
+      );
+      console.log('Logout en Keycloak completado con éxito');
+    } catch (error: any) {
+      // Manejo detallado de errores
+      if (axios.isAxiosError(error)) {
+        if (error.code === 'ECONNABORTED') {
+          console.warn('Timeout durante el logout en Keycloak. La sesión se ha cerrado localmente.');
+        } else if (error.response) {
+          // Error con respuesta del servidor
+          console.error(`Error de logout en Keycloak: ${error.response.status} - ${error.response.statusText}`);
+          console.error('Headers:', error.response.headers);
+          console.error('Data:', error.response.data);
+        } else if (error.request) {
+          // Error sin respuesta del servidor
+          console.error('No se recibió respuesta del servidor de Keycloak durante el logout');
+        } else {
+          // Error en la configuración de la petición
+          console.error('Error en la configuración de la petición de logout:', error.message);
+        }
+      } else {
+        // Error no relacionado con Axios
+        console.error('Error desconocido durante el logout:', error);
+      }
+    }
   }
 
   /**
@@ -309,25 +352,29 @@ class AuthService {
       console.log(`Intentando renovar token... (forzado: ${force})`);
       const params = new URLSearchParams();
       params.append('client_id', KEYCLOAK_CONFIG.CLIENT_ID);
-      params.append('client_secret', KEYCLOAK_CONFIG.CLIENT_SECRET);
       params.append('grant_type', 'refresh_token');
       params.append('refresh_token', refreshToken);
       
       const response = await axios.post<AuthTokens>(
         `${KEYCLOAK_CONFIG.URL}/realms/${KEYCLOAK_CONFIG.REALM}/protocol/openid-connect/token`,
-        params,
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        }
+        params.toString(),
+        this.keycloakRequestConfig
       );
       
       this.setSession(response.data);
       console.log('Token renovado con éxito, nueva expiración:', new Date(parseInt(localStorage.getItem('expires_at') || '0')));
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error refreshing token:', error);
+      if (error.response) {
+        console.error('Status:', error.response.status);
+        console.error('Data:', error.response.data);
+        console.error('Headers:', error.response.headers);
+      } else if (error.request) {
+        console.error('No response received:', error.request);
+      } else {
+        console.error('Error config:', error.config);
+      }
       this.clearSession();
       return false;
     }

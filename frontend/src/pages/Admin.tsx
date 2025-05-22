@@ -34,19 +34,26 @@ const Admin: React.FC = () => {
   const [importSuccess, setImportSuccess] = useState<boolean>(false);
 
   useEffect(() => {
-    // Verify if user is administrator
-    console.log("Verifying administrator permissions...");
+    // Primero verificar si el usuario está autenticado
+    if (!authService.isAuthenticated()) {
+      console.warn("Usuario no autenticado, redirigiendo a login");
+      navigate('/login');
+      return;
+    }
+
+    // Luego verificar si es administrador
+    console.log("Verificando permisos de administrador...");
     const isAdmin = authService.isAdmin();
-    console.log("Is administrator?", isAdmin);
+    console.log("¿Es administrador?", isAdmin);
     
     if (!isAdmin) {
-      console.warn("User without administrator permissions, redirecting to home");
+      console.warn("Usuario sin permisos de administrador, redirigiendo a home");
       navigate('/');
       return;
     }
     
-    console.log("User authenticated as administrator, loading panel");
-    // Load initial data based on active tab
+    console.log("Usuario autenticado como administrador, cargando panel");
+    // Cargar datos iniciales basados en la pestaña activa
     loadTabData(activeTab);
   }, [activeTab, navigate]);
 

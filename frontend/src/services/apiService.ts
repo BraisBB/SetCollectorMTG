@@ -2,6 +2,8 @@ import { httpClient } from './httpClient';
 import authService from './authService';
 import { SetMtg, Card, Deck, DeckCreateDto, CardDeck, User, UserCollectionCard } from './types';
 import { SearchParams } from '../components/SearchBar';
+import { API_BASE_URL } from './config';
+import axios from 'axios';
 
 // Servicio para operaciones de la API
 const apiService = {
@@ -384,30 +386,21 @@ const apiService = {
       
       if (!Array.isArray(response)) {
         console.error('Respuesta inesperada al obtener usuarios (no es un array):', response);
-        // Intentar convertir a array si es posible
-        if (response && typeof response === 'object') {
-          console.log('Intentando convertir objeto a array:', response);
-          // Si es un objeto con múltiples propiedades que podrían ser usuarios
-          const values = Object.values(response);
-          if (values.length > 0) {
-            console.log('Convertido a array con éxito, elementos:', values.length);
-            return values as User[];
-          }
-        }
         return [];
       }
       
-      console.log('Users retrieved successfully:', response);
+      console.log('Users received:', response);
       return response;
     } catch (error) {
       console.error('Error retrieving users:', error);
-      return [];
+      throw error;
     }
   },
 
   createUser: async (userData: any): Promise<User> => {
     try {
       console.log('Creating user with data:', userData);
+      
       // Ensure we're sending data in the format expected by the backend (UserCreateDto)
       const createDto = {
         username: userData.username,
@@ -416,13 +409,39 @@ const apiService = {
         firstName: userData.firstName,
         lastName: userData.lastName
       };
+      
       console.log('Formatted data for backend:', createDto);
+      
+      // Usar httpClient en lugar de axios directo para aprovechar la configuración centralizada
       const response = await httpClient.post<User>('/users', createDto);
+      
       console.log('User created successfully:', response);
       return response;
-    } catch (error) {
+    } catch (error: any) {
+      // Registrar más detalles sobre el error
       console.error('Error creating user:', error);
-      throw error;
+      
+      if (error.response) {
+        // El servidor respondió con un código de error
+        console.error('Backend response status:', error.response.status);
+        console.error('Backend response data:', error.response.data);
+        console.error('Backend response headers:', error.response.headers);
+        
+        // Propagar un mensaje más descriptivo
+        throw new Error(
+          error.response.data?.message || 
+          error.response.data?.details || 
+          `Error del servidor: ${error.response.status}`
+        );
+      } else if (error.request) {
+        // La solicitud se realizó pero no se recibió respuesta
+        console.error('No response received from server:', error.request);
+        throw new Error('No se recibió respuesta del servidor');
+      } else {
+        // Error en la configuración de la solicitud
+        console.error('Request configuration error:', error.message);
+        throw new Error(`Error de configuración: ${error.message}`);
+      }
     }
   },
 

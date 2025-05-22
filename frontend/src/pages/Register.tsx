@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { apiService } from '../services/apiService';
 import Header from '../components/Header';
 import './Register.css';
 
@@ -129,9 +130,9 @@ const Register: React.FC = () => {
     setLoading(true);
     
     try {
-      const response = await axios.post('http://localhost:8080/users', formData);
+      const response = await apiService.createUser(formData);
       
-      if (response.status === 201) {
+      if (response) {
         navigate('/login', { state: { message: 'Registration successful! Please log in.' } });
       }
     } catch (error: unknown) {

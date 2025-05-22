@@ -1,27 +1,42 @@
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
-import { API_URL } from './config';
+import { API_BASE_URL } from './config';
 import authService from './authService';
+
+/**
+ * Normaliza una URL relativa o absoluta
+ * @param url URL a normalizar
+ * @param baseUrl URL base para URLs relativas
+ * @returns URL normalizada
+ */
+function normalizeUrl(url: string, baseUrl: string): string {
+  if (url.startsWith('http')) return url;
+  return url.startsWith('/') ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
+}
 
 // Cliente HTTP centralizado para todas las peticiones a la API
 class HttpClient {
   private api;
   
-  constructor(baseURL: string) {
-    // Asegurarnos de que tenemos un baseURL adecuado
+  constructor() {
     this.api = axios.create({
-      baseURL,
-      timeout: 10000, // Reducimos el timeout a 10 segundos
+      baseURL: API_BASE_URL,
+      timeout: 15000, // Aumentamos timeout
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
-      }
+        // REMOVIDO: No enviar Origin manualmente, lo maneja el navegador
+      },
+      withCredentials: true
     });
     
     // Interceptor para añadir token de autorización
     this.api.interceptors.request.use(async (config: any) => {
-      // Asegurar que la URL tiene el formato correcto
-      if (!config.url.startsWith('/') && !config.url.startsWith('http')) {
-        config.url = `/${config.url}`;
+      // Log para debugging
+      console.log(`Making ${config.method?.toUpperCase()} request to:`, config.url || config.baseURL);
+      
+      // Normalizar la URL solo si no estamos usando proxy
+      if (!import.meta.env.DEV && config.url && !config.url.startsWith('http')) {
+        config.url = normalizeUrl(config.url, API_BASE_URL);
       }
       
       // Actualizar token si está por expirar
@@ -37,6 +52,7 @@ class HttpClient {
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
+      
       return config;
     }, (error) => {
       console.error('Error en la configuración de la petición:', error);
@@ -46,65 +62,49 @@ class HttpClient {
     // Interceptor para manejar errores
     this.api.interceptors.response.use(
       (response) => {
-        return response;
+        console.log(`Response ${response.status} from:`, response.config.url);
+        return response.data; // Devolver directamente response.data para simplificar
       },
       async (error: AxiosError) => {
-        // Mejora en la gestión de errores
+        // Logging mejorado para debugging
         if (error.response) {
-          // La solicitud fue realizada y el servidor respondió con un código de estado
-          // que no está en el rango de 2xx
           const status = error.response.status;
-          const url = error.config?.url || '';
+          const url = error.config?.url || 'unknown';
           
-          console.error(`Error en solicitud HTTP (${status}): ${url}`);
+          console.error(`HTTP Error ${status} for ${url}`);
+          console.error('Response headers:', error.response.headers);
+          console.error('Response data:', error.response.data);
           
-          // Añadir información más descriptiva al error
           if (error.response.data && typeof error.response.data === 'object' && 'message' in error.response.data) {
             error.message = `Error ${status}: ${error.response.data.message}`;
           } else {
             error.message = `Error ${status}: ${error.response.statusText}`;
           }
           
-          // Si es un error de autenticación, actualizar token o redirigir al login
+          // Manejo de errores de autenticación
           if (status === 401 || status === 403) {
-            // En caso de 401, intentar refrescar el token y reintentar
             if (status === 401 && authService.isAuthenticated() && error.config) {
               const refreshed = await authService.refreshTokenIfNeeded();
               
               if (refreshed) {
-                // Si se refrescó el token con éxito, reintentar la solicitud original
                 const newToken = authService.getToken();
-                
                 if (newToken && error.config.headers) {
                   error.config.headers.Authorization = `Bearer ${newToken}`;
                 }
-                
-                return axios(error.config);
-              }
-            }
-            
-            // Para errores 403, podría ser un problema de permisos o del ID de usuario
-            if (status === 403 && error.config) {
-              // Si hay un userId en el config, podríamos estar usando un ID numérico incorrecto
-              const userId = authService.getUserIdentifier();
-              const username = localStorage.getItem('username');
-              
-              if (username && userId && url.includes(`/user/${userId}`)) {
-                // Intentar con username en lugar de ID numérico
-                const newUrl = url.replace(`/user/${userId}`, `/user/byUsername/${username}`);
-                
-                error.config.url = newUrl;
-                return axios(error.config);
+                return this.api(error.config);
               }
             }
           }
         } else if (error.request) {
-          // La solicitud fue realizada pero no se recibió respuesta
-          console.error('Error de red (Sin respuesta):', error.config?.url);
+          console.error('Network error - no response received:', error.config?.url);
+          console.error('Request details:', {
+            method: error.config?.method,
+            url: error.config?.url,
+            headers: error.config?.headers
+          });
           error.message = 'No se recibió respuesta del servidor';
         } else {
-          // Algo ocurrió durante la preparación de la solicitud
-          console.error('Error en la configuración de la solicitud:', error.message);
+          console.error('Request setup error:', error.message);
         }
         
         return Promise.reject(error);
@@ -112,54 +112,22 @@ class HttpClient {
     );
   }
   
-  // Métodos genéricos para las operaciones CRUD
+  // Métodos simplificados para usar con response.data directo
   async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    try {
-      const response = await this.api.get(url, config);
-      // Asegurar que tenemos datos válidos
-      if (response && response.data !== undefined) {
-        return response.data as T;
-      } else {
-        // Si estamos esperando un array, devolvemos un array vacío
-        if (url.includes('/users') || url.includes('/sets') || url.includes('/cards') || url.includes('/decks')) {
-          return [] as unknown as T;
-        }
-        return null as unknown as T;
-      }
-    } catch (error) {
-      // Manejo de fallback para desarrollo
-      if (url.includes('/sets')) {
-        console.warn('Fallback para sets en desarrollo');
-        return [] as unknown as T;
-      }
-      throw error;
-    }
+    return this.api.get(url, config);
   }
   
   async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.api.post(url, data, config);
-    if (response && response.data !== undefined) {
-      return response.data as T;
-    }
-    return null as unknown as T;
+    return this.api.post(url, data, config);
   }
   
   async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.api.put(url, data, config);
-    if (response && response.data !== undefined) {
-      return response.data as T;
-    }
-    return null as unknown as T;
+    return this.api.put(url, data, config);
   }
   
   async delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.api.delete(url, config);
-    if (response && response.data !== undefined) {
-      return response.data as T;
-    }
-    return null as unknown as T;
+    return this.api.delete(url, config);
   }
 }
 
-// Exportamos una instancia única para todo el proyecto
-export const httpClient = new HttpClient(API_URL); 
+export const httpClient = new HttpClient();
