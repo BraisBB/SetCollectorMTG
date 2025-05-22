@@ -6,6 +6,9 @@ import org.keycloak.admin.client.KeycloakBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Configuración para exponer un bean Keycloak que permite interactuar con la Admin API de Keycloak.
  *
@@ -16,10 +19,14 @@ import org.springframework.context.annotation.Configuration;
  * Las propiedades de conexión y credenciales se obtienen desde application.properties.
  */
 @Configuration
+@Slf4j
 public class KeycloakAdminConfig {
 
-    @Value("${keycloak.internal-server-url}")
+    @Value("${keycloak.auth-server-url}")
     private String serverUrl;
+
+    @Value("${keycloak.public-server-url:${keycloak.auth-server-url}}")
+    private String publicServerUrl;
 
     @Value("${keycloak.realm}")
     private String realm;
@@ -38,6 +45,7 @@ public class KeycloakAdminConfig {
      */
     @Bean
     public Keycloak keycloakAdmin() {
+        log.info("Configurando cliente admin de Keycloak usando URL: {}", serverUrl);
         // Este bean se usará para interactuar con la Admin API de Keycloak
         return KeycloakBuilder.builder()
                 .serverUrl(serverUrl)

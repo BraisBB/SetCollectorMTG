@@ -412,35 +412,28 @@ const apiService = {
       
       console.log('Formatted data for backend:', createDto);
       
-      // Usar httpClient en lugar de axios directo para aprovechar la configuración centralizada
-      const response = await httpClient.post<User>('/users', createDto);
+      // Uso de axios directo para evitar interceptores de autenticación
+      const response = await axios.post(`${API_BASE_URL}/users`, createDto, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        timeout: 20000, // 20 segundos
+        withCredentials: false // importante: sin credentials para evitar problemas CORS
+      });
       
-      console.log('User created successfully:', response);
-      return response;
+      console.log('User created successfully:', response.data);
+      return response.data;
     } catch (error: any) {
-      // Registrar más detalles sobre el error
-      console.error('Error creating user:', error);
-      
       if (error.response) {
-        // El servidor respondió con un código de error
-        console.error('Backend response status:', error.response.status);
-        console.error('Backend response data:', error.response.data);
-        console.error('Backend response headers:', error.response.headers);
-        
-        // Propagar un mensaje más descriptivo
-        throw new Error(
-          error.response.data?.message || 
-          error.response.data?.details || 
-          `Error del servidor: ${error.response.status}`
-        );
+        console.error('Error from server:', error.response.status, error.response.data);
+        throw new Error(error.response.data.message || `Error del servidor: ${error.response.status}`);
       } else if (error.request) {
-        // La solicitud se realizó pero no se recibió respuesta
-        console.error('No response received from server:', error.request);
+        console.error('No response received:', error.request);
         throw new Error('No se recibió respuesta del servidor');
       } else {
-        // Error en la configuración de la solicitud
-        console.error('Request configuration error:', error.message);
-        throw new Error(`Error de configuración: ${error.message}`);
+        console.error('Error creating user:', error.message);
+        throw error;
       }
     }
   },

@@ -60,15 +60,36 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserDto createUser(UserCreateDto userCreateDto) {
-        log.info("API request to create user: {}", userCreateDto.getUsername());
+        log.info("=== INICIO: API request to create user: {} ===", userCreateDto.getUsername());
+        
+        // Validar datos de entrada
+        if (userCreateDto.getUsername() == null || userCreateDto.getUsername().trim().isEmpty()) {
+            log.error("VALIDACIÓN FALLIDA: Intento de crear usuario con nombre de usuario vacío");
+            throw new IllegalArgumentException("El nombre de usuario no puede estar vacío");
+        }
+
+        if (userCreateDto.getEmail() == null || userCreateDto.getEmail().trim().isEmpty()) {
+            log.error("VALIDACIÓN FALLIDA: Intento de crear usuario con email vacío");
+            throw new IllegalArgumentException("El email no puede estar vacío");
+        }
+
+        if (userCreateDto.getPassword() == null || userCreateDto.getPassword().trim().isEmpty()) {
+            log.error("VALIDACIÓN FALLIDA: Intento de crear usuario con contraseña vacía");
+            throw new IllegalArgumentException("La contraseña no puede estar vacía");
+        }
+        
+        // Verificar si ya existe
         if (userRepository.existsByUsername(userCreateDto.getUsername())) {
-            log.warn("Username {} already exists locally.", userCreateDto.getUsername());
+            log.warn("VALIDACIÓN FALLIDA: Username {} already exists locally.", userCreateDto.getUsername());
             throw new RuntimeException("Username already exists");
         }
+        
         if (userRepository.existsByEmail(userCreateDto.getEmail())) {
-            log.warn("Email {} already exists locally.", userCreateDto.getEmail());
+            log.warn("VALIDACIÓN FALLIDA: Email {} already exists locally.", userCreateDto.getEmail());
             throw new RuntimeException("Email already in use");
         }
+
+        log.info("VALIDACIÓN CORRECTA: Datos del usuario válidos, procediendo a crear en Keycloak");
 
         // Crear un mapa con solo los campos necesarios
         UserRepresentation userRepresentation = new UserRepresentation();
@@ -85,24 +106,28 @@ public class UserServiceImpl implements UserService {
         credential.setTemporary(false);
         userRepresentation.setCredentials(Collections.singletonList(credential));
 
+        log.info("KEYCLOAK: Preparando conexión con Keycloak: Realm={}", realm);
         RealmResource realmResource = keycloakAdmin.realms().realm(realm);
         Response response = null;
         String keycloakUserId = null;
 
         try {
-            log.debug("Attempting to create user in Keycloak realm '{}'", realm);
+            log.debug("KEYCLOAK: Intentando crear usuario en Keycloak realm '{}'. Username={}, Email={}",
+                    realm, userCreateDto.getUsername(), userCreateDto.getEmail());
             response = realmResource.users().create(userRepresentation);
 
-            log.debug("Keycloak response status: {}", response.getStatus());
+            log.debug("KEYCLOAK: Respuesta recibida. Status: {}", response.getStatus());
             if (response.getStatus() == 201) { // 201 Created = Éxito
                 String locationHeader = response.getLocation().getPath();
                 keycloakUserId = locationHeader.substring(locationHeader.lastIndexOf('/') + 1);
-                log.info("User successfully created in Keycloak with ID: {}", keycloakUserId);
+                log.info("KEYCLOAK: User successfully created in Keycloak with ID: {}", keycloakUserId);
 
                 // Asignar rol USER por defecto
+                log.debug("KEYCLOAK: Asignando rol USER al usuario con ID Keycloak: {}", keycloakUserId);
                 assignRolesToUser(realmResource, keycloakUserId, Collections.singletonList("USER"));
 
                 // Crear usuario local
+                log.debug("DB: Creando registro de usuario en base de datos local");
                 User appUser = new User();
                 appUser.setKeycloakId(keycloakUserId);
                 appUser.setUsername(userCreateDto.getUsername());
@@ -110,42 +135,44 @@ public class UserServiceImpl implements UserService {
                 appUser.setFirstName(userCreateDto.getFirstName());
                 appUser.setLastName(userCreateDto.getLastName());
 
+                log.debug("DB: Creando colección por defecto para el usuario");
                 UserCollection defaultCollection = new UserCollection();
                 defaultCollection.setUser(appUser);
                 defaultCollection.setTotalCards(0);
                 appUser.setUserCollection(defaultCollection);
 
+                log.debug("DB: Guardando usuario y colección en base de datos local");
                 User savedUser = userRepository.save(appUser);
-                log.info("Local user record created successfully with default USER role for Keycloak ID: {}",
-                        keycloakUserId);
+                log.info("=== FIN: Usuario creado exitosamente: ID={}, Username={} ===", 
+                        savedUser.getUserId(), savedUser.getUsername());
                 return userMapper.toDto(savedUser);
             } else {
                 String errorBody = "";
                 if (response.hasEntity()) {
                     errorBody = response.readEntity(String.class);
                 }
-                log.error("Failed to create user in Keycloak. Status: {}, Info: {}, Body: {}",
+                log.error("KEYCLOAK ERROR: Failed to create user in Keycloak. Status: {}, Info: {}, Body: {}",
                         response.getStatus(), response.getStatusInfo(), errorBody);
                 throw new RuntimeException(
                         "Keycloak user creation failed. Status: " + response.getStatus() + " - " + errorBody);
             }
         } catch (Exception e) {
-            log.error("Exception during user creation process for username {}: {}", userCreateDto.getUsername(),
+            log.error("EXCEPCIÓN: Error durante la creación del usuario {}: {}", userCreateDto.getUsername(),
                     e.getMessage(), e);
             if (keycloakUserId != null && response != null && response.getStatus() == 201) {
                 log.warn(
-                        "Local DB save likely failed after Keycloak user creation. Attempting Keycloak user rollback for ID: {}",
+                        "ROLLBACK: Falló el guardado en base de datos después de crear usuario en Keycloak. Intentando rollback para ID: {}",
                         keycloakUserId);
                 try {
                     realmResource.users().delete(keycloakUserId);
-                    log.info("Rollback successful: Keycloak user {} deleted.", keycloakUserId);
+                    log.info("ROLLBACK: Eliminación de usuario en Keycloak exitosa: {}", keycloakUserId);
                 } catch (Exception deleteEx) {
                     log.error(
-                            "FATAL: Rollback failed! Keycloak user {} exists but local record failed or delete failed. Manual intervention required.",
+                            "ROLLBACK ERROR: ¡Falló el rollback! Usuario Keycloak {} existe pero el registro local falló. Requiere intervención manual.",
                             keycloakUserId, deleteEx);
                 }
             }
-            throw new RuntimeException("Error during user creation process", e);
+            throw new RuntimeException("Error durante el proceso de creación de usuario", e);
         } finally {
             if (response != null) {
                 response.close();

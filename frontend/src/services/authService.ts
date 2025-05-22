@@ -66,6 +66,13 @@ class AuthService {
   }
 
   /**
+   * Obtener la URL de redirección para el inicio de sesión
+   */
+  getRedirectUri(): string {
+    return KEYCLOAK_CONFIG.REDIRECT_URI || window.location.origin;
+  }
+
+  /**
    * Realiza el login del usuario usando las credenciales proporcionadas
    */
   async login(credentials: LoginCredentials): Promise<boolean> {
@@ -86,8 +93,10 @@ class AuthService {
       params.append('username', credentials.username);
       params.append('password', credentials.password);
       params.append('scope', 'openid profile email');
+      params.append('redirect_uri', this.getRedirectUri());
 
       console.log('Enviando solicitud de autenticación a:', `${KEYCLOAK_CONFIG.URL}/realms/${KEYCLOAK_CONFIG.REALM}/protocol/openid-connect/token`);
+      console.log('Redirect URI:', this.getRedirectUri());
       
       const response = await axios.post<AuthTokens>(
         `${KEYCLOAK_CONFIG.URL}/realms/${KEYCLOAK_CONFIG.REALM}/protocol/openid-connect/token`,
@@ -143,6 +152,7 @@ class AuthService {
       const params = new URLSearchParams();
       params.append('client_id', KEYCLOAK_CONFIG.CLIENT_ID);
       params.append('refresh_token', refreshToken);
+      params.append('redirect_uri', this.getRedirectUri());
 
       // Configuramos un timeout para evitar que la petición se quede colgada
       const logoutConfig = {

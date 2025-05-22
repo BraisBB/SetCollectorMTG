@@ -23,6 +23,7 @@ import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.core.env.Environment;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -62,6 +63,8 @@ public class SecurityConfig {
     // Inyectamos el filtro de sincronización
     private final AuthenticationSynchronizationFilter authSyncFilter;
 
+    private final Environment environment;
+
     /**
      * Define la cadena de filtros de seguridad principal.
      *
@@ -71,6 +74,18 @@ public class SecurityConfig {
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        log.info("Configurando seguridad en SecurityConfig");
+        
+        // Determinar el entorno para la configuración CORS
+        String activeProfile = environment.getProperty("spring.profiles.active", "default");
+        boolean isDev = activeProfile.contains("dev") || activeProfile.equals("default");
+        
+        if (isDev) {
+            log.info("CORS configurado para entorno de DESARROLLO");
+        } else {
+            log.info("CORS configurado para entorno de PRODUCCIÓN");
+        }
+        
         // Convertidor para extraer roles del token JWT y mapearlos a authorities de Spring Security
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(new KeycloakRoleConverter());
@@ -91,35 +106,55 @@ public class SecurityConfig {
                 
                 // Configurar reglas de autorización para URLs
                 .authorizeHttpRequests(authorize -> authorize
-                        // Permitir OPTIONS para todas las rutas (para preflight CORS)
+                        // Rutas públicas (sin autenticación)
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        
-                        // Rutas públicas: documentación API, swagger, salud, registro, login
+                        .requestMatchers("/", "/actuator/**", "/health/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/actuator/health").permitAll()
-                        .requestMatchers("/sets/**").permitAll()
-                        .requestMatchers("/cards/**").permitAll()
-                        .requestMatchers("/decks/**").permitAll()
-                        .requestMatchers("/admin/**").permitAll() // Temporalmente permitir acceso a rutas admin
+                        
+                        // Permitir registro de usuarios sin autenticación
+                        .requestMatchers(HttpMethod.POST, "/users").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/users/").permitAll()
                         
                         // Permitir operaciones específicas en /users sin autenticación (para registro)
-                        .requestMatchers(HttpMethod.POST, "/users").permitAll() // Registro de usuarios
                         .requestMatchers(HttpMethod.GET, "/users/username/**").permitAll() // Verificar username
                         
                         // El resto de operaciones en /users requieren autenticación
-                        .requestMatchers("/users/**").permitAll() // Temporalmente permitir acceso a todos los endpoints de users
+                        .requestMatchers("/users/**").authenticated()
                         
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/public/**").permitAll()
                         
+                        // Rutas protegidas con roles específicos
+                        .requestMatchers("/admin/**").hasAuthority("ADMIN")
+                        
                         // Todo lo demás requiere autenticación
-                        .anyRequest().permitAll() // Temporalmente permitir acceso a todo
+                        .anyRequest().authenticated()
                 )
                 
                 // Configurar autenticación con OAuth2 Resource Server (JWT)
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
                 )
+                
+                // Agregar filtro personalizado para OPTIONS preflight con configuración explícita de Content-Type
+                .addFilterBefore(new OncePerRequestFilter() {
+                    @Override
+                    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) 
+                            throws ServletException, IOException {
+                        // Si es una solicitud OPTIONS, establecer encabezados CORS y finalizar
+                        if (request.getMethod().equals(HttpMethod.OPTIONS.name())) {
+                            response.setHeader("Access-Control-Allow-Origin", "*");
+                            response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+                            response.setHeader("Access-Control-Allow-Headers", 
+                                    "Authorization, Content-Type, Accept, X-Requested-With, Origin, Access-Control-Request-Method, Access-Control-Request-Headers");
+                            response.setHeader("Access-Control-Allow-Credentials", "true");
+                            response.setHeader("Access-Control-Max-Age", "3600");
+                            response.setStatus(HttpServletResponse.SC_OK);
+                            return;
+                        }
+                        filterChain.doFilter(request, response);
+                    }
+                }, CorsFilter.class)
                 
                 // Agregar filtro personalizado para sincronizar usuario autenticado
                 .addFilterBefore(authSyncFilter, UsernamePasswordAuthenticationFilter.class);
