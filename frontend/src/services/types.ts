@@ -87,7 +87,9 @@ export interface RegisterCredentials {
 export interface AuthResponse {
   token: string;
   username: string;
+  email?: string;
   roles: string[];
+  message?: string;
 }
 
 export interface User {
@@ -99,4 +101,25 @@ export interface User {
   joinDate?: string;
   roles: string[];
   enabled: boolean;
+}
+
+// DTOs para gestión de usuarios
+export interface UserCreateDto {
+  username: string;
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface UserRoleUpdateDto {
+  roles: string[];
+}
+
+// Respuesta para operaciones de roles
+export interface RoleUpdateResponse {
+  success: boolean;
+  message: string;
+  userId: number;
+  assignedRoles: string[];
 } 

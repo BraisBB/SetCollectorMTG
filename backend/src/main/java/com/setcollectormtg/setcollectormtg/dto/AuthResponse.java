@@ -22,6 +22,6 @@ public class AuthResponse {
         this.username = username;
         this.email = email;
         this.roles = roles;
-        this.message = "Autenticación exitosa";
+        this.message = "Authentication successful";
     }
 } 

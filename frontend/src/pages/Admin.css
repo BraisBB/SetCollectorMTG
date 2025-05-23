@@ -516,3 +516,120 @@
   text-align: center;
 }
 
+/* Gestión de roles */
+.user-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.role-badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.role-badge.user {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.role-badge.admin {
+  background-color: #fff3e0;
+  color: #f57c00;
+}
+
+.no-roles {
+  color: #666;
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.status-badge.enabled {
+  background-color: #e8f5e8;
+  color: #2e7d32;
+}
+
+.status-badge.disabled {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+/* Role management in form */
+.role-management {
+  margin-top: 8px;
+}
+
+.available-roles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.role-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.role-checkbox input[type="checkbox"] {
+  margin: 0;
+}
+
+.role-label {
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.role-label.user {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.role-label.admin {
+  background-color: #fff3e0;
+  color: #f57c00;
+}
+
+.btn-update-roles {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-update-roles:hover {
+  background-color: #45a049;
+}
+
+.warning {
+  color: #ff9800;
+  font-size: 0.875rem;
+  margin-top: 8px;
+  padding: 8px;
+  background-color: #fff3e0;
+  border-radius: 4px;
+  border-left: 4px solid #ff9800;
+}
+

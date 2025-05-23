@@ -28,26 +28,26 @@ public class AdminController {
     private final CardImportService cardImportService;
 
     /**
-     * Endpoint para subir un archivo JSON con cartas y procesarlo
-     * Solo accesible para administradores
+     * Endpoint to upload a JSON file with cards and process it.
+     * Only accessible for administrators.
      */
     @PostMapping(value = "/cards/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Map<String, Object>> importCardsFromJson(@RequestParam("file") MultipartFile file) {
-        log.info("Recibida solicitud para importar cartas desde archivo JSON: {}", file.getOriginalFilename());
+        log.info("Request received to import cards from JSON file: {}", file.getOriginalFilename());
         Map<String, Object> response = new HashMap<>();
         
-        // Validaciones iniciales
+        // Initial validations
         if (file.isEmpty()) {
-            log.warn("Se intentó subir un archivo vacío");
+            log.warn("Attempt to upload empty file");
             response.put("success", false);
             response.put("message", "Please select a file to upload");
             return ResponseEntity.badRequest().body(response);
         }
 
-        // Verificar que es un archivo JSON
+        // Verify it's a JSON file
         if (!file.getOriginalFilename().toLowerCase().endsWith(".json")) {
-            log.warn("Se intentó subir un archivo que no es JSON: {}", file.getOriginalFilename());
+            log.warn("Attempt to upload non-JSON file: {}", file.getOriginalFilename());
             response.put("success", false);
             response.put("message", "Only JSON files are allowed");
             return ResponseEntity.badRequest().body(response);
@@ -55,36 +55,36 @@ public class AdminController {
         
         Path tempFilePath = null;
         try {
-            // Crear un archivo temporal para guardar el JSON
+            // Create a temporary file to save the JSON
             String filename = UUID.randomUUID().toString() + ".json";
             tempFilePath = Paths.get(System.getProperty("java.io.tmpdir"), filename);
             Files.write(tempFilePath, file.getBytes());
             
-            log.info("Archivo guardado temporalmente en: {}", tempFilePath);
-            log.info("Tamaño del archivo: {} bytes", file.getSize());
+            log.info("File temporarily saved at: {}", tempFilePath);
+            log.info("File size: {} bytes", file.getSize());
             
-            // Procesar el archivo JSON
+            // Process the JSON file
             cardImportService.importSetFromJson(tempFilePath.toString());
             
-            log.info("Importación completada con éxito");
+            log.info("Import completed successfully");
             
             response.put("success", true);
             response.put("message", "Cards imported successfully");
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("Error al importar cartas: {}", e.getMessage(), e);
+            log.error("Error importing cards: {}", e.getMessage(), e);
             response.put("success", false);
             response.put("message", "Error importing cards: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         } finally {
-            // Eliminar el archivo temporal si existe
+            // Delete temporary file if it exists
             if (tempFilePath != null) {
                 try {
                     Files.deleteIfExists(tempFilePath);
-                    log.info("Archivo temporal eliminado: {}", tempFilePath);
+                    log.info("Temporary file deleted: {}", tempFilePath);
                 } catch (IOException e) {
-                    log.warn("No se pudo eliminar el archivo temporal: {}", tempFilePath, e);
+                    log.warn("Could not delete temporary file: {}", tempFilePath, e);
                 }
             }
         }

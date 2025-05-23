@@ -4,6 +4,8 @@ import com.setcollectormtg.setcollectormtg.dto.AuthRequest;
 import com.setcollectormtg.setcollectormtg.dto.AuthResponse;
 import com.setcollectormtg.setcollectormtg.dto.RegisterRequest;
 import com.setcollectormtg.setcollectormtg.enums.Role;
+import com.setcollectormtg.setcollectormtg.exception.ResourceNotFoundException;
+import com.setcollectormtg.setcollectormtg.exception.UserAlreadyExistsException;
 import com.setcollectormtg.setcollectormtg.model.User;
 import com.setcollectormtg.setcollectormtg.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,11 +31,11 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
         // Verificar si el usuario ya existe
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            throw new RuntimeException("El usuario ya existe");
-    }
-    
+            throw new UserAlreadyExistsException("Username already exists");
+        }
+        
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("El email ya está registrado");
+            throw new UserAlreadyExistsException("Email is already registered");
         }
 
         // Crear nuevo usuario
@@ -65,7 +67,7 @@ public class AuthService {
         );
 
         User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         String jwtToken = jwtService.generateToken(user);
         Set<String> roleNames = user.getRoles().stream()

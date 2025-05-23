@@ -3,6 +3,7 @@ package com.setcollectormtg.setcollectormtg.dto;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 @Data
 public class UserDto {
@@ -12,5 +13,7 @@ public class UserDto {
     private String firstName;
     private String lastName;
     private LocalDate joinDate;
-    // No tiene contraseña ni keycloakId 
+    private Set<String> roles;
+    private Boolean enabled;
+    // No tiene contraseña por seguridad
 }

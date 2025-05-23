@@ -26,80 +26,102 @@ public class DeckController {
     private final DeckService deckService;
     private final CurrentUserUtil currentUserUtil;
 
-    @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
+    @GetMapping("/admin")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<List<DeckDto>> getAllDecks() {
+        log.debug("Getting all decks (admin endpoint)");
         return ResponseEntity.ok(deckService.getAllDecks());
     }
 
+    /**
+     * Gets a specific deck by ID. Accessible by ADMIN (for moderation) or the deck owner.
+     */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER', 'ADMIN', 'ROLE_ADMIN') and @userSecurity.isOwner(authentication, #id)")
+    @PreAuthorize("hasAuthority('ADMIN') or (hasAuthority('USER') and @userSecurity.isOwner(authentication, #id))")
     public ResponseEntity<DeckDto> getDeckById(@PathVariable Long id) {
         return ResponseEntity.ok(deckService.getDeckById(id));
     }
 
+    /**
+     * Gets decks by user ID. Accessible by ADMIN (for moderation) or the user themselves.
+     */
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER', 'ADMIN', 'ROLE_ADMIN') and @userSecurity.isOwner(authentication, #userId)")
-    public ResponseEntity<List<DeckDto>> getDecksByUser(@PathVariable Long userId) {
-        log.info("Solicitando mazos para usuario con ID: {}", userId);
+    @PreAuthorize("hasAuthority('ADMIN') or (hasAuthority('USER') and @userSecurity.isOwner(authentication, #userId))")
+    public ResponseEntity<List<DeckDto>> getDecksByUserId(@PathVariable Long userId) {
+        log.info("Requesting decks for user with ID: {}", userId);
         return ResponseEntity.ok(deckService.getDecksByUser(userId));
     }
 
+    /**
+     * Gets decks by username. Accessible by ADMIN (for moderation) or the user themselves.
+     */
     @GetMapping("/user/byUsername/{username}")
-    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER', 'ADMIN', 'ROLE_ADMIN') and @userSecurity.canAccessUserByUsername(authentication, #username)")
+    @PreAuthorize("hasAuthority('ADMIN') or (hasAuthority('USER') and @userSecurity.canAccessUserByUsername(authentication, #username))")
     public ResponseEntity<List<DeckDto>> getDecksByUsername(@PathVariable String username) {
-        log.info("Solicitando mazos para usuario con username: {}", username);
+        log.info("Requesting decks for user with username: {}", username);
         return ResponseEntity.ok(deckService.getDecksByUsername(username));
     }
     
+    /**
+     * Gets decks for the current authenticated user. USER authority only.
+     */
     @GetMapping("/current-user")
-    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER', 'ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<List<DeckDto>> getDecksForCurrentUser() {
-        log.info("Solicitando mazos para el usuario autenticado actualmente");
+        log.info("Requesting decks for the currently authenticated user");
         
         User currentUser = currentUserUtil.getCurrentUser();
         if (currentUser == null) {
-            log.warn("No se pudo obtener el usuario actual");
+            log.warn("Could not get current user");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         
-        log.info("Usuario autenticado con ID: {}, username: {}", 
+        log.info("Authenticated user with ID: {}, username: {}", 
                 currentUser.getUserId(), currentUser.getUsername());
         
         return ResponseEntity.ok(deckService.getDecksByUser(currentUser.getUserId()));
     }
 
+    /**
+     * Gets decks by user with pagination. Accessible by the user themselves only.
+     */
     @GetMapping("/user/{userId}/paged")
-    @PreAuthorize("@userSecurity.isOwner(authentication, #userId)")
+    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #userId)")
     public ResponseEntity<Page<DeckDto>> getDecksByUserPaged(@PathVariable Long userId, Pageable pageable) {
         return ResponseEntity.ok(deckService.getDecksByUserPaged(userId, pageable));
     }
 
+    /**
+     * Creates a new deck. USER authority only.
+     */
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER', 'ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<DeckDto> createDeck(@Valid @RequestBody DeckCreateDto deckCreateDto) {
         try {
-            log.info("Solicitud de creación de mazo recibida: {}", deckCreateDto);
+            log.info("Deck creation request received: {}", deckCreateDto);
             
-            // Validar explícitamente que el DTO es correcto
+            // Explicitly validate that the DTO is correct
             if (deckCreateDto.getDeckName() == null || deckCreateDto.getDeckName().trim().isEmpty()) {
-                log.warn("Intento de crear mazo con nombre vacío");
+                log.warn("Attempt to create deck with empty name");
                 return ResponseEntity.badRequest().build();
             }
             
-            // Crear el mazo
+            // Create the deck
             DeckDto createdDeck = deckService.createDeck(deckCreateDto);
-            log.info("Mazo creado exitosamente con ID: {}", createdDeck.getDeckId());
+            log.info("Deck successfully created with ID: {}", createdDeck.getDeckId());
             
             return ResponseEntity.status(HttpStatus.CREATED).body(createdDeck);
         } catch (Exception e) {
-            log.error("Error al crear mazo: {}", e.getMessage(), e);
+            log.error("Error creating deck: {}", e.getMessage(), e);
             throw e;
         }
     }
 
+    /**
+     * Updates a deck. Accessible by the deck owner only.
+     */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER', 'ADMIN', 'ROLE_ADMIN') and @userSecurity.isOwner(authentication, #id)")
+    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #id)")
     public ResponseEntity<DeckDto> updateDeck(
             @PathVariable Long id,
             @Valid @RequestBody DeckDto deckDto) {
@@ -107,14 +129,17 @@ public class DeckController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("(hasAnyAuthority('USER', 'ROLE_USER') and @userSecurity.isOwner(authentication, #id)) or hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("(hasAuthority('USER') and @userSecurity.isOwner(authentication, #id)) or hasAuthority('ADMIN')")
     public ResponseEntity<Void> deleteDeck(@PathVariable Long id) {
         deckService.deleteDeck(id);
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Updates deck color based on cards. Accessible by the deck owner only.
+     */
     @GetMapping("/{id}/update-color")
-    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER', 'ADMIN', 'ROLE_ADMIN') and @userSecurity.isOwner(authentication, #id)")
+    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #id)")
     public ResponseEntity<DeckDto> updateDeckColor(@PathVariable Long id) {
         return ResponseEntity.ok(deckService.updateDeckColor(id));
     }

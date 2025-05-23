@@ -29,8 +29,7 @@ public class UserSecurity {
     private final DeckRepository deckRepository;
     private final UserCollectionRepository collectionRepository;
 
-    private static final List<String> ADMIN_AUTHORITIES = List.of(
-            "ADMIN", "ROLE_ADMIN", "admin", "realm-admin");
+    private static final List<String> ADMIN_AUTHORITIES = List.of("ADMIN");
 
     /**
      * Verifica si el usuario autenticado es el propietario del recurso identificado por resourceId.

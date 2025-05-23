@@ -1,6 +1,15 @@
 import { httpClient } from './httpClient';
 import { UserCollectionCard, UserCollection } from './types';
 
+// Helper function to build API path correctly
+function apiPath(path: string): string {
+  if (path.startsWith('/api/')) {
+    return path;
+  }
+  const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+  return `/api/${cleanPath}`;
+}
+
 // Servicio para gestionar la colección de cartas del usuario
 class CollectionService {
   /**
@@ -9,7 +18,7 @@ class CollectionService {
   async getCardInCollection(cardId: number): Promise<number> {
     try {
       console.log(`Solicitando cantidad de carta ${cardId} en colección`);
-      const quantity = await httpClient.get<number>(`/collection/cards/${cardId}/quantity`);
+      const quantity = await httpClient.get<number>(apiPath(`/collection/cards/${cardId}/quantity`));
       console.log(`Cantidad de carta ${cardId} recibida: ${quantity}`);
       return quantity;
     } catch (error) {
@@ -26,7 +35,7 @@ class CollectionService {
     try {
       console.log(`Añadiendo carta ${cardId} a la colección (${quantity} copias)`);
       const result = await httpClient.post<UserCollectionCard>(
-        `/collection/cards/${cardId}`,
+        apiPath(`/collection/cards/${cardId}`),
         {}, // Cuerpo vacío, ya que usamos el parámetro quantity
         { params: { quantity } } // Usar params de axios para añadir ?quantity=X
       );
@@ -45,7 +54,7 @@ class CollectionService {
     try {
       console.log(`Actualizando cantidad de carta ${cardId} a ${quantity}`);
       const result = await httpClient.put<UserCollectionCard>(
-        `/collection/cards/${cardId}`,
+        apiPath(`/collection/cards/${cardId}`),
         {}, // Cuerpo vacío
         { params: { quantity } } // Usar params para ?quantity=X
       );
@@ -63,7 +72,7 @@ class CollectionService {
   async removeCardFromCollection(cardId: number): Promise<void> {
     try {
       console.log(`Eliminando carta ${cardId} de la colección`);
-      await httpClient.delete(`/collection/cards/${cardId}`);
+      await httpClient.delete(apiPath(`/collection/cards/${cardId}`));
       console.log(`Carta ${cardId} eliminada correctamente`);
     } catch (error) {
       console.error(`Error al eliminar carta ${cardId} de la colección:`, error);
@@ -76,15 +85,11 @@ class CollectionService {
    */
   async getUserCollectionCards(): Promise<UserCollectionCard[]> {
     try {
-      console.log('Solicitando colección del usuario actual');
-      // Primero, obtener la colección del usuario actual
-      const userCollection = await httpClient.get<UserCollection>(`/collections/user/current`);
-      console.log(`Información de colección recibida: ${userCollection.collectionId}`);
+      console.log('Solicitando cartas de la colección del usuario actual');
       
-      // Luego obtener todas las cartas de esa colección
-      console.log(`Solicitando cartas para colección ${userCollection.collectionId}`);
-      const cards = await httpClient.get<UserCollectionCard[]>(`/collections/${userCollection.collectionId}/cards`);
-      console.log(`${cards.length} cartas recibidas`);
+      // Usar el endpoint directo que obtiene las cartas de la colección del usuario actual
+      const cards = await httpClient.get<UserCollectionCard[]>(apiPath(`/collections/current-user/cards`));
+      console.log(`${cards.length} cartas recibidas de la colección`);
       
       // Verificar la estructura de datos recibida para depuración
       if (cards.length > 0) {

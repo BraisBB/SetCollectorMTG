@@ -1,6 +1,6 @@
 import { httpClient } from './httpClient';
 import authService from './authService';
-import { SetMtg, Card, Deck, DeckCreateDto, CardDeck, User, UserCollectionCard } from './types';
+import { SetMtg, Card, Deck, DeckCreateDto, CardDeck, User, UserCollectionCard, UserRoleUpdateDto, RoleUpdateResponse } from './types';
 import { SearchParams } from '../components/SearchBar';
 
 // Función helper para construir la ruta de API correctamente
@@ -36,6 +36,11 @@ const apiService = {
     return httpClient.get<SetMtg>(apiPath(`/sets/${id}`));
   },
 
+  getSetByCode: async (setCode: string): Promise<SetMtg> => {
+    console.log(`Requesting set with code ${setCode}`);
+    return httpClient.get<SetMtg>(apiPath(`/sets/code/${setCode}`));
+  },
+
   getCardsBySet: async (setId: number): Promise<Card[]> => {
     console.log(`Requesting cards from set ${setId}`);
     return httpClient.get<Card[]>(apiPath(`/sets/${setId}/cards`));
@@ -59,6 +64,23 @@ const apiService = {
   getDeckById: async (deckId: number): Promise<Deck> => {
     console.log(`Requesting deck ${deckId}`);
     return httpClient.get<Deck>(apiPath(`/decks/${deckId}`));
+  },
+
+  getDecksByUserId: async (userId: number): Promise<Deck[]> => {
+    console.log(`Requesting decks for user ${userId}`);
+    return httpClient.get<Deck[]>(apiPath(`/decks/user/${userId}`));
+  },
+
+  getDecksByUsername: async (username: string): Promise<Deck[]> => {
+    console.log(`Requesting decks for user ${username}`);
+    return httpClient.get<Deck[]>(apiPath(`/decks/user/byUsername/${username}`));
+  },
+
+  getDecksByUserPaged: async (userId: number, page: number = 0, size: number = 20): Promise<any> => {
+    console.log(`Requesting paged decks for user ${userId}, page ${page}, size ${size}`);
+    return httpClient.get(apiPath(`/decks/user/${userId}/paged`), {
+      params: { page, size }
+    });
   },
 
   createDeck: async (deck: DeckCreateDto): Promise<Deck> => {
@@ -184,6 +206,18 @@ const apiService = {
     await httpClient.delete(apiPath(`/decks/${deckId}/cards/${cardId}`));
   },
 
+  // Get information about a specific card in a deck
+  getCardDeckInfo: async (deckId: number, cardId: number): Promise<CardDeck> => {
+    console.log(`Getting info for card ${cardId} in deck ${deckId}`);
+    return httpClient.get<CardDeck>(apiPath(`/decks/${deckId}/cards/${cardId}`));
+  },
+
+  // Get the quantity of a specific card in a deck
+  getCardQuantityInDeck: async (deckId: number, cardId: number): Promise<number> => {
+    console.log(`Getting quantity for card ${cardId} in deck ${deckId}`);
+    return httpClient.get<number>(apiPath(`/decks/${deckId}/cards/${cardId}/quantity`));
+  },
+
   // User Collection
   getUserCollection: async (): Promise<UserCollectionCard[]> => {
     try {
@@ -196,6 +230,87 @@ const apiService = {
     } catch (error) {
       console.error('Error fetching user collection:', error);
       return [];
+    }
+  },
+
+  // ===== COLLECTION MANAGEMENT =====
+  createCollection: async (collectionData: any): Promise<any> => {
+    try {
+      console.log('Creating new collection:', collectionData);
+      return httpClient.post(apiPath('/collections'), collectionData);
+    } catch (error) {
+      console.error('Error creating collection:', error);
+      throw error;
+    }
+  },
+
+  getCollectionById: async (collectionId: number): Promise<any> => {
+    try {
+      console.log(`Getting collection ${collectionId}`);
+      return httpClient.get(apiPath(`/collections/${collectionId}`));
+    } catch (error) {
+      console.error(`Error getting collection ${collectionId}:`, error);
+      throw error;
+    }
+  },
+
+  getCollectionByUserId: async (userId: number): Promise<any> => {
+    try {
+      console.log(`Getting collection for user ${userId}`);
+      return httpClient.get(apiPath(`/collections/user/${userId}`));
+    } catch (error) {
+      console.error(`Error getting collection for user ${userId}:`, error);
+      throw error;
+    }
+  },
+
+  getCurrentUserCollection: async (): Promise<any> => {
+    try {
+      console.log('Getting current user collection');
+      return httpClient.get(apiPath('/collections/user/current'));
+    } catch (error) {
+      console.error('Error getting current user collection:', error);
+      throw error;
+    }
+  },
+
+  getCollectionCards: async (collectionId: number): Promise<UserCollectionCard[]> => {
+    try {
+      console.log(`Getting cards for collection ${collectionId}`);
+      return httpClient.get<UserCollectionCard[]>(apiPath(`/collections/${collectionId}/cards`));
+    } catch (error) {
+      console.error(`Error getting cards for collection ${collectionId}:`, error);
+      throw error;
+    }
+  },
+
+  updateCollection: async (collectionId: number, collectionData: any): Promise<any> => {
+    try {
+      console.log(`Updating collection ${collectionId}:`, collectionData);
+      return httpClient.put(apiPath(`/collections/${collectionId}`), collectionData);
+    } catch (error) {
+      console.error(`Error updating collection ${collectionId}:`, error);
+      throw error;
+    }
+  },
+
+  deleteCollection: async (collectionId: number): Promise<void> => {
+    try {
+      console.log(`Deleting collection ${collectionId}`);
+      await httpClient.delete(apiPath(`/collections/${collectionId}`));
+    } catch (error) {
+      console.error(`Error deleting collection ${collectionId}:`, error);
+      throw error;
+    }
+  },
+
+  getTotalCardsInCollection: async (collectionId: number): Promise<number> => {
+    try {
+      console.log(`Getting total cards for collection ${collectionId}`);
+      return httpClient.get<number>(apiPath(`/collections/${collectionId}/total-cards`));
+    } catch (error) {
+      console.error(`Error getting total cards for collection ${collectionId}:`, error);
+      throw error;
     }
   },
 
@@ -218,13 +333,23 @@ const apiService = {
     }
   },
 
-  // Users
+  // ===== USER MANAGEMENT =====
   getUserByUsername: async (username: string): Promise<User> => {
     try {
       console.log(`Requesting user ${username}`);
       return httpClient.get<User>(apiPath(`/users/username/${username}`));
     } catch (error) {
       console.error(`Error getting user by username ${username}:`, error);
+      throw error;
+    }
+  },
+
+  getCurrentUserProfile: async (): Promise<User> => {
+    try {
+      console.log('Requesting current user profile');
+      return httpClient.get<User>(apiPath('/users/me'));
+    } catch (error) {
+      console.error('Error getting current user profile:', error);
       throw error;
     }
   },
@@ -382,6 +507,43 @@ const apiService = {
     }
   },
 
+  // User Role Management
+  getUserRoles: async (userId: number): Promise<string[]> => {
+    try {
+      console.log(`Getting roles for user ${userId}`);
+      const response = await httpClient.get<string[]>(apiPath(`/users/${userId}/roles`));
+      console.log(`Roles for user ${userId}:`, response);
+      return response;
+    } catch (error) {
+      console.error(`Error getting roles for user ${userId}:`, error);
+      throw error;
+    }
+  },
+
+  assignRolesToUser: async (userId: number, roles: string[]): Promise<any> => {
+    try {
+      console.log(`Assigning roles ${roles} to user ${userId}`);
+      const roleUpdateDto = { roles };
+      const response = await httpClient.post(apiPath(`/users/${userId}/roles`), roleUpdateDto);
+      console.log(`Roles assigned successfully to user ${userId}:`, response);
+      return response;
+    } catch (error) {
+      console.error(`Error assigning roles to user ${userId}:`, error);
+      throw error;
+    }
+  },
+
+  removeRoleFromUser: async (userId: number, roleName: string): Promise<void> => {
+    try {
+      console.log(`Removing role ${roleName} from user ${userId}`);
+      await httpClient.delete(apiPath(`/users/${userId}/roles/${roleName}`));
+      console.log(`Role ${roleName} removed from user ${userId}`);
+    } catch (error) {
+      console.error(`Error removing role from user ${userId}:`, error);
+      throw error;
+    }
+  },
+
   // Sets
   createSet: async (setData: Partial<SetMtg>): Promise<SetMtg> => {
     try {
@@ -411,14 +573,12 @@ const apiService = {
   },
 
   // Cartas
-  getAllCards: async (page: number = 0, size: number = 50): Promise<Card[]> => {
+  getAllCards: async (): Promise<Card[]> => {
     try {
-      console.log(`Requesting all cards (page: ${page}, size: ${size})...`);
+      console.log('Requesting all cards...');
       
-      // Get cards with pagination parameters
-      const cards = await httpClient.get<Card[]>(apiPath('/cards'), {
-        params: { page, size }
-      });
+      // Get all cards without pagination parameters
+      const cards = await httpClient.get<Card[]>(apiPath('/cards'));
       
       console.log(`Received ${cards.length} cards from server`);
       
@@ -512,11 +672,9 @@ const apiService = {
   },
 
   // Mazos (funciones administrativas)
-  getAllDecks: async (page: number = 0, size: number = 50): Promise<Deck[]> => {
+  getAllDecks: async (): Promise<Deck[]> => {
     try {
-      return httpClient.get<Deck[]>(apiPath('/decks'), {
-        params: { page, size }
-      });
+      return httpClient.get<Deck[]>(apiPath('/decks/admin'));
     } catch (error) {
       console.error('Error obteniendo todos los mazos:', error);
       return [];

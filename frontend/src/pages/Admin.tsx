@@ -28,6 +28,8 @@ const Admin: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedSet, setSelectedSet] = useState<any>(null);
   const [selectedCard, setSelectedCard] = useState<any>(null);
+  // Estado para roles del usuario seleccionado
+  const [selectedUserRoles, setSelectedUserRoles] = useState<string[]>([]);
   // Estado para importación de cartas
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [importLoading, setImportLoading] = useState<boolean>(false);
@@ -142,7 +144,30 @@ const Admin: React.FC = () => {
 
   const handleEditUser = (user: any) => {
     setSelectedUser(user);
+    // Initialize roles from user data or load from API
+    if (user.roles && Array.isArray(user.roles)) {
+      setSelectedUserRoles(user.roles);
+    } else {
+      // Load roles from API if not available in user object
+      const userId = user.id || user.userId;
+      if (userId) {
+        loadUserRoles(userId);
+      } else {
+        setSelectedUserRoles([]);
+      }
+    }
     setShowUserForm(true);
+  };
+
+  // Add function to load user roles
+  const loadUserRoles = async (userId: number) => {
+    try {
+      const roles = await apiService.getUserRoles(userId);
+      setSelectedUserRoles(roles);
+    } catch (error) {
+      console.error(`Error loading roles for user ${userId}:`, error);
+      setSelectedUserRoles([]);
+    }
   };
 
   const handleUpdateUser = async (userData: any) => {
@@ -616,6 +641,62 @@ const Admin: React.FC = () => {
             />
           </div>
         )}
+        
+        {/* Role Management Section for editing users */}
+        {selectedUser && (
+          <div className="form-group">
+            <label>User Roles</label>
+            <div className="role-management">
+              <div className="available-roles">
+                {['USER', 'ADMIN'].map((role: string) => (
+                  <label key={role} className="role-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={selectedUserRoles.includes(role)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedUserRoles(prev => [...prev, role]);
+                        } else {
+                          // Ensure at least one role remains
+                          const newRoles = selectedUserRoles.filter(r => r !== role);
+                          if (newRoles.length > 0) {
+                            setSelectedUserRoles(newRoles);
+                          }
+                        }
+                      }}
+                    />
+                    <span className={`role-label ${role.toLowerCase()}`}>{role}</span>
+                  </label>
+                ))}
+              </div>
+              {selectedUserRoles.length === 0 && (
+                <div className="warning">
+                  ⚠️ User must have at least one role
+                </div>
+              )}
+              {selectedUser && selectedUserRoles.length > 0 && (
+                <button
+                  type="button"
+                  className="btn-update-roles"
+                  onClick={async () => {
+                    try {
+                      const userId = selectedUser.id || selectedUser.userId;
+                      await apiService.assignRolesToUser(userId, selectedUserRoles);
+                      // Refresh user data
+                      loadTabData('users');
+                      setError(null);
+                    } catch (err: any) {
+                      setError(`Error updating roles: ${err.message}`);
+                    }
+                  }}
+                >
+                  Update Roles
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+        
         <div className="form-buttons">
           <button type="submit" className="btn-primary">
             {selectedUser ? 'Update' : 'Create'}
@@ -626,6 +707,7 @@ const Admin: React.FC = () => {
             onClick={() => {
               setShowUserForm(false);
               setSelectedUser(null);
+              setSelectedUserRoles([]);
             }}
           >
             Cancel
@@ -967,6 +1049,8 @@ const Admin: React.FC = () => {
               <th>Email</th>
               <th>First Name</th>
               <th>Last Name</th>
+              <th>Roles</th>
+              <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -982,6 +1066,23 @@ const Admin: React.FC = () => {
                   <td>{user.email || 'N/A'}</td>
                   <td>{user.firstName || 'N/A'}</td>
                   <td>{user.lastName || 'N/A'}</td>
+                  <td>
+                    <div className="user-roles">
+                      {user.roles && user.roles.length > 0 ? 
+                        user.roles.map((role: string) => (
+                          <span key={role} className={`role-badge ${role.toLowerCase()}`}>
+                            {role}
+                          </span>
+                        )) : 
+                        <span className="no-roles">No roles</span>
+                      }
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`status-badge ${user.enabled ? 'enabled' : 'disabled'}`}>
+                      {user.enabled ? 'Active' : 'Disabled'}
+                    </span>
+                  </td>
                   <td className="actions">
                     <button 
                       onClick={() => handleEditUser(user)}

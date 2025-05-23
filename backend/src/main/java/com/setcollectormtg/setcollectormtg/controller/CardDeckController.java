@@ -20,25 +20,31 @@ public class CardDeckController {
 
     private final CardDeckService cardDeckService;
 
+    /**
+     * Gets all cards in a deck. Accessible by ADMIN (for moderation) or the deck owner.
+     */
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER', 'ADMIN', 'ROLE_ADMIN') and @userSecurity.isOwner(authentication, #deckId)")
+    @PreAuthorize("hasAuthority('ADMIN') or (hasAuthority('USER') and @userSecurity.isOwner(authentication, #deckId))")
     public ResponseEntity<List<CardDeckDto>> getAllCardsInDeck(
             @PathVariable Long deckId, 
             Authentication authentication) {
-        log.debug("Usuario {} solicitando cartas del mazo {}", 
-                authentication != null ? authentication.getName() : "anónimo", deckId);
+        log.debug("User {} requesting cards from deck {}", 
+                authentication != null ? authentication.getName() : "anonymous", deckId);
         List<CardDeckDto> cards = cardDeckService.getAllCardsInDeck(deckId);
-        log.info("Retornando {} cartas para el mazo {}", cards.size(), deckId);
-        // Depurar los valores de nCopies
+        log.info("Returning {} cards for deck {}", cards.size(), deckId);
+        // Debug nCopies values
         for (CardDeckDto card : cards) {
-            log.info("Carta ID: {}, Nombre: {}, nCopies: {}", 
+            log.info("Card ID: {}, Name: {}, nCopies: {}", 
                     card.getCardId(), card.getCardName(), card.getNCopies());
         }
         return ResponseEntity.ok(cards);
     }
 
+    /**
+     * Adds a card to a deck. Accessible by the deck owner only.
+     */
     @PostMapping("/{cardId}")
-    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER') and @userSecurity.isOwner(authentication, #deckId)")
+    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #deckId)")
     public ResponseEntity<CardDeckDto> addCardToDeck(
             @PathVariable Long deckId,
             @PathVariable Long cardId,
@@ -48,8 +54,11 @@ public class CardDeckController {
                 HttpStatus.CREATED);
     }
 
+    /**
+     * Updates the quantity of a card in a deck. Accessible by the deck owner only.
+     */
     @PutMapping("/{cardId}")
-    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER') and @userSecurity.isOwner(authentication, #deckId)")
+    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #deckId)")
     public ResponseEntity<CardDeckDto> updateCardQuantity(
             @PathVariable Long deckId,
             @PathVariable Long cardId,
@@ -58,8 +67,11 @@ public class CardDeckController {
                 cardDeckService.updateCardQuantity(deckId, cardId, quantity));
     }
 
+    /**
+     * Removes a card from a deck. Accessible by ADMIN or the deck owner.
+     */
     @DeleteMapping("/{cardId}")
-    @PreAuthorize("(hasAnyAuthority('USER', 'ROLE_USER') and @userSecurity.isOwner(authentication, #deckId)) or hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("(hasAuthority('USER') and @userSecurity.isOwner(authentication, #deckId)) or hasAuthority('ADMIN')")
     public ResponseEntity<Void> removeCardFromDeck(
             @PathVariable Long deckId,
             @PathVariable Long cardId) {
@@ -67,8 +79,11 @@ public class CardDeckController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Gets information about a specific card in a deck. Accessible by ADMIN or the deck owner.
+     */
     @GetMapping("/{cardId}")
-    @PreAuthorize("(hasAnyAuthority('USER', 'ROLE_USER') and @userSecurity.isOwner(authentication, #deckId)) or hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("(hasAuthority('USER') and @userSecurity.isOwner(authentication, #deckId)) or hasAuthority('ADMIN')")
     public ResponseEntity<CardDeckDto> getCardDeckInfo(
             @PathVariable Long deckId,
             @PathVariable Long cardId) {
@@ -76,8 +91,11 @@ public class CardDeckController {
                 cardDeckService.getCardDeckInfo(deckId, cardId));
     }
 
+    /**
+     * Gets the quantity of a specific card in a deck. Accessible by ADMIN or the deck owner.
+     */
     @GetMapping("/{cardId}/quantity")
-    @PreAuthorize("(hasAnyAuthority('USER', 'ROLE_USER') and @userSecurity.isOwner(authentication, #deckId)) or hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("(hasAuthority('USER') and @userSecurity.isOwner(authentication, #deckId)) or hasAuthority('ADMIN')")
     public ResponseEntity<Integer> getCardQuantity(
             @PathVariable Long deckId,
             @PathVariable Long cardId) {

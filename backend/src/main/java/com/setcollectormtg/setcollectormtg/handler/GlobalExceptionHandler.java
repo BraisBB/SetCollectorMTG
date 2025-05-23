@@ -2,6 +2,7 @@ package com.setcollectormtg.setcollectormtg.handler;
 
 import com.setcollectormtg.setcollectormtg.dto.ErrorResponse;
 import com.setcollectormtg.setcollectormtg.exception.ResourceNotFoundException;
+import com.setcollectormtg.setcollectormtg.exception.UserAlreadyExistsException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -123,6 +124,27 @@ public class GlobalExceptionHandler {
                 .build();
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+    
+    /**
+     * Maneja excepciones cuando un usuario ya existe
+     */
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleUserAlreadyExistsException(
+            UserAlreadyExistsException ex,
+            WebRequest request) {
+        
+        log.error("User already exists: {}", ex.getMessage(), ex);
+        
+        ErrorResponse error = ErrorResponse.builder()
+                .code("USER_ALREADY_EXISTS")
+                .message(ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .path(request.getDescription(false).replace("uri=", ""))
+                .status(HttpStatus.CONFLICT.value())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
     
     /**

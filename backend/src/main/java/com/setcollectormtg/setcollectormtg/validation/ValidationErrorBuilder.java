@@ -1,7 +1,18 @@
 package com.setcollectormtg.setcollectormtg.validation;
 
+/**
+ * Utility class for building consistent validation error messages.
+ * Provides static methods to generate standardized error messages for various validation scenarios.
+ */
 public class ValidationErrorBuilder {
     
+    /**
+     * Builds a comprehensive password validation error message.
+     * Validates password strength requirements including length, character types, and restrictions.
+     * 
+     * @param password The password to validate
+     * @return A detailed error message or null if password is valid
+     */
     public static String buildPasswordValidationError(String password) {
         StringBuilder error = new StringBuilder();
         
@@ -36,6 +47,13 @@ public class ValidationErrorBuilder {
         return error.length() > 0 ? error.toString().trim() : null;
     }
 
+    /**
+     * Builds a validation error message for fields that must start with a capital letter.
+     * 
+     * @param value The string value to validate
+     * @param fieldName The name of the field being validated
+     * @return An error message or null if the value is valid
+     */
     public static String buildCapitalizedValidationError(String value, String fieldName) {
         if (value == null || value.isEmpty()) {
             return null;

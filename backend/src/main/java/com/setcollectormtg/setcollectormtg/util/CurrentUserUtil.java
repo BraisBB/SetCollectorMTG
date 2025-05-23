@@ -9,8 +9,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 /**
- * Utilidad para obtener el usuario actual en cualquier parte de la aplicación.
- * Obtiene el usuario desde el contexto de seguridad de Spring Security.
+ * Utility to get the current user in any part of the application.
+ * Gets the user from Spring Security's security context.
  */
 @Component
 @RequiredArgsConstructor
@@ -20,27 +20,62 @@ public class CurrentUserUtil {
     private final UserRepository userRepository;
     
     /**
-     * Obtiene el usuario actual a partir del contexto de seguridad.
+     * Gets the current user from security context.
      * 
-     * @return El usuario actual o null si no hay usuario autenticado
+     * @return The current user or null if no user is authenticated
      */
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated() && authentication.getName() != null) {
-            log.debug("Obteniendo usuario actual para username: {}", authentication.getName());
-            return userRepository.findByUsername(authentication.getName()).orElse(null);
+        
+        if (authentication == null || !authentication.isAuthenticated() || 
+            authentication.getName() == null || "anonymousUser".equals(authentication.getName())) {
+            log.debug("No authenticated user found in security context");
+            return null;
         }
         
-        return null;
+        try {
+            log.debug("Getting current user for username: {}", authentication.getName());
+            return userRepository.findByUsername(authentication.getName()).orElse(null);
+        } catch (Exception e) {
+            log.error("Error getting current user: {}", e.getMessage(), e);
+            return null;
+        }
     }
     
     /**
-     * Obtiene el ID del usuario actual.
+     * Gets the current user's ID.
      * 
-     * @return El ID del usuario actual o null si no hay usuario autenticado
+     * @return The current user's ID or null if no user is authenticated
      */
     public Long getCurrentUserId() {
         User currentUser = getCurrentUser();
         return currentUser != null ? currentUser.getUserId() : null;
+    }
+    
+    /**
+     * Gets the current username from security context.
+     * 
+     * @return The current username or null if no user is authenticated
+     */
+    public String getCurrentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        if (authentication == null || !authentication.isAuthenticated() || 
+            "anonymousUser".equals(authentication.getName())) {
+            return null;
+        }
+        
+        return authentication.getName();
+    }
+    
+    /**
+     * Checks if there's a currently authenticated user.
+     * 
+     * @return true if user is authenticated, false otherwise
+     */
+    public boolean isUserAuthenticated() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && authentication.isAuthenticated() && 
+               authentication.getName() != null && !"anonymousUser".equals(authentication.getName());
     }
 } 
