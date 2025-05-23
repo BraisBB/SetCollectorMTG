@@ -117,6 +117,83 @@ docker compose logs -f
 - **Interfaz responsive** optimizada para dispositivos móviles
 - **Health checks** y monitoreo de servicios
 
+## Importación de Sets y Cartas desde JSON
+
+La aplicación permite importar sets y cartas de Magic: The Gathering desde archivos JSON obtenidos de [MTGJson.com](https://mtgjson.com/).
+
+### Obtener Archivos JSON
+
+1. Visita https://mtgjson.com/downloads/all-sets/
+2. Busca el set deseado en la lista
+3. **IMPORTANTE**: Selecciona solo sets con nombres **normales** o que contengan **"Commander"**
+4. **EVITA** sets que contengan:
+   - "Promos" (cartas promocionales)
+   - "Art Series" (cartas de arte)
+
+### Ejemplos de Sets Válidos 
+- `NEO` - Kamigawa: Neon Dynasty
+- `VOW` - Innistrad: Crimson Vow
+- `AFC` - Adventures in the Forgotten Realms Commander
+- `ZNR` - Zendikar Rising
+- `ELD` - Throne of Eldraine
+
+### Ejemplos de Sets a Evitar 
+- `PNEO` - Kamigawa: Neon Dynasty Promos
+- `ANEO` - Kamigawa: Neon Dynasty Art Series
+- `PVOW` - Innistrad: Crimson Vow Promos
+
+### Importación vía Panel Administrativo
+
+1. **Acceso Admin**: Inicia sesión con una cuenta de administrador
+2. **Panel Admin**: Ve a la sección de administración
+3. **Importar Set**: 
+   - Selecciona la pestaña "Sets" 
+   - Haz clic en "Import from JSON"
+   - Selecciona el archivo JSON descargado
+   - Confirma la importación
+
+4. **Importar Cartas**:
+   - Una vez importado el set, ve a la pestaña "Cards"
+   - Haz clic en "Import from JSON" 
+   - Selecciona el **mismo archivo JSON** del set
+   - Las cartas se importarán automáticamente asociadas al set
+
+### Formato JSON Esperado
+
+El archivo JSON debe seguir el formato estándar de MTGJson:
+
+```json
+{
+  "code": "ZNR",
+  "name": "Zendikar Rising",
+  "type": "expansion",
+  "releaseDate": "2020-09-25",
+  "cards": [
+    {
+      "name": "Carta Ejemplo",
+      "type": "Creature — Human",
+      "manaCost": "{1}{W}",
+      "rarity": "common",
+      // ... otros campos
+    }
+  ]
+}
+```
+
+### Validaciones de Importación
+
+- **Sets duplicados**: No se permitirá importar un set que ya existe
+- **Cartas duplicadas**: Las cartas duplicadas se omitirán automáticamente
+- **Formato inválido**: Los archivos que no sigan el formato MTGJson serán rechazados
+- **Tamaño de archivo**: Se recomienda que los archivos no excedan 50MB
+
+### Recomendaciones
+
+- **Importa el set primero**: Siempre importa el set antes que las cartas
+- **Un archivo por vez**: Evita importar múltiples sets simultáneamente
+- **Conexión estable**: Asegúrate de tener una buena conexión durante la importación
+- **Backup previo**: Considera hacer backup de la base de datos antes de importaciones masivas
+
 ## API REST - Endpoints Principales
 
 ### Autenticación
