@@ -8,10 +8,10 @@ import './Home.css';
 import { apiService } from '../services';
 import authService from '../services/authService';
 
-// Page size for loading cards
+// Tamaño de página para cargar cartas
 const PAGE_SIZE = 20;
 
-// Interface for card data received from backend
+// Interfaz para datos de carta recibidos del backend
 interface CardResponse {
   cardId: number;
   name: string;
@@ -33,14 +33,14 @@ const Home = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
 
-  // Check authentication status
+  // Verificar estado de autenticación
   useEffect(() => {
     const isAuth = authService.isAuthenticated();
     console.log('Home - Authentication status:', isAuth);
     setIsAuthenticated(isAuth);
   }, []);
 
-  // Format cards for display in the CardGrid component
+  // Formatear cartas para mostrar en el componente CardGrid
   const formatCardsForDisplay = (cardsData: CardResponse[]): Card[] => {
     return cardsData.map(card => ({
       id: card.cardId.toString(),
@@ -61,16 +61,16 @@ const Home = () => {
     try {
       const results = await apiService.searchCards(searchParams);
       
-      // Store all search results for pagination
+      // Almacenar todos los resultados de búsqueda para paginación
       setAllCards(results);
       
-      // Only show the first page (PAGE_SIZE cards)
+      // Solo mostrar la primera página (PAGE_SIZE cartas)
       const firstPageCards = results.slice(0, PAGE_SIZE);
       
-      // Convert to the format expected by CardGrid
+      // Convertir al formato esperado por CardGrid
       const formattedCards = formatCardsForDisplay(firstPageCards);
       
-      // Reset pagination
+      // Reiniciar paginación
       setCurrentPage(0);
       setCards(formattedCards);
       setHasMoreCards(results.length > PAGE_SIZE);
@@ -106,21 +106,21 @@ const Home = () => {
       return;
     }
     
-    // Transform the data
+    // Transformar los datos
     const newCards = formatCardsForDisplay(nextPageItems);
     
-    // Update state
-    setCards(prev => [...prev, ...newCards]);
+    // Actualizar estado
+    setCards((prev: any) => [...prev, ...newCards]);
     setCurrentPage(nextPage);
     setHasMoreCards(endIndex < allCards.length);
     setLoading(false);
   };
 
-  // Helper function to determine the card's primary color based on its mana cost
+  // Función auxiliar para determinar el color principal de la carta basado en su costo de maná
   const determineCardColor = (manaCost: string): string => {
     if (!manaCost) return 'colorless';
     
-    // Map mana symbols to color names for UI
+    // Mapear símbolos de maná a nombres de color para la UI
     const colorMap: Record<string, string> = {
       'W': 'white',
       'U': 'blue',
@@ -131,7 +131,7 @@ const Home = () => {
     
     const foundColors: string[] = [];
     
-    // Look for color symbols in mana cost
+    // Buscar símbolos de color en el costo de maná
     for (const [symbol, colorName] of Object.entries(colorMap)) {
       if (manaCost.includes(`{${symbol}}`)) {
         foundColors.push(colorName);

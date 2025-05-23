@@ -1,19 +1,19 @@
 package com.setcollectormtg.setcollectormtg.validation;
 
 /**
- * Utility class for building consistent validation error messages.
- * Provides static methods to generate standardized error messages for various
- * validation scenarios.
+ * Clase de utilidad para construir mensajes de error de validación consistentes.
+ * Proporciona métodos estáticos para generar mensajes de error estandarizados para varios
+ * escenarios de validación.
  */
 public class ValidationErrorBuilder {
 
     /**
-     * Builds a comprehensive password validation error message.
-     * Validates password strength requirements including length, character types,
-     * and restrictions.
+     * Construye un mensaje de error de validación de contraseña completo.
+     * Valida los requisitos de fortaleza de la contraseña incluyendo longitud, tipos de caracteres,
+     * y restricciones.
      * 
-     * @param password The password to validate
-     * @return A detailed error message or null if password is valid
+     * @param password La contraseña a validar
+     * @return Un mensaje de error detallado o null si la contraseña es válida
      */
     public static String buildPasswordValidationError(String password) {
         StringBuilder error = new StringBuilder();
@@ -50,12 +50,12 @@ public class ValidationErrorBuilder {
     }
 
     /**
-     * Builds a validation error message for fields that must start with a capital
-     * letter.
+     * Construye un mensaje de error de validación para campos que deben comenzar con una letra
+     * mayúscula.
      * 
-     * @param value     The string value to validate
-     * @param fieldName The name of the field being validated
-     * @return An error message or null if the value is valid
+     * @param value     El valor de cadena a validar
+     * @param fieldName El nombre del campo que se está validando
+     * @return Un mensaje de error o null si el valor es válido
      */
     public static String buildCapitalizedValidationError(String value, String fieldName) {
         if (value == null || value.isEmpty()) {

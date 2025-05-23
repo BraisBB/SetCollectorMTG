@@ -23,7 +23,7 @@ const Login: React.FC = () => {
     locationState?.message || null
   );
 
-  // Check if user is already authenticated and redirect to home
+  // Verificar si el usuario ya está autenticado y redirigir al home
   useEffect(() => {
     if (authService.isAuthenticated()) {
       navigate('/');
@@ -34,7 +34,7 @@ const Login: React.FC = () => {
     const { name, value } = e.target;
     setter(value);
     
-    // Clear field error when user modifies its value
+    // Limpiar error del campo cuando el usuario modifica su valor
     if (fieldErrors[name]) {
       const updatedErrors = { ...fieldErrors };
       delete updatedErrors[name];
@@ -76,17 +76,17 @@ const Login: React.FC = () => {
       const success = await authService.login({ username, password });
       
       if (success) {
-        // Store username in localStorage for the header component
+        // Almacenar nombre de usuario en localStorage para el componente header
         localStorage.setItem('username', username);
-        navigate('/'); // Redirect to home page on successful login
+        navigate('/'); // Redirigir a página home en login exitoso
       } else {
-        // Generic message for any authentication error
+        // Mensaje genérico para cualquier error de autenticación
         setError('Invalid username or password');
       }
     } catch (error: unknown) {
       console.error(error);
       
-      // Generic message for any error
+      // Mensaje genérico para cualquier error
       setError('Invalid username or password');
     } finally {
       setLoading(false);
@@ -114,7 +114,7 @@ const Login: React.FC = () => {
                 id="username"
                 name="username"
                 value={username}
-                onChange={(e) => handleInputChange(e, setUsername)}
+                onChange={(e: any) => handleInputChange(e, setUsername)}
                 autoComplete="username"
                 disabled={loading}
                 className={fieldErrors.username ? 'error-input' : ''}
@@ -129,7 +129,7 @@ const Login: React.FC = () => {
                 id="password"
                 name="password"
                 value={password}
-                onChange={(e) => handleInputChange(e, setPassword)}
+                onChange={(e: any) => handleInputChange(e, setPassword)}
                 autoComplete="current-password"
                 disabled={loading}
                 className={fieldErrors.password ? 'error-input' : ''}

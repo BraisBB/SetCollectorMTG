@@ -9,8 +9,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 /**
- * Utility to get the current user in any part of the application.
- * Gets the user from Spring Security's security context.
+ * Utilidad para obtener el usuario actual en cualquier parte de la aplicación.
+ * Obtiene el usuario del contexto de seguridad de Spring Security.
  */
 @Component
 @RequiredArgsConstructor
@@ -20,9 +20,9 @@ public class CurrentUserUtil {
     private final UserRepository userRepository;
 
     /**
-     * Gets the current user from security context.
+     * Obtiene el usuario actual del contexto de seguridad.
      * 
-     * @return The current user or null if no user is authenticated
+     * @return El usuario actual o null si no hay ningún usuario autenticado
      */
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -43,9 +43,9 @@ public class CurrentUserUtil {
     }
 
     /**
-     * Gets the current user's ID.
+     * Obtiene el ID del usuario actual.
      * 
-     * @return The current user's ID or null if no user is authenticated
+     * @return El ID del usuario actual o null si no hay ningún usuario autenticado
      */
     public Long getCurrentUserId() {
         User currentUser = getCurrentUser();
@@ -53,9 +53,9 @@ public class CurrentUserUtil {
     }
 
     /**
-     * Gets the current username from security context.
+     * Obtiene el nombre de usuario actual del contexto de seguridad.
      * 
-     * @return The current username or null if no user is authenticated
+     * @return El nombre de usuario actual o null si no hay ningún usuario autenticado
      */
     public String getCurrentUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -69,9 +69,9 @@ public class CurrentUserUtil {
     }
 
     /**
-     * Checks if there's a currently authenticated user.
+     * Verifica si hay un usuario autenticado actualmente.
      * 
-     * @return true if user is authenticated, false otherwise
+     * @return true si el usuario está autenticado, false en caso contrario
      */
     public boolean isUserAuthenticated() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

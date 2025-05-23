@@ -13,18 +13,18 @@ const Admin: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
-  // States for each section
+  // Estados para cada sección
   const [users, setUsers] = useState<any[]>([]);
   const [sets, setSets] = useState<any[]>([]);
   const [cards, setCards] = useState<any[]>([]);
   const [decks, setDecks] = useState<any[]>([]);
   
-  // States for forms
+  // Estados para formularios
   const [showUserForm, setShowUserForm] = useState<boolean>(false);
   const [showSetForm, setShowSetForm] = useState<boolean>(false);
   const [showCardForm, setShowCardForm] = useState<boolean>(false);
   
-  // States for selected items
+  // Estados para elementos seleccionados
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedSet, setSelectedSet] = useState<any>(null);
   const [selectedCard, setSelectedCard] = useState<any>(null);
@@ -84,8 +84,8 @@ const Admin: React.FC = () => {
           setSets(fetchedSets);
           break;
         case 'cards':
-          // Here we could implement paginated search,
-          // as getting all cards could be too much
+          // Aquí podríamos implementar búsqueda paginada,
+          // ya que obtener todas las cartas podría ser demasiado
           const fetchedCards = await apiService.getAllCards();
           setCards(fetchedCards);
           break;
@@ -104,11 +104,11 @@ const Admin: React.FC = () => {
     }
   };
 
-  // User functions
+  // Funciones de usuario
   const handleCreateUser = async (userData: any) => {
     try {
       console.log('Creating user with data:', userData);
-      // Create a properly formatted UserCreateDto object as expected by the backend
+      // Crear un objeto UserCreateDto formateado correctamente como espera el backend
       const userCreateDto = {
         username: userData.username,
         email: userData.email,
@@ -144,11 +144,11 @@ const Admin: React.FC = () => {
 
   const handleEditUser = (user: any) => {
     setSelectedUser(user);
-    // Initialize roles from user data or load from API
+    // Inicializar roles desde datos del usuario o cargar desde API
     if (user.roles && Array.isArray(user.roles)) {
       setSelectedUserRoles(user.roles);
     } else {
-      // Load roles from API if not available in user object
+      // Cargar roles desde API si no están disponibles en el objeto usuario
       const userId = user.id || user.userId;
       if (userId) {
         loadUserRoles(userId);
@@ -159,7 +159,7 @@ const Admin: React.FC = () => {
     setShowUserForm(true);
   };
 
-  // Add function to load user roles
+  // Agregar función para cargar roles de usuario
   const loadUserRoles = async (userId: number) => {
     try {
       const roles = await apiService.getUserRoles(userId);
@@ -174,13 +174,13 @@ const Admin: React.FC = () => {
     try {
       console.log('Updating user with data:', userData);
       
-      // Determine the correct user ID (could be in id or userId field)
+      // Determinar el ID de usuario correcto (podría estar en el campo id o userId)
       const userId = userData.userId || userData.id;
       if (!userId) {
         throw new Error("Cannot update user: Missing user ID");
       }
       
-      // Create a properly formatted UserDto object as expected by the backend
+      // Crear un objeto UserDto formateado correctamente como espera el backend
       const userDto = {
         userId: userId,
         username: userData.username,
@@ -191,10 +191,10 @@ const Admin: React.FC = () => {
       
       console.log(`Calling updateUser with userId: ${userId} and data:`, userDto);
       
-      // Update user basic information
+      // Actualizar información básica del usuario
       await apiService.updateUser(userId, userDto);
       
-      // If we're editing a user and have roles selected, update roles as well
+      // Si estamos editando un usuario y tenemos roles seleccionados, actualizar roles también
       if (selectedUser && selectedUserRoles.length > 0) {
         console.log(`Updating roles for user ${userId}:`, selectedUserRoles);
         await apiService.assignRolesToUser(userId, selectedUserRoles);
@@ -205,13 +205,13 @@ const Admin: React.FC = () => {
       setSelectedUser(null);
       setSelectedUserRoles([]);
       loadTabData('users');
-      setError(null); // Clear any previous errors
+      setError(null); // Limpiar errores previos
     } catch (err: any) {
       setDetailedError('Error updating user', err);
     }
   };
 
-  // Sets functions
+  // Funciones de sets
   const handleCreateSet = async (setData: any) => {
     try {
       await apiService.createSet(setData);
@@ -269,10 +269,10 @@ const Admin: React.FC = () => {
     }
   };
 
-  // Cards functions
+  // Funciones de cartas
   const handleCreateCard = async (cardData: any) => {
     try {
-      // Format data according to the DTO expected by the backend
+      // Formatear datos según el DTO esperado por el backend
       const cardCreateDto: {
         name: string;
         cardType: string;
@@ -292,7 +292,7 @@ const Admin: React.FC = () => {
         imageUrl: cardData.imageUrl || "",
       };
       
-      // Only include setId if present
+      // Solo incluir setId si está presente
       if (cardData.setId !== undefined) {
         cardCreateDto.setId = cardData.setId;
       }
@@ -300,18 +300,18 @@ const Admin: React.FC = () => {
       console.log("Sending data to create card:", cardCreateDto);
       await apiService.createCard(cardCreateDto);
       
-      // Clear form state
+      // Limpiar estado del formulario
       setShowCardForm(false);
       setSelectedCard(null);
       
-      // Reload data
+      // Recargar datos
       loadTabData('cards');
     } catch (err: any) {
       setError(`Error creating card: ${err.message}`);
     }
   };
 
-  // Function to load all sets
+  // Función para cargar todos los sets
   const loadSets = async () => {
     try {
       const fetchedSets = await apiService.getAllSets();
@@ -333,31 +333,31 @@ const Admin: React.FC = () => {
     }
   };
 
-  // Function to prepare a card for editing
+  // Función para preparar una carta para edición
   const handleEditCard = (card: any) => {
     console.log("Preparing card for editing:", card);
     
-    // Always load sets before editing a card
+    // Siempre cargar sets antes de editar una carta
     console.log("Loading sets before editing...");
     loadSets().then(() => {
       prepareCardForEditing(card);
     });
   };
   
-  // Helper function to prepare the card for editing
+  // Función auxiliar para preparar la carta para edición
   const prepareCardForEditing = (card: any) => {
-    // Determine the ID of the set from the setMtg directly
+    // Determinar el ID del set desde el setMtg directamente
     let cardSetId = null;
     
-    // Verify all data available in the console
+    // Verificar todos los datos disponibles en la consola
     console.log("Complete card to edit:", JSON.stringify(card, null, 2));
     
-    // Try to get setId specifically from the setMtg object (highest priority)
+    // Intentar obtener setId específicamente del objeto setMtg (prioridad más alta)
     if (card.setMtg && card.setMtg.setId) {
       cardSetId = card.setMtg.setId;
       console.log("Using setId from setMtg object:", cardSetId);
     } 
-    // If no setMtg, search in other fields
+    // Si no hay setMtg, buscar en otros campos
     else if (card.setId !== undefined && card.setId !== null) {
       cardSetId = card.setId;
       console.log("Using direct setId:", cardSetId);
@@ -366,20 +366,20 @@ const Admin: React.FC = () => {
       console.log("Using set_id from DB:", cardSetId);
     }
     
-    // Log for diagnostic
-    console.log("Available sets:", sets.map(s => ({ id: s.id, name: s.name })));
+    // Log para diagnóstico
+    console.log("Available sets:", sets.map((s: any) => ({ id: s.id, name: s.name })));
     console.log("Determined set ID:", cardSetId);
     
-    // Verify if the set exists in our data
-    const setExists = cardSetId ? sets.some(s => s.id === cardSetId) : false;
+    // Verificar si el set existe en nuestros datos
+    const setExists = cardSetId ? sets.some((s: any) => s.id === cardSetId) : false;
     if (cardSetId && !setExists) {
       console.warn(`The set with ID ${cardSetId} is not in the list of available sets`);
     }
     
-    // Save original set for comparison during update
+    // Guardar set original para comparación durante actualización
     const originalSetId = cardSetId;
     
-    // Create a normalized object for editing
+    // Crear un objeto normalizado para edición
     const normalizedCard = {
       id: card.id || card.cardId,
       cardId: card.id || card.cardId,
@@ -390,11 +390,11 @@ const Admin: React.FC = () => {
       manaValue: card.manaValue || 0,
       setId: cardSetId,
       set_id: cardSetId,
-      originalSetId: originalSetId, // Save original ID for comparison
+      originalSetId: originalSetId, // Guardar ID original para comparación
       oracleText: card.oracleText || "",
       cardImageUrl: card.imageUrl || card.cardImageUrl || "",
       imageUrl: card.imageUrl || card.cardImageUrl || "",
-      isNewCard: false // This is an existing card being edited
+      isNewCard: false // Esta es una carta existente siendo editada
     };
     
     console.log("Normalized data for editing:", normalizedCard);
@@ -402,7 +402,7 @@ const Admin: React.FC = () => {
     setShowCardForm(true);
   };
 
-  // Function to update an existing card
+  // Función para actualizar una carta existente
   const handleUpdateCard = async (cardData: any) => {
     try {
       const cardId = cardData.id || cardData.cardId;
@@ -412,8 +412,8 @@ const Admin: React.FC = () => {
       
       console.log("Complete data for update:", cardData);
       
-      // Create a complete DTO to ensure all fields are present
-      // Using an extended interface to allow optional setId
+      // Crear un DTO completo para asegurar que todos los campos estén presentes
+      // Usando una interfaz extendida para permitir setId opcional
       interface CardDto {
         id: number;
         name: string;
@@ -423,11 +423,11 @@ const Admin: React.FC = () => {
         manaValue: number;
         oracleText: string;
         imageUrl: string;
-        setId?: number; // Only allow number or undefined for the API
+        setId?: number; // Solo permitir number o undefined para la API
       }
       
       const cardDto: CardDto = {
-        id: cardId, // Include id instead of cardId
+        id: cardId, // Incluir id en lugar de cardId
         name: cardData.name,
         cardType: cardData.cardType,
         manaCost: cardData.manaCost || "",
@@ -437,7 +437,7 @@ const Admin: React.FC = () => {
         imageUrl: cardData.imageUrl || cardData.cardImageUrl || "",
       };
       
-      // Only include setId if changed from original value or if present
+      // Solo incluir setId si cambió del valor original o si está presente
       const isSetIdChanged = cardData.setId !== cardData.originalSetId;
       if (cardData.setId) {
         const setId = typeof cardData.setId === 'string' ? parseInt(cardData.setId) : cardData.setId;
@@ -451,11 +451,11 @@ const Admin: React.FC = () => {
           }
         }
       } else {
-        // If set was removed (was not null and now is null)
-        // We don't add any setId to the DTO for the backend to treat as undefined
+        // Si se removió el set (no era null y ahora es null)
+        // No agregamos ningún setId al DTO para que el backend lo trate como undefined
         if (cardData.originalSetId) {
           console.log(`Removing setId (was ${cardData.originalSetId})`);
-          // Don't include setId in the DTO
+          // No incluir setId en el DTO
         }
       }
       
@@ -463,11 +463,11 @@ const Admin: React.FC = () => {
       await apiService.updateCard(cardId, cardDto);
       console.log("Card updated successfully");
       
-      // Clear form state
+      // Limpiar estado del formulario
       setShowCardForm(false);
       setSelectedCard(null);
       
-      // Reload data
+      // Recargar datos
       loadTabData('cards');
     } catch (err: any) {
       console.error("Error updating card:", err);
@@ -475,19 +475,19 @@ const Admin: React.FC = () => {
     }
   };
 
-  // Helper function to calculate mana value from mana cost
+  // Función auxiliar para calcular valor de maná desde costo de maná
   const calculateManaValue = (manaCost: string): number => {
-    // Remove braces and count symbols
+    // Remover llaves y contar símbolos
     const cleanedCost = manaCost.replace(/[{}]/g, '');
     let total = 0;
     
-    // Count numeric symbols
+    // Contar símbolos numéricos
     const numericMatch = cleanedCost.match(/\d+/g);
     if (numericMatch) {
       total += numericMatch.reduce((sum, num) => sum + parseInt(num), 0);
     }
     
-    // Count color symbols (W, U, B, R, G)
+    // Contar símbolos de color (W, U, B, R, G)
     const colorMatches = cleanedCost.match(/[WUBRG]/g);
     if (colorMatches) {
       total += colorMatches.length;
@@ -496,7 +496,7 @@ const Admin: React.FC = () => {
     return total;
   };
 
-  // Decks functions (simpler, probably just view and delete)
+  // Funciones de mazos (más simples, probablemente solo ver y eliminar)
   const handleDeleteDeck = async (deckId: number) => {
     if (window.confirm('Are you sure you want to delete this deck?')) {
       try {
@@ -508,12 +508,12 @@ const Admin: React.FC = () => {
     }
   };
 
-  // Import cards from JSON file
+  // Importar cartas desde archivo JSON
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       
-      // Check if file is JSON
+      // Verificar si el archivo es JSON
       if (!file.name.toLowerCase().endsWith('.json')) {
         setError('Only JSON files are allowed');
         return;
@@ -540,7 +540,7 @@ const Admin: React.FC = () => {
       if (response.success) {
         setImportSuccess(true);
         setSelectedFile(null);
-        // Reload cards data
+        // Recargar datos de cartas
         loadTabData('cards');
       } else {
         setError(response.message || 'Error importing cards');
@@ -556,10 +556,10 @@ const Admin: React.FC = () => {
   const setDetailedError = (message: string, err: any) => {
     console.error(message, err);
     
-    // Build a detailed error message
+    // Construir un mensaje de error detallado
     let errorDetail = err.message || 'Unknown error';
     
-    // If additional details are available in the response
+    // Si hay detalles adicionales disponibles en la respuesta
     if (err.response && err.response.data) {
       if (typeof err.response.data === 'string') {
         errorDetail += ': ' + err.response.data;
@@ -568,7 +568,7 @@ const Admin: React.FC = () => {
       } else if (err.response.data.error) {
         errorDetail += ': ' + err.response.data.error;
       } else if (err.response.data.errors) {
-        // For multiple validation errors
+        // Para múltiples errores de validación
         const validationErrors = Object.entries(err.response.data.errors)
           .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
           .join('; ');
@@ -717,7 +717,7 @@ const Admin: React.FC = () => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         
-        // Obtener el ID del set (puede estar en id o setId)
+        // Obtener el ID del set (podría estar en id o setId)
         const setId = selectedSet?.id || selectedSet?.setId;
         console.log("ID del set seleccionado:", setId);
         
