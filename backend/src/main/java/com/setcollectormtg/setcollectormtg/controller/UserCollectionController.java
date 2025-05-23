@@ -63,7 +63,7 @@ public class UserCollectionController {
     @PreAuthorize("hasAuthority('ADMIN') or (hasAuthority('USER') and @userSecurity.isOwner(authentication, #userId))")
     public ResponseEntity<UserCollectionDto> getCollectionByUserId(@PathVariable Long userId) {
         log.debug("Getting collection for user with ID: {}", userId);
-        return ResponseEntity.ok(userCollectionService.getCollectionByUserId(userId));
+        return ResponseEntity.ok(userCollectionService.getOrCreateCollectionByUserId(userId));
     }
 
     /**

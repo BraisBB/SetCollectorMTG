@@ -40,7 +40,7 @@ public class UserCollectionCardController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        UserCollectionDto userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
+        UserCollectionDto userCollection = userCollectionService.getOrCreateCollectionByUserId(user.getUserId());
 
         return new ResponseEntity<>(
                 userCollectionCardService.addCardToCollection(userCollection.getCollectionId(), cardId, quantity),
@@ -65,7 +65,7 @@ public class UserCollectionCardController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        UserCollectionDto userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
+        UserCollectionDto userCollection = userCollectionService.getOrCreateCollectionByUserId(user.getUserId());
 
         return ResponseEntity.ok(
                 userCollectionCardService.updateCardQuantity(userCollection.getCollectionId(), cardId, quantity));
@@ -86,7 +86,7 @@ public class UserCollectionCardController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        UserCollectionDto userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
+        UserCollectionDto userCollection = userCollectionService.getOrCreateCollectionByUserId(user.getUserId());
 
         userCollectionCardService.removeCardFromCollection(userCollection.getCollectionId(), cardId);
         return ResponseEntity.noContent().build();
@@ -108,7 +108,7 @@ public class UserCollectionCardController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        UserCollectionDto userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
+        UserCollectionDto userCollection = userCollectionService.getOrCreateCollectionByUserId(user.getUserId());
 
         return ResponseEntity.ok(
                 userCollectionCardService.getCardCollectionInfo(userCollection.getCollectionId(), cardId));
@@ -130,7 +130,7 @@ public class UserCollectionCardController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        UserCollectionDto userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
+        UserCollectionDto userCollection = userCollectionService.getOrCreateCollectionByUserId(user.getUserId());
 
         return ResponseEntity.ok(
                 userCollectionCardService.getCardCountInCollection(userCollection.getCollectionId(), cardId));

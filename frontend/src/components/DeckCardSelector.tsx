@@ -92,20 +92,41 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
 
   // Check if a card can have multiple copies based on deck format and card type
   const canIncreaseCardCopies = (currentCopies: number, cardId: number): boolean => {
-    // In Commander format, only one copy of each card is allowed
+    // Get the card from the cards array
+    const card = cards.find(c => c.cardId === cardId);
+    if (!card) return false;
+    
+    // Helper function to check if a card is a basic land
+    const isBasicLand = (cardType: string): boolean => {
+      if (!cardType) return false;
+      const lowerType = cardType.toLowerCase();
+      // Basic lands are specifically marked as "Basic Land" in MTG
+      return lowerType.includes('basic') && lowerType.includes('land');
+    };
+    
+    const cardIsBasicLand = isBasicLand(card.cardType);
+    
+    // In Commander format
     if (deckGameType === 'COMMANDER') {
+      // Basic lands can have multiple copies even in Commander
+      if (cardIsBasicLand) {
+        return true; // No limit for basic lands
+      }
+      // Non-basic cards: only 1 copy allowed
       return currentCopies < 1;
     }
     
-    // Get the card from the cards array
-    const card = cards.find(c => c.cardId === cardId);
-    
-    // For Land cards, allow unlimited copies in Standard
-    if (card && card.cardType && card.cardType.includes('Land')) {
-      return true; // No hay límite para tierras
+    // In Standard format
+    if (deckGameType === 'STANDARD') {
+      // Basic lands: no limit
+      if (cardIsBasicLand) {
+        return true; // No limit for basic lands
+      }
+      // Non-basic cards: up to 4 copies
+      return currentCopies < 4;
     }
     
-    // In Standard format, up to 4 copies are allowed for non-land cards
+    // Default case (shouldn't happen)
     return currentCopies < 4;
   };
   
@@ -245,10 +266,26 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
     
     // If trying to increase over format limit, show error and don't make API call
     if (newQuantity > currentQuantity && !canIncreaseCardCopies(currentQuantity, cardId)) {
-      const formatName = deckGameType === 'COMMANDER' ? 'Commander' : 'Standard';
-      const maxCopies = deckGameType === 'COMMANDER' ? 1 : 4;
+      const card = cards.find(c => c.cardId === cardId);
+      const cardType = card?.cardType?.toLowerCase() || '';
+      const isBasicLand = cardType.includes('basic') && cardType.includes('land');
       
-      setError(`Cannot add more copies. ${formatName} format only allows ${maxCopies} ${maxCopies === 1 ? 'copy' : 'copies'} of each card.`);
+      let errorMessage = '';
+      if (deckGameType === 'COMMANDER') {
+        if (isBasicLand) {
+          errorMessage = 'This should not happen - basic lands have no copy limit in Commander';
+        } else {
+          errorMessage = 'Commander format only allows 1 copy of each non-basic card.';
+        }
+      } else {
+        if (isBasicLand) {
+          errorMessage = 'This should not happen - basic lands have no copy limit in Standard';
+        } else {
+          errorMessage = 'Standard format only allows 4 copies of each non-basic card.';
+        }
+      }
+      
+      setError(errorMessage);
       return;
     }
     
@@ -518,7 +555,24 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
                                 className="quantity-btn increase" 
                                 onClick={() => handleOptimisticQuantityChange(card.cardId, (localQuantities[card.cardId] || card.nCopies) + 1)}
                                 disabled={!canIncreaseCardCopies(localQuantities[card.cardId] || card.nCopies, card.cardId)}
-                                title={deckGameType === 'COMMANDER' ? 'Commander format only allows 1 copy of each card' : ''}
+                                title={(() => {
+                                  const cardType = card.cardType?.toLowerCase() || '';
+                                  const isBasicLand = cardType.includes('basic') && cardType.includes('land');
+                                  
+                                  if (deckGameType === 'COMMANDER') {
+                                    if (isBasicLand) {
+                                      return 'Basic lands have no copy limit in Commander';
+                                    } else {
+                                      return 'Commander format only allows 1 copy of each non-basic card';
+                                    }
+                                  } else {
+                                    if (isBasicLand) {
+                                      return 'Basic lands have no copy limit in Standard';
+                                    } else {
+                                      return 'Standard format allows up to 4 copies of each non-basic card';
+                                    }
+                                  }
+                                })()}
                               >
                                 +
                               </button>

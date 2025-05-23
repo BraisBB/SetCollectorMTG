@@ -200,17 +200,43 @@ public class CardDeckServiceImpl implements CardDeckService {
     
     private void validateCopiesLimit(Card card, int quantityToAdd, GameType gameType) {
         // Validar límite de copias según el formato
-        // En Commander solo puede haber 1 copia de cada carta
-        // En Standard pueden haber hasta 4 copias de cada carta excepto tierras básicas
-        if (gameType == GameType.COMMANDER && quantityToAdd > 1) {
-            throw new IllegalStateException(
-                String.format("Format %s only allows 1 copy of each card", gameType.getName())
-            );
-        } else if (gameType == GameType.STANDARD && quantityToAdd > 4 && !card.getCardType().contains("Basic Land")) {
-            throw new IllegalStateException(
-                String.format("Format %s only allows 4 copies of each card", gameType.getName())
-            );
+        // En Commander solo puede haber 1 copia de cada carta (excepto tierras básicas)
+        if (gameType == GameType.COMMANDER) {
+            // Las tierras básicas pueden tener múltiples copias incluso en Commander
+            if (!isBasicLand(card) && quantityToAdd > 1) {
+                throw new IllegalStateException(
+                    String.format("Format %s only allows 1 copy of each non-basic card", gameType.getName())
+                );
+            }
+            // Las tierras básicas no tienen límite, pero el deck total sí
+        } else if (gameType == GameType.STANDARD) {
+            // En Standard: tierras básicas sin límite, otras cartas máximo 4
+            if (!isBasicLand(card) && quantityToAdd > 4) {
+                throw new IllegalStateException(
+                    String.format("Format %s only allows 4 copies of each non-basic card", gameType.getName())
+                );
+            }
+            // Las tierras básicas no tienen límite de copias
         }
+    }
+    
+    /**
+     * Determina si una carta es una tierra básica.
+     * Las tierras básicas en MTG pueden tener cantidad ilimitada en los decks.
+     * 
+     * @param card La carta a verificar
+     * @return true si es una tierra básica, false en caso contrario
+     */
+    private boolean isBasicLand(Card card) {
+        if (card == null || card.getCardType() == null) {
+            return false;
+        }
+        
+        String cardType = card.getCardType().toLowerCase();
+        
+        // Verificar si es específicamente una tierra básica
+        // Los tipos típicos son: "Basic Land — Plains", "Basic Land — Mountain", etc.
+        return cardType.contains("basic") && cardType.contains("land");
     }
     
     private void validateTotalCards(Deck deck, int quantityToAdd, GameType gameType) {

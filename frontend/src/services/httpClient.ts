@@ -20,15 +20,17 @@ class HttpClient {
     this.api.interceptors.request.use(async (config: any) => {
       console.log(`Making ${config.method?.toUpperCase()} request to:`, config.url || config.baseURL);
       
-      // Detectar endpoints públicos - solo métodos GET para sets y cards son públicos
+      // Detectar endpoints públicos - solo métodos GET para búsqueda de cartas y sets son públicos
       const method = config.method?.toUpperCase();
       const isPublicEndpoint = config.url && (
-        // Búsqueda de cartas (GET)
+        // Búsqueda de cartas públicas (GET) - solo endpoints de consulta general
         (method === 'GET' && config.url.includes('cards/search')) || 
         (method === 'GET' && config.url.includes('cards?')) ||
-        (method === 'GET' && config.url.includes('/cards')) ||
+        (method === 'GET' && config.url.match(/^\/api\/cards(\/\d+)?$/)) || // Solo /api/cards o /api/cards/{id}
+        (method === 'GET' && config.url.match(/^\/cards(\/\d+)?$/)) || // Solo /cards o /cards/{id}
         // Consulta de sets (GET)
-        (method === 'GET' && config.url.includes('/sets')) ||
+        (method === 'GET' && config.url.match(/^\/api\/sets(\/\d+)?$/)) || // Solo /api/sets o /api/sets/{id}
+        (method === 'GET' && config.url.match(/^\/sets(\/\d+)?$/)) || // Solo /sets o /sets/{id}
         // Autenticación
         config.url.includes('/auth/login') ||
         config.url.includes('/auth/register')
