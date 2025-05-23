@@ -32,8 +32,8 @@ public class AuthService {
         // Verificar si el usuario ya existe
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new UserAlreadyExistsException("Username already exists");
-        }
-        
+    }
+    
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new UserAlreadyExistsException("Email is already registered");
         }

@@ -1,6 +1,6 @@
 import { useState, FormEvent, useEffect } from 'react';
-import axios from 'axios';
 import './SearchBar.css';
+import { apiService } from '../services';
 
 interface SearchBarProps {
   onSearch: (searchParams: SearchParams) => void;
@@ -13,16 +13,6 @@ export interface SearchParams {
   rarity: string;
   set: string;
   manaCost: string;
-}
-
-// URL base del backend
-const API_BASE_URL = 'http://localhost:5173';
-
-// Interfaz para los sets recibidos del backend
-interface SetResponse {
-  setId: number;
-  setCode: string;
-  name: string;
 }
 
 interface FilterOptions {
@@ -72,13 +62,13 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
     const fetchFilterOptions = async () => {
       setLoading(true);
       try {
-        // Cargar la lista de sets
-        const setsResponse = await axios.get<SetResponse[]>(`${API_BASE_URL}/sets`);
+        // Cargar la lista de sets usando apiService
+        const sets = await apiService.getAllSets();
         
         // Actualizar las opciones de filtro
         setFilterOptions(prev => ({
           ...prev,
-          sets: setsResponse.data.map((set: SetResponse) => ({
+          sets: sets.map((set) => ({
             id: set.setId.toString(),
             code: set.setCode,
             name: set.name

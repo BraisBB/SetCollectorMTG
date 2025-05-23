@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import './CardModal.css';
 import { httpClient } from '../services/httpClient';
 import { collectionService } from '../services';
+import authService from '../services/authService';
 
 export interface Card {
   cardId: number;
@@ -51,14 +52,20 @@ const CardModal: React.FC<CardModalProps> = ({
   const [copiesCount, setCopiesCount] = useState<number>(1);
   const [addingToCollection, setAddingToCollection] = useState<boolean>(false);
 
+  // Determinar si el usuario debe tener acceso a funcionalidades de colección
+  // Los administradores no tienen acceso a colección (se comportan como usuarios públicos)
+  const hasCollectionAccess = isAuthenticated && !authService.isAdmin();
+
   // Pre-cargar los sets cuando el componente se monta
   useEffect(() => {
     const fetchSets = async () => {
       try {
-        const sets = await httpClient.get<SetInfo[]>('sets');
+        const sets = await httpClient.get<SetInfo[]>('/api/sets');
         setSets(sets);
       } catch (error) {
         console.error('Error fetching sets:', error);
+        // Asegurar que sets siempre sea un array para evitar errores
+        setSets([]);
       }
     };
 
@@ -96,23 +103,32 @@ const CardModal: React.FC<CardModalProps> = ({
       
       const fetchCardData = async () => {
         try {
-          // Hacer las solicitudes en paralelo para mejorar el rendimiento
-          const [cardDetails, collectionQuantity] = await Promise.all([
-            httpClient.get<Card>(`cards/${card.cardId}`),
-            isAuthenticated ? collectionService.getCardInCollection(card.cardId).catch(() => 0) : Promise.resolve(0)
-          ]);
+          // Cargar detalles de la carta
+          const cardDetails = await httpClient.get<Card>(`/api/cards/${card.cardId}`);
           
-          // Si la carta ya tiene un contador de colección, lo usamos en lugar del resultado de la API
-          const finalCollectionCount = card.collectionCount !== undefined ? card.collectionCount : collectionQuantity;
+          // Solo acceder a la colección si el usuario tiene acceso (no es admin)
+          let collectionQuantity = 0;
+          if (hasCollectionAccess) {
+            try {
+              collectionQuantity = await collectionService.getCardInCollection(card.cardId);
+            } catch (error) {
+              console.log('No collection data available for this card');
+              collectionQuantity = 0;
+            }
+          }
+          
+          // Si la carta ya tiene un contador de colección y tenemos acceso, lo usamos
+          const finalCollectionCount = hasCollectionAccess && card.collectionCount !== undefined ? 
+            card.collectionCount : collectionQuantity;
           
           // Mezclamos los datos de la carta que ya tenemos con los detalles adicionales
           const mergedData = {
             ...cardDetails,
-            collectionCount: finalCollectionCount
+            collectionCount: hasCollectionAccess ? finalCollectionCount : 0
           };
           
           setFullCardData(mergedData);
-          setCollectionCount(finalCollectionCount);
+          setCollectionCount(hasCollectionAccess ? finalCollectionCount : 0);
           setCopiesCount(1);
           
         } catch (err: any) {
@@ -122,9 +138,11 @@ const CardModal: React.FC<CardModalProps> = ({
           // Usamos los datos parciales que ya tenemos
           setFullCardData(card);
           
-          // Si la carta ya tiene un contador de colección, lo usamos aunque fallara la carga de detalles
-          if (card.collectionCount !== undefined) {
+          // Solo usar contador de colección si tenemos acceso
+          if (hasCollectionAccess && card.collectionCount !== undefined) {
             setCollectionCount(card.collectionCount);
+          } else {
+            setCollectionCount(0);
           }
         } finally {
           setLoading(false);
@@ -135,10 +153,16 @@ const CardModal: React.FC<CardModalProps> = ({
     } else {
       setFullCardData(null);
     }
-  }, [card, isAuthenticated]);
+  }, [card, hasCollectionAccess]);
 
   const getSetName = (card: Card | null): string => {
     if (!card) return 'Unknown Set';
+    
+    // Validar que sets sea un array válido
+    if (!Array.isArray(sets)) {
+      console.warn('Sets is not an array:', sets);
+      return card.set || 'Unknown Set';
+    }
     
     // Intentar obtener el setId de varias formas posibles
     let setId: number | undefined;
@@ -168,9 +192,9 @@ const CardModal: React.FC<CardModalProps> = ({
   };
 
   const handleAddToCollection = async () => {
-    if (!card || !isAuthenticated) {
-      if (!isAuthenticated) {
-        setError('You need to be logged in to add cards to your collection');
+    if (!card || !hasCollectionAccess) {
+      if (!hasCollectionAccess) {
+        setError('Collection management is not available for administrators');
       }
       return;
     }
@@ -216,9 +240,9 @@ const CardModal: React.FC<CardModalProps> = ({
   };
 
   const handleRemoveFromCollection = async () => {
-    if (!card || !isAuthenticated || collectionCount === 0) {
-      if (!isAuthenticated) {
-        setError('You need to be logged in to manage your collection');
+    if (!card || !hasCollectionAccess || collectionCount === 0) {
+      if (!hasCollectionAccess) {
+        setError('Collection management is not available for administrators');
       }
       return;
     }
@@ -381,7 +405,7 @@ const CardModal: React.FC<CardModalProps> = ({
               )}
               
               {/* Collection Controls - Posicionados debajo de la imagen */}
-              {isAuthenticated && (
+              {hasCollectionAccess && (
                 <div className="image-overlay-controls">
                   <div className="minimal-controls">
                     <button 

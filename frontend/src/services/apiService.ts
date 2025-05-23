@@ -1,6 +1,6 @@
 import { httpClient } from './httpClient';
 import authService from './authService';
-import { SetMtg, Card, Deck, DeckCreateDto, CardDeck, User, UserCollectionCard, UserRoleUpdateDto, RoleUpdateResponse } from './types';
+import { SetMtg, Card, Deck, DeckCreateDto, CardDeck, User, UserCollectionCard } from './types';
 import { SearchParams } from '../components/SearchBar';
 
 // Función helper para construir la ruta de API correctamente

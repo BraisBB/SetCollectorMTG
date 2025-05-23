@@ -1,5 +1,5 @@
 import { httpClient } from './httpClient';
-import { UserCollectionCard, UserCollection } from './types';
+import { UserCollectionCard } from './types';
 
 // Helper function to build API path correctly
 function apiPath(path: string): string {

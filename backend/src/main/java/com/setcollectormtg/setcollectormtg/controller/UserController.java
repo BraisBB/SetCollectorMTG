@@ -187,7 +187,7 @@ public class UserController {
         log.debug("Getting paginated users (requires ADMIN)");
         return ResponseEntity.ok(userService.getAllUsersPaged(pageable));
     }
-
+    
     /**
      * Gets the current authenticated user's profile.
      */

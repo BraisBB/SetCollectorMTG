@@ -1,8 +1,8 @@
-# 🐳 Docker Setup para SetCollectorMTG
+# 🐳 Podman Setup para SetCollectorMTG
 
 ## Sistema de Autenticación JWT Simple
 
-Este proyecto ha sido migrado de Keycloak a un sistema de autenticación JWT simple integrado directamente en Spring Boot.
+Este proyecto ha sido migrado de Keycloak a un sistema de autenticación JWT simple integrado directamente en Spring Boot, y utiliza **Podman** como motor de contenedores.
 
 ## 🏗️ Arquitectura
 
@@ -14,31 +14,65 @@ Este proyecto ha sido migrado de Keycloak a un sistema de autenticación JWT sim
 └─────────────────┘    └──────────────────┘    └─────────────────┘
 ```
 
+## 📋 Requisitos Previos
+
+### Instalación de Podman
+
+**Windows:**
+```powershell
+# Usando winget
+winget install RedHat.Podman
+
+# O usando Chocolatey
+choco install podman-desktop
+```
+
+**Linux (Ubuntu/Debian):**
+```bash
+sudo apt-get update
+sudo apt-get install podman podman-compose
+```
+
+**macOS:**
+```bash
+# Usando Homebrew
+brew install podman podman-compose
+```
+
+### Verificar Instalación
+```bash
+podman --version
+podman-compose --version
+```
+
 ## 🚀 Inicio Rápido
 
 ### 1. Construir y ejecutar todos los servicios
 
 ```bash
 # Construir y ejecutar en modo desarrollo
-docker-compose up --build
+podman-compose up --build
 
 # Ejecutar en segundo plano
-docker-compose up -d --build
+podman-compose up -d --build
+
+# Solo construir sin ejecutar
+podman-compose build
 ```
 
 ### 2. Verificar servicios
 
 ```bash
 # Ver estado de los servicios
-docker-compose ps
+podman-compose ps
 
-# Ver logs
-docker-compose logs -f
+# Ver logs en tiempo real
+podman-compose logs -f
 
 # Ver logs de un servicio específico
-docker-compose logs -f backend
-docker-compose logs -f frontend
-docker-compose logs -f mysql
+podman-compose logs -f backend
+podman-compose logs -f frontend
+podman-compose logs -f mysql
 ```
 
 ### 3. Health Checks
@@ -104,13 +138,13 @@ curl -X POST http://localhost:8080/auth/register \
 
 ```bash
 # Logs en tiempo real de todos los servicios
-docker-compose logs -f
+podman-compose logs -f
 
 # Logs del backend con filtro de nivel
-docker-compose logs -f backend | grep ERROR
+podman-compose logs -f backend | grep ERROR
 
 # Logs de nginx para debugging de API
-docker exec setcollector-frontend tail -f /var/log/nginx/api_access.log
+podman exec setcollector-frontend tail -f /var/log/nginx/api_access.log
 ```
 
 ### Métricas
@@ -124,57 +158,85 @@ docker exec setcollector-frontend tail -f /var/log/nginx/api_access.log
 
 ```bash
 # Rebuild solo el backend
-docker-compose up --build backend
+podman-compose up --build backend
 
 # Rebuild solo el frontend
-docker-compose up --build frontend
+podman-compose up --build frontend
 
 # Rebuild todo
-docker-compose up --build
+podman-compose up --build
+
+# Forzar rebuild sin cache
+podman-compose build --no-cache
 ```
 
 ### Acceso a contenedores
 
 ```bash
 # Acceder al contenedor del backend
-docker exec -it setcollector-backend bash
+podman exec -it setcollector-backend bash
 
 # Acceder al contenedor de MySQL
-docker exec -it setcollector-mysql mysql -u setcollector -p
+podman exec -it setcollector-mysql mysql -u setcollector -p
 
 # Acceder al contenedor del frontend
-docker exec -it setcollector-frontend sh
+podman exec -it setcollector-frontend sh
 ```
 
-## 🔨 Comandos Útiles
+## 🔨 Comandos Útiles de Podman
 
 ### Gestión de Contenedores
 
 ```bash
 # Parar todos los servicios
-docker-compose down
+podman-compose down
 
 # Parar y eliminar volúmenes
-docker-compose down -v
+podman-compose down -v
 
 # Eliminar imágenes construidas
-docker-compose down --rmi all
+podman-compose down --rmi all
 
-# Limpiar todo (contenedores, redes, volúmenes)
-docker system prune -a
+# Ver todos los contenedores
+podman ps -a
+
+# Ver imágenes locales
+podman images
+```
+
+### Limpieza del Sistema
+
+```bash
+# Limpiar contenedores parados
+podman container prune
+
+# Limpiar imágenes no utilizadas
+podman image prune
+
+# Limpiar volúmenes no utilizados
+podman volume prune
+
+# Limpiar todo el sistema
+podman system prune -a
+
+# Limpiar todo incluyendo volúmenes
+podman system prune -a --volumes
 ```
 
 ### Base de Datos
 
 ```bash
 # Backup de la base de datos
-docker exec setcollector-mysql mysqldump -u root -proot setcollector > backup.sql
+podman exec setcollector-mysql mysqldump -u root -proot setcollector > backup.sql
 
 # Restaurar base de datos
-docker exec -i setcollector-mysql mysql -u root -proot setcollector < backup.sql
+podman exec -i setcollector-mysql mysql -u root -proot setcollector < backup.sql
 
 # Acceder a MySQL CLI
-docker exec -it setcollector-mysql mysql -u setcollector -p
+podman exec -it setcollector-mysql mysql -u setcollector -p
+
+# Ver logs de MySQL
+podman-compose logs mysql
 ```
 
 ## 🎯 URLs de Acceso
@@ -186,45 +248,139 @@ docker exec -it setcollector-mysql mysql -u setcollector -p
   - Frontend: http://localhost:5173/health
   - Backend: http://localhost:8080/actuator/health
 
+## ⚙️ Configuraciones Específicas de Podman
+
+### Modo Rootless (Recomendado)
+
+Podman funciona mejor en modo rootless para mayor seguridad:
+
+```bash
+# Verificar si Podman está en modo rootless
+podman info | grep rootless
+
+# Configurar subuid y subgid (si es necesario)
+sudo usermod --add-subuids 10000-75535 $USER
+sudo usermod --add-subgids 10000-75535 $USER
+```
+
+### Pods en Podman
+
+```bash
+# Ver pods creados por podman-compose
+podman pod list
+
+# Inspeccionar un pod específico
+podman pod inspect setcollectormtg_default
+
+# Ver logs de todo el pod
+podman pod logs setcollectormtg_default
+```
+
+### Redes en Podman
+
+```bash
+# Listar redes
+podman network ls
+
+# Inspeccionar la red del proyecto
+podman network inspect setcollectormtg_setcollector-network
+```
+
 ## 🚨 Troubleshooting
 
 ### Problemas Comunes
 
 1. **Backend no inicia**: Verificar que MySQL esté healthy
    ```bash
-   docker-compose logs mysql
+   podman-compose logs mysql
+   podman exec setcollector-mysql mysqladmin ping -h localhost
    ```
 
 2. **Frontend no puede comunicarse con backend**: Verificar configuración CORS
    ```bash
-   docker-compose logs backend | grep CORS
+   podman-compose logs backend | grep CORS
    ```
 
 3. **JWT tokens no funcionan**: Verificar variable `APP_JWT_SECRET`
    ```bash
-   docker exec setcollector-backend env | grep JWT
+   podman exec setcollector-backend env | grep JWT
+   ```
+
+4. **Problemas de permisos (Linux)**: Verificar configuración de rootless
+   ```bash
+   podman info | grep -A5 -B5 rootless
+   ```
+
+5. **Puertos ocupados**: Verificar qué está usando los puertos
+   ```bash
+   # Linux/macOS
+   netstat -tlnp | grep -E ':(3306|8080|5173)'
+   
+   # Windows
+   netstat -an | findstr "3306 8080 5173"
    ```
 
 ### Reset Completo
 
 ```bash
-# Parar todos los contenedores
-docker-compose down -v
+# Parar todos los contenedores y pods
+podman-compose down -v
 
-# Eliminar imágenes locales
-docker-compose down --rmi local
+# Eliminar pod completo
+podman pod rm -f setcollectormtg_default
+
+# Eliminar imágenes locales del proyecto
+podman rmi setcollectormtg_backend setcollectormtg_frontend
 
 # Eliminar volúmenes
-docker volume rm setcollectormtg_mysql_data
+podman volume rm setcollectormtg_mysql_data
 
 # Rebuild desde cero
-docker-compose up --build
+podman-compose up --build
 ```
 
-## 📝 Notas
+### Problemas Específicos de Windows
 
-- El sistema ya no requiere Keycloak
-- Los tokens JWT se almacenan en localStorage del navegador
+```powershell
+# Verificar que el servicio de Podman esté ejecutándose
+Get-Service podman
+
+# Reiniciar máquina virtual de Podman
+podman machine stop
+podman machine start
+
+# Ver información de la máquina virtual
+podman machine list
+```
+
+## 🔄 Migración desde Docker
+
+Si vienes de Docker, estos son los equivalentes en Podman:
+
+| Docker Command | Podman Equivalent |
+|---|---|
+| `docker-compose up` | `podman-compose up` |
+| `docker ps` | `podman ps` |
+| `docker exec -it` | `podman exec -it` |
+| `docker logs` | `podman logs` |
+| `docker build` | `podman build` |
+| `docker images` | `podman images` |
+| `docker system prune` | `podman system prune` |
+
+## 📝 Notas Importantes
+
+- **Podman es compatible con Docker**: Usa las mismas imágenes y Dockerfiles
+- **Rootless por defecto**: Mayor seguridad sin necesidad de privilegios root
+- **Pods nativos**: Podman-compose crea pods automáticamente
+- **No hay daemon**: Podman no requiere un daemon ejecutándose
+- **Integración con systemd**: Mejor integración con servicios del sistema
+- **Compatible con Kubernetes**: Los pods de Podman pueden exportarse como YAML de Kubernetes
+
+## 🔐 Seguridad
+
 - Los usuarios se almacenan directamente en MySQL
 - Las contraseñas se hashean con BCrypt
 - Los roles se manejan como strings simples: "USER", "ADMIN" 
+- JWT tokens se almacenan en localStorage del navegador
+- Contenedores ejecutan en modo rootless para mayor seguridad
+- Variables de entorno sensibles deben configurarse externamente en producción 
