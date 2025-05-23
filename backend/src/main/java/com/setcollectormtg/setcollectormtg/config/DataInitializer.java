@@ -59,15 +59,15 @@ public class DataInitializer implements CommandLineRunner {
 
         try {
             User savedUser = userRepository.save(adminUser);
-            log.info("✅ Usuario administrador creado exitosamente:");
-            log.info("   👤 Username: {}", savedUser.getUsername());
-            log.info("   📧 Email: {}", savedUser.getEmail());
-            log.info("   🔐 Password: {} (encriptada)", ADMIN_PASSWORD);
-            log.info("   🛡️ Roles: {}", savedUser.getRoles());
-            log.info("   🆔 ID: {}", savedUser.getUserId());
-            log.info("   ℹ️ Los administradores acceden como usuarios públicos (sin colección)");
+            log.info("Usuario administrador creado exitosamente:");
+            log.info("Username: {}", savedUser.getUsername());
+            log.info("Email: {}", savedUser.getEmail());
+            log.info("Password: {} (encriptada)", ADMIN_PASSWORD);
+            log.info("Roles: {}", savedUser.getRoles());
+            log.info("ID: {}", savedUser.getUserId());
+            log.info("Los administradores acceden como usuarios públicos (sin colección)");
         } catch (Exception e) {
-            log.error("❌ Error al crear usuario administrador: {}", e.getMessage(), e);
+            log.error("Error al crear usuario administrador: {}", e.getMessage(), e);
         }
     }
 }
