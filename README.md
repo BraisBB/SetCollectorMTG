@@ -1,6 +1,7 @@
-# SetCollectorMTG - Magic: The Gathering Card Collector
+# SetCollectorMTG - Magic: The Gathering 
 
-Una aplicación web completa para coleccionar y gestionar cartas de Magic: The Gathering, desarrollada con Spring Boot 3, React 19, y MySQL 8.0, desplegada con Docker.
+Una aplicación web para visualizar sets de cartas y virtualizar tu colección personal de cartas Magic: The Gathering y creacion de Decks.
+Desarrollada con Spring Boot 3, React 19, y MySQL 8.0, desplegada con Docker.
 
 ## Tecnologías Utilizadas
 
@@ -9,7 +10,7 @@ Una aplicación web completa para coleccionar y gestionar cartas de Magic: The G
 - **Spring Security** con autenticación JWT
 - **Spring Data JPA** con Hibernate
 - **MySQL 8.0** como base de datos principal
-- **H2** para testing
+- **H2** para testeo
 - **MapStruct** para mapeo de DTOs
 - **SpringDoc OpenAPI 3** (Swagger)
 - **Maven** como gestor de dependencias
@@ -79,11 +80,11 @@ docker info
 git clone <repository-url>
 cd SetCollectorMTG
 
-# Construir y ejecutar todos los servicios
-docker compose up --build
+# Primero construir las imagenes
+docker compose build
 
-# Ejecutar en segundo plano (recomendado)
-docker compose up -d --build
+# Levantar los contenedores en segundo plano (recomendado)
+docker compose up -d 
 ```
 
 ### Verificar el despliegue
@@ -110,11 +111,10 @@ docker compose logs -f
 
 - **Autenticación JWT** con roles de usuario (USER, ADMIN)
 - **Búsqueda avanzada** de cartas de Magic: The Gathering
-- **Gestión de colección personal** con cartas favoritas
+- **Gestión de colección personal**
 - **Panel administrativo** para gestión de usuarios
-- **API REST completa** con documentación Swagger
+- **API REST** con documentación Swagger
 - **Interfaz responsive** optimizada para dispositivos móviles
-- **Sistema de caché** para mejorar rendimiento
 - **Health checks** y monitoreo de servicios
 
 ## API REST - Endpoints Principales
@@ -212,7 +212,7 @@ docker compose down
 docker compose down -v
 
 # Rebuild completo
-docker compose down && docker compose up --build -d
+docker compose down ; docker compose up --build -d
 ```
 
 ### Gestión de Base de Datos
@@ -457,8 +457,6 @@ mvn jacoco:report
 ```bash
 cd frontend
 
-# Tests unitarios (si están configurados)
-npm test
 
 # Build test
 npm run build
@@ -471,21 +469,6 @@ npm run build
 - [React Documentation](https://react.dev/)
 - [API Documentation](http://localhost:8080/swagger-ui/index.html) (cuando esté ejecutándose)
 - [MySQL 8.0 Reference](https://dev.mysql.com/doc/refman/8.0/en/)
-
-## Contribución
-
-1. Fork el proyecto
-2. Crear rama feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit cambios (`git commit -am 'Añadir nueva funcionalidad'`)
-4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Abrir Pull Request
-
-### Estándares de Código
-
-- **Backend**: Seguir convenciones de Spring Boot y Clean Code
-- **Frontend**: Usar ESLint y prettier para formateo
-- **Commits**: Formato conventional commits
-- **Testing**: Cobertura mínima del 80%
 
 ## Soporte
 
