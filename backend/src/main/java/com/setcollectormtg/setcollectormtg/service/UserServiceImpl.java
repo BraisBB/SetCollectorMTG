@@ -112,17 +112,34 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void assignRolesToUser(Long id, List<String> roleNames) {
+        log.debug("UserServiceImpl.assignRolesToUser called with id={}, roleNames={}", id, roleNames);
+        
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + id));
 
+        log.debug("User found: username={}, current roles={}", user.getUsername(), user.getRoles());
+
         Set<Role> roles = roleNames.stream()
-                .map(Role::valueOf)
+                .map(roleName -> {
+                    log.debug("Converting role name '{}' to Role enum", roleName);
+                    try {
+                        Role role = Role.valueOf(roleName);
+                        log.debug("Successfully converted '{}' to {}", roleName, role);
+                        return role;
+                    } catch (IllegalArgumentException e) {
+                        log.error("Invalid role name: {}", roleName, e);
+                        throw new IllegalArgumentException("Invalid role: " + roleName, e);
+                    }
+                })
                 .collect(Collectors.toSet());
 
-        user.setRoles(roles);
-        userRepository.save(user);
+        log.debug("Converted roles: {}", roles);
         
-        log.info("Roles asignados al usuario {}: {}", user.getUsername(), roleNames);
+        user.setRoles(roles);
+        User savedUser = userRepository.save(user);
+        
+        log.info("Roles asignados al usuario {}: {} (saved user roles: {})", 
+                user.getUsername(), roleNames, savedUser.getRoles());
     }
 
     @Override

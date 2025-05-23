@@ -65,7 +65,17 @@ public class SetMtgController {
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<SetMtgDto> updateSet(@PathVariable Long id, @RequestBody SetMtgCreateDto setMtgCreateDto) {
         log.debug("Updating MTG set with ID: {}", id);
-        return ResponseEntity.ok(setMtgService.updateSet(id, setMtgCreateDto));
+        log.debug("Received set data: {}", setMtgCreateDto);
+        log.debug("Release date from request: {}", setMtgCreateDto.getReleaseDate());
+        
+        try {
+            SetMtgDto result = setMtgService.updateSet(id, setMtgCreateDto);
+            log.debug("Set updated successfully: {}", result);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("Error updating set with ID {}: {}", id, e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**

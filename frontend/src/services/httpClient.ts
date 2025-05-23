@@ -20,11 +20,16 @@ class HttpClient {
     this.api.interceptors.request.use(async (config: any) => {
       console.log(`Making ${config.method?.toUpperCase()} request to:`, config.url || config.baseURL);
       
-      // Detectar endpoints públicos
+      // Detectar endpoints públicos - solo métodos GET para sets y cards son públicos
+      const method = config.method?.toUpperCase();
       const isPublicEndpoint = config.url && (
-        config.url.includes('cards/search') || 
-        config.url.includes('cards?') || 
-        config.url.includes('/sets') ||
+        // Búsqueda de cartas (GET)
+        (method === 'GET' && config.url.includes('cards/search')) || 
+        (method === 'GET' && config.url.includes('cards?')) ||
+        (method === 'GET' && config.url.includes('/cards')) ||
+        // Consulta de sets (GET)
+        (method === 'GET' && config.url.includes('/sets')) ||
+        // Autenticación
         config.url.includes('/auth/login') ||
         config.url.includes('/auth/register')
       );
@@ -71,16 +76,20 @@ class HttpClient {
           console.error(`HTTP Error ${status} for ${url}`);
           console.error('Response data:', error.response.data);
           
-          // Manejo mejorado de errores de validación
+          // Preservar la estructura original del error para validaciones
           if (error.response.data && typeof error.response.data === 'object') {
             const errorData = error.response.data as any;
             
-            // Si hay errores de validación específicos del backend
+            // Preservar error.response para que el frontend pueda acceder a errorData.errors
+            error.response = error.response;
+            
+            // Si hay errores de validación específicos del backend, crear un mensaje descriptivo
+            // pero mantener el acceso a la estructura original
             if (errorData.errors && typeof errorData.errors === 'object') {
               const validationMessages = Object.entries(errorData.errors)
                 .map(([field, message]) => `${field}: ${message}`)
                 .join(', ');
-              error.message = `Error ${status}: ${validationMessages}`;
+              error.message = `Validation failed: ${validationMessages}`;
             } else if (errorData.message) {
               error.message = `Error ${status}: ${errorData.message}`;
             } else {

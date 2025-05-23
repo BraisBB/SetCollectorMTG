@@ -138,8 +138,14 @@ public class UserController {
             @PathVariable Long id,
             @Valid @RequestBody UserRoleUpdateDto roleUpdateDto) {
         log.debug("Assigning roles {} to user with ID: {}", roleUpdateDto.getRoles(), id);
+        log.debug("Received role update DTO: {}", roleUpdateDto);
+        log.debug("Role update DTO class: {}", roleUpdateDto.getClass().getName());
+        log.debug("Roles field: {}", roleUpdateDto.getRoles());
+        log.debug("Roles field class: {}", roleUpdateDto.getRoles() != null ? roleUpdateDto.getRoles().getClass().getName() : "null");
+        
         try {
             userService.assignRolesToUser(id, List.copyOf(roleUpdateDto.getRoles()));
+            log.info("Roles assigned successfully to user {}: {}", id, roleUpdateDto.getRoles());
             return ResponseEntity.ok().body(Map.of(
                 "success", true,
                 "message", "Roles assigned successfully",

@@ -6,8 +6,10 @@ import com.setcollectormtg.setcollectormtg.exception.ResourceNotFoundException;
 import com.setcollectormtg.setcollectormtg.mapper.DeckMapper;
 import com.setcollectormtg.setcollectormtg.model.Deck;
 import com.setcollectormtg.setcollectormtg.model.User;
+import com.setcollectormtg.setcollectormtg.model.CardDeck;
 import com.setcollectormtg.setcollectormtg.repository.DeckRepository;
 import com.setcollectormtg.setcollectormtg.repository.UserRepository;
+import com.setcollectormtg.setcollectormtg.repository.CardDeckRepository;
 import com.setcollectormtg.setcollectormtg.util.CurrentUserUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +19,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +31,7 @@ public class DeckServiceImpl implements DeckService {
 
     private final DeckRepository deckRepository;
     private final UserRepository userRepository;
+    private final CardDeckRepository cardDeckRepository;
     private final DeckMapper deckMapper;
     private final CurrentUserUtil currentUserUtil;
 
@@ -146,10 +153,94 @@ public class DeckServiceImpl implements DeckService {
         Deck deck = deckRepository.findById(deckId)
                 .orElseThrow(() -> new ResourceNotFoundException("Deck not found with id: " + deckId));
 
-        // Lógica para recalcular el color del deck basado en las cartas
-        // Por ahora simplemente guardamos el deck sin cambios
+        // Obtener todas las cartas del deck
+        List<CardDeck> deckCards = cardDeckRepository.findByDeck_DeckId(deckId);
+        
+        if (deckCards.isEmpty()) {
+            // Si no hay cartas, el deck no tiene color
+            deck.setDeckColor(null);
+            log.debug("Deck {} has no cards, setting color to null", deckId);
+        } else {
+            // Calcular el color basado en las cartas del deck
+            String calculatedColor = calculateDeckColor(deckCards);
+            deck.setDeckColor(calculatedColor);
+            log.debug("Deck {} color calculated as: {}", deckId, calculatedColor);
+        }
+
         Deck updatedDeck = deckRepository.save(deck);
         return deckMapper.toDto(updatedDeck);
+    }
+
+    /**
+     * Calcula el color del deck basado en las cartas que contiene
+     * @param deckCards Lista de cartas del deck
+     * @return String representando el color del deck
+     */
+    private String calculateDeckColor(List<CardDeck> deckCards) {
+        Set<String> colors = new HashSet<>();
+        
+        // Analizamos cada carta en el deck
+        for (CardDeck cardDeck : deckCards) {
+            String manaCost = cardDeck.getCard().getManaCost();
+            if (manaCost != null && !manaCost.trim().isEmpty()) {
+                // Extraer colores del coste de maná
+                Set<String> cardColors = extractColorsFromManaCost(manaCost);
+                colors.addAll(cardColors);
+            }
+        }
+        
+        log.debug("Colors found in deck: {}", colors);
+        
+        // Determinar el tipo de color del deck
+        if (colors.isEmpty()) {
+            return "colorless";
+        } else if (colors.size() == 1) {
+            // Mapear símbolos de mana a nombres de colores
+            String color = colors.iterator().next();
+            return mapManaSymbolToColorName(color);
+        } else {
+            // Deck multicolor - convertir los símbolos a nombres de colores y combinarlos
+            return colors.stream()
+                    .map(this::mapManaSymbolToColorName)
+                    .sorted() // Ordenar alfabéticamente para consistencia
+                    .reduce((a, b) -> a + " " + b)
+                    .orElse("multicolor");
+        }
+    }
+
+    /**
+     * Extrae los símbolos de color del coste de maná
+     * @param manaCost String del coste de maná (ej: "{2}{W}{U}")
+     * @return Set de símbolos de color encontrados
+     */
+    private Set<String> extractColorsFromManaCost(String manaCost) {
+        Set<String> colors = new HashSet<>();
+        
+        // Patrón para encontrar símbolos de mana de color: {W}, {U}, {B}, {R}, {G}
+        Pattern colorPattern = Pattern.compile("\\{([WUBRG])\\}");
+        Matcher matcher = colorPattern.matcher(manaCost);
+        
+        while (matcher.find()) {
+            colors.add(matcher.group(1)); // Agregar solo la letra (W, U, B, R, G)
+        }
+        
+        return colors;
+    }
+
+    /**
+     * Mapea símbolos de mana a nombres de colores
+     * @param manaSymbol Símbolo de mana (W, U, B, R, G)
+     * @return Nombre del color correspondiente
+     */
+    private String mapManaSymbolToColorName(String manaSymbol) {
+        switch (manaSymbol) {
+            case "W": return "white";
+            case "U": return "blue";
+            case "B": return "black";
+            case "R": return "red";
+            case "G": return "green";
+            default: return "colorless";
+        }
     }
 
     @Override
