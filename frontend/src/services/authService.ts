@@ -1,526 +1,148 @@
-import axios from 'axios';
-import { KEYCLOAK_CONFIG } from './config';
-import { LoginCredentials, AuthTokens } from './types';
+import { AUTH_CONFIG } from './config';
+import { LoginCredentials, RegisterCredentials, AuthResponse } from './types';
+import { httpClient } from './httpClient';
 
 class AuthService {
-  // Gestión de nombres de usuario
-  private knownUsernames: Map<string, string> = new Map();
-  
-  // Configuración unificada para solicitudes a Keycloak
-  private keycloakRequestConfig = {
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Accept': 'application/json'
-    },
-    withCredentials: true,
-    timeout: 10000 // Añadir timeout
-  };
-
   constructor() {
-    this.loadKnownUsernames();
     this.initAuth();
   }
 
-  /**
-   * Carga los nombres de usuario conocidos desde localStorage
-   */
-  private loadKnownUsernames(): void {
-    try {
-      const storedData = localStorage.getItem('known_usernames');
-      if (storedData) {
-        const entries = JSON.parse(storedData) as [string, string][];
-        this.knownUsernames = new Map(entries);
-      }
-    } catch (error) {
-      console.error('Error loading known usernames:', error);
+  initAuth(): void {
+    if (this.hasToken() && !this.isTokenValid()) {
+      console.log('Token expirado encontrado, limpiando sesión');
+      this.clearSession();
     }
   }
 
-  /**
-   * Guarda los nombres de usuario conocidos en localStorage
-   */
-  private saveKnownUsernames(): void {
-    try {
-      const entries = Array.from(this.knownUsernames.entries());
-      localStorage.setItem('known_usernames', JSON.stringify(entries));
-    } catch (error) {
-      console.error('Error saving known usernames:', error);
-    }
-  }
-
-  /**
-   * Registra un nuevo nombre de usuario conocido
-   */
-  registerKnownUsername(exactUsername: string): void {
-    const normalizedUsername = exactUsername.toLowerCase();
-    this.knownUsernames.set(normalizedUsername, exactUsername);
-    this.saveKnownUsernames();
-  }
-
-  /**
-   * Intenta obtener el formato exacto del nombre de usuario
-   */
-  async getExactUsername(username: string): Promise<string | null> {
-    const normalizedUsername = username.toLowerCase();
-    return this.knownUsernames.get(normalizedUsername) || null;
-  }
-
-  /**
-   * Obtener la URL de redirección para el inicio de sesión
-   */
-  getRedirectUri(): string {
-    return KEYCLOAK_CONFIG.REDIRECT_URI || window.location.origin;
-  }
-
-  /**
-   * Realiza el login del usuario usando las credenciales proporcionadas
-   */
   async login(credentials: LoginCredentials): Promise<boolean> {
     try {
-      // Verificamos si conocemos el formato exacto del nombre de usuario
-      const exactUsername = await this.getExactUsername(credentials.username);
+      console.log('Enviando solicitud de login para usuario:', credentials.username);
       
-      // Si conocemos el formato exacto y no coincide, rechazamos el intento
-      if (exactUsername && exactUsername !== credentials.username) {
-        localStorage.setItem('format_error', 'true');
+      const authData: AuthResponse = await httpClient.post<AuthResponse>(
+        AUTH_CONFIG.LOGIN_ENDPOINT,
+        credentials
+      );
+      
+      console.log('Login exitoso para usuario:', authData.username);
+      this.setSession(authData);
+      return true;
+    } catch (error: any) {
+      console.error('Error durante el login:', error);
+      
+      throw error;
+    }
+  }
+
+  async register(credentials: RegisterCredentials): Promise<boolean> {
+    try {
+      console.log('Enviando solicitud de registro para usuario:', credentials.username);
+      
+      const authData: AuthResponse = await httpClient.post<AuthResponse>(
+        AUTH_CONFIG.REGISTER_ENDPOINT, 
+        credentials
+      );
+      
+      console.log('Registro exitoso para usuario:', authData.username);
+      this.setSession(authData);
+      return true;
+    } catch (error: any) {
+      console.error('Error durante el registro:', error);
+      
+      throw error;
+    }
+  }
+
+  async logout(): Promise<void> {
+    this.clearSession();
+    console.log('Sesión cerrada');
+  }
+
+  isAuthenticated(): boolean {
+    return this.hasToken() && this.isTokenValid();
+  }
+
+  getToken(): string | null {
+    return localStorage.getItem(AUTH_CONFIG.TOKEN_KEY);
+  }
+
+  getUsername(): string | null {
+    return localStorage.getItem('username');
+  }
+
+  getRoles(): string[] {
+    const rolesStr = localStorage.getItem('userRoles');
+    return rolesStr ? JSON.parse(rolesStr) : [];
+  }
+
+  isAdmin(): boolean {
+    const roles = this.getRoles();
+    return roles.includes('ADMIN') || roles.includes('ROLE_ADMIN');
+  }
+
+  getUserIdentifier(): string | null {
+    return this.getUsername();
+  }
+
+  async refreshTokenIfNeeded(): Promise<boolean> {
+    return this.isTokenValid();
+  }
+
+  isTokenExpiringSoon(): boolean {
+    const token = this.getToken();
+    if (!token) return false;
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const currentTime = Math.floor(Date.now() / 1000);
+      const fiveMinutesFromNow = currentTime + (5 * 60);
+      
+      return payload.exp && payload.exp < fiveMinutesFromNow;
+    } catch (error) {
+      console.error('Error verificando expiración del token:', error);
+      return false;
+    }
+  }
+
+  private hasToken(): boolean {
+    return !!localStorage.getItem(AUTH_CONFIG.TOKEN_KEY);
+  }
+
+  private isTokenValid(): boolean {
+    const token = this.getToken();
+    if (!token) return false;
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const currentTime = Math.floor(Date.now() / 1000);
+      
+      if (payload.exp && payload.exp < currentTime) {
+        console.log('Token ha expirado');
         return false;
       }
-      
-      const params = new URLSearchParams();
-      params.append('client_id', KEYCLOAK_CONFIG.CLIENT_ID);
-      // No se necesita client_secret para clientes públicos
-      params.append('grant_type', 'password');
-      params.append('username', credentials.username);
-      params.append('password', credentials.password);
-      params.append('scope', 'openid profile email');
-      params.append('redirect_uri', this.getRedirectUri());
 
-      console.log('Enviando solicitud de autenticación a:', `${KEYCLOAK_CONFIG.URL}/realms/${KEYCLOAK_CONFIG.REALM}/protocol/openid-connect/token`);
-      console.log('Redirect URI:', this.getRedirectUri());
-      
-      const response = await axios.post<AuthTokens>(
-        `${KEYCLOAK_CONFIG.URL}/realms/${KEYCLOAK_CONFIG.REALM}/protocol/openid-connect/token`,
-        params.toString(),
-        this.keycloakRequestConfig
-      );
-      
-      // Registro el formato exacto y limpio indicadores de error
-      this.registerKnownUsername(credentials.username);
-      localStorage.removeItem('format_error');
-      
-      // Guardo la sesión
-      this.setSession(response.data);
       return true;
-    } catch (error: any) {
-      console.error('Login failed:', error);
-      if (error.response) {
-        console.error('Status:', error.response.status);
-        console.error('Data:', error.response.data);
-        console.error('Headers:', error.response.headers);
-      } else if (error.request) {
-        console.error('No response received:', error.request);
-      } else {
-        console.error('Error config:', error.config);
-      }
+    } catch (error) {
+      console.error('Error validando token:', error);
       return false;
     }
   }
 
-  /**
-   * Verifica si hubo un error de formato en el último intento de login
-   */
-  hasFormatError(): boolean {
-    return localStorage.getItem('format_error') === 'true';
+  private setSession(authData: AuthResponse): void {
+    localStorage.setItem(AUTH_CONFIG.TOKEN_KEY, authData.token);
+    localStorage.setItem('username', authData.username);
+    localStorage.setItem('userRoles', JSON.stringify(authData.roles));
+    
+    console.log('Sesión guardada para usuario:', authData.username);
+    console.log('Roles del usuario:', authData.roles);
   }
 
-  /**
-   * Cierra la sesión del usuario actual
-   */
-  async logout(): Promise<void> {
-    const refreshToken = localStorage.getItem('refresh_token');
-    
-    // Siempre limpiamos la sesión local, independientemente de si la petición a Keycloak tiene éxito o no
-    this.clearSession();
-    
-    // Si no hay refresh token, no necesitamos hacer la petición a Keycloak
-    if (!refreshToken) {
-      console.log('No hay refresh token, sesión limpiada localmente');
-      return;
-    }
-    
-    try {
-      const params = new URLSearchParams();
-      params.append('client_id', KEYCLOAK_CONFIG.CLIENT_ID);
-      params.append('refresh_token', refreshToken);
-      params.append('redirect_uri', this.getRedirectUri());
-
-      // Configuramos un timeout para evitar que la petición se quede colgada
-      const logoutConfig = {
-        ...this.keycloakRequestConfig,
-        timeout: 5000 // 5 segundos de timeout
-      };
-      
-      await axios.post(
-        `${KEYCLOAK_CONFIG.URL}/realms/${KEYCLOAK_CONFIG.REALM}/protocol/openid-connect/logout`,
-        params.toString(),
-        logoutConfig
-      );
-      console.log('Logout en Keycloak completado con éxito');
-    } catch (error: any) {
-      // Manejo detallado de errores
-      if (axios.isAxiosError(error)) {
-        if (error.code === 'ECONNABORTED') {
-          console.warn('Timeout durante el logout en Keycloak. La sesión se ha cerrado localmente.');
-        } else if (error.response) {
-          // Error con respuesta del servidor
-          console.error(`Error de logout en Keycloak: ${error.response.status} - ${error.response.statusText}`);
-          console.error('Headers:', error.response.headers);
-          console.error('Data:', error.response.data);
-        } else if (error.request) {
-          // Error sin respuesta del servidor
-          console.error('No se recibió respuesta del servidor de Keycloak durante el logout');
-        } else {
-          // Error en la configuración de la petición
-          console.error('Error en la configuración de la petición de logout:', error.message);
-        }
-      } else {
-        // Error no relacionado con Axios
-        console.error('Error desconocido durante el logout:', error);
-      }
-    }
-  }
-
-  /**
-   * Obtiene el ID del usuario del token JWT
-   * Para interacciones con la API, preferimos usar username
-   */
-  getUserIdentifier(): string | null {
-    // Preferimos usar el username como identificador principal para la API
-    const username = localStorage.getItem('username');
-    if (username) {
-      return username;
-    }
-    
-    // Si por alguna razón no tenemos el username, intentamos con keycloakId como fallback
-    const keycloakId = localStorage.getItem('user_keycloak_id');
-    if (keycloakId) {
-      return keycloakId;
-    }
-    
-    // Último recurso: intentar extraerlo del token
-    const token = localStorage.getItem('access_token');
-    if (!token) return null;
-
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      
-      // Extraer identificadores por orden de preferencia
-      if (payload.preferred_username) {
-        localStorage.setItem('username', payload.preferred_username);
-        return payload.preferred_username;
-      }
-      
-      if (payload.sub) {
-        localStorage.setItem('user_keycloak_id', payload.sub);
-        return payload.sub;
-      }
-      
-      console.warn("No se encontró ningún identificador adecuado en el token");
-      return null;
-    } catch (error) {
-      console.error("Error al decodificar token o extraer identificador:", error);
-      return null;
-    }
-  }
-  
-  /**
-   * Obtiene el ID de Keycloak del usuario (UUID)
-   * Para operaciones internas que requieren específicamente el UUID de Keycloak
-   */
-  getKeycloakId(): string | null {
-    // Primero intentar desde localStorage
-    const keycloakId = localStorage.getItem('user_keycloak_id');
-    if (keycloakId) {
-      return keycloakId;
-    }
-    
-    // Intentar extraerlo del token
-    const token = localStorage.getItem('access_token');
-    if (!token) return null;
-
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      if (payload.sub) {
-        localStorage.setItem('user_keycloak_id', payload.sub);
-        return payload.sub;
-      }
-      
-      return null;
-    } catch (error) {
-      console.error("Error al extraer keycloakId:", error);
-      return null;
-    }
-  }
-  
-  /**
-   * Guarda los tokens en el localStorage y extrae información del usuario
-   */
-  private setSession(authResult: AuthTokens): void {
-    const expiresAt = Date.now() + authResult.expires_in * 1000;
-    
-    localStorage.setItem('access_token', authResult.access_token);
-    localStorage.setItem('refresh_token', authResult.refresh_token);
-    localStorage.setItem('expires_at', expiresAt.toString());
-    
-    // Decodificar el token para obtener información del usuario
-    try {
-      const payload = JSON.parse(atob(authResult.access_token.split('.')[1]));
-      console.log("Token payload:", payload);
-      
-      // Guardar todos los identificadores disponibles
-      if (payload.preferred_username) {
-        localStorage.setItem('username', payload.preferred_username);
-        console.log("Username guardado:", payload.preferred_username);
-      }
-      
-      if (payload.name) {
-        localStorage.setItem('display_name', payload.name);
-      }
-      
-      if (payload.sub) {
-        localStorage.setItem('user_keycloak_id', payload.sub);
-        console.log("Keycloak ID guardado:", payload.sub);
-      }
-      
-      if (payload.email) {
-        localStorage.setItem('email', payload.email);
-      }
-    } catch (error) {
-      console.error('Error al decodificar el token:', error);
-    }
-  }
-  
-  /**
-   * Elimina los tokens del localStorage
-   */
   private clearSession(): void {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('expires_at');
+    localStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
     localStorage.removeItem('username');
-    localStorage.removeItem('user_keycloak_id');
-    localStorage.removeItem('display_name');
-    localStorage.removeItem('email');
-    localStorage.removeItem('user_internal_id');
-  }
-
-  /**
-   * Verifica si el usuario está autenticado
-   */
-  isAuthenticated(): boolean {
-    const expiresAt = localStorage.getItem('expires_at');
-    return !!expiresAt && Date.now() < parseInt(expiresAt, 10);
-  }
-
-  /**
-   * Obtiene el token de acceso
-   */
-  getToken(): string | null {
-    return localStorage.getItem('access_token');
-  }
-
-  /**
-   * Verifica si el token está a punto de expirar
-   */
-  isTokenExpiringSoon(): boolean {
-    const expiresAt = localStorage.getItem('expires_at');
-    if (!expiresAt) return false;
-    
-    // Consideramos que expira pronto si queda menos de 3 minutos
-    // Esto nos da tiempo suficiente para renovarlo antes de que expire
-    const expiresAtMs = parseInt(expiresAt, 10);
-    const timeRemaining = expiresAtMs - Date.now();
-    const THREE_MINUTES = 3 * 60 * 1000;
-    
-    return timeRemaining < THREE_MINUTES;
-  }
-
-  /**
-   * Refresca el token si es necesario
-   * @param force Si es true, fuerza la renovación incluso si el token no está por expirar
-   */
-  async refreshTokenIfNeeded(force: boolean = false): Promise<boolean> {
-    // Si no está forzado y el token no está por expirar, no hacemos nada
-    if (!force && !this.isTokenExpiringSoon()) {
-      return true;
-    }
-    
-    const refreshToken = localStorage.getItem('refresh_token');
-    if (!refreshToken) return false;
-    
-    try {
-      console.log(`Intentando renovar token... (forzado: ${force})`);
-      const params = new URLSearchParams();
-      params.append('client_id', KEYCLOAK_CONFIG.CLIENT_ID);
-      params.append('grant_type', 'refresh_token');
-      params.append('refresh_token', refreshToken);
-      
-      const response = await axios.post<AuthTokens>(
-        `${KEYCLOAK_CONFIG.URL}/realms/${KEYCLOAK_CONFIG.REALM}/protocol/openid-connect/token`,
-        params.toString(),
-        this.keycloakRequestConfig
-      );
-      
-      this.setSession(response.data);
-      console.log('Token renovado con éxito, nueva expiración:', new Date(parseInt(localStorage.getItem('expires_at') || '0')));
-      return true;
-    } catch (error: any) {
-      console.error('Error refreshing token:', error);
-      if (error.response) {
-        console.error('Status:', error.response.status);
-        console.error('Data:', error.response.data);
-        console.error('Headers:', error.response.headers);
-      } else if (error.request) {
-        console.error('No response received:', error.request);
-      } else {
-        console.error('Error config:', error.config);
-      }
-      this.clearSession();
-      return false;
-    }
-  }
-
-  /**
-   * Inicializa la autenticación
-   */
-  initAuth(): void {
-    // Verificamos si hay token válido
-    const token = localStorage.getItem('access_token');
-    const refreshToken = localStorage.getItem('refresh_token');
-    
-    if (token && refreshToken) {
-      console.log('Token encontrado al iniciar, intentando renovar sesión...');
-      
-      // Verificar la validez del token actual
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const expTime = payload.exp * 1000; // Convertir a milisegundos
-        const currentTime = Date.now();
-        const timeToExpiry = expTime - currentTime;
-        
-        console.log('Estado del token:');
-        console.log(`- Tiempo actual: ${new Date(currentTime).toISOString()}`);
-        console.log(`- Expiración: ${new Date(expTime).toISOString()}`);
-        console.log(`- Tiempo hasta expiración: ${Math.floor(timeToExpiry / 1000 / 60)} minutos`);
-        
-        if (timeToExpiry <= 0) {
-          console.warn('Token expirado, intentando renovar...');
-        }
-      } catch (error) {
-        console.error('Error al verificar token:', error);
-      }
-      
-      // Intentar renovar el token siempre al iniciar la app o recargar la página
-      // Esto asegura que siempre tengamos un token fresco al comenzar
-      this.refreshTokenIfNeeded(true)
-        .then(success => {
-          if (success) {
-            console.log('Sesión renovada correctamente al iniciar');
-            // Recargar la página para asegurar que todos los componentes tengan el token fresco
-            // Solo si no es una carga inicial (detectar con sessionStorage)
-            if (sessionStorage.getItem('app_initialized')) {
-              console.log('Recargando página para aplicar nuevo token...');
-              window.location.reload();
-            } else {
-              sessionStorage.setItem('app_initialized', 'true');
-            }
-          } else {
-            console.warn('No se pudo renovar la sesión al iniciar, cerrando sesión...');
-            this.clearSession();
-          }
-        })
-        .catch(error => {
-          console.error('Error al renovar token durante inicialización:', error);
-          this.clearSession();
-        });
-    } else if (!this.isAuthenticated()) {
-      // Si no hay token válido, limpiamos la sesión
-      if (token) {
-        console.log('Token expirado encontrado, limpiando sesión...');
-        this.clearSession();
-      }
-    }
-  }
-
-  /**
-   * Precarga un nombre de usuario exacto (útil para testing)
-   */
-  preloadKnownUsername(exactUsername: string): void {
-    this.registerKnownUsername(exactUsername);
-  }
-
-  /**
-   * Verifica si el usuario tiene el rol de administrador
-   * @returns true si el usuario tiene rol ADMIN, false en caso contrario
-   */
-  isAdmin(): boolean {
-    // Si no está autenticado, definitivamente no es admin
-    if (!this.isAuthenticated()) {
-      console.log("No está autenticado, no puede ser admin");
-      return false;
-    }
-    
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      console.log("No hay token disponible");
-      return false;
-    }
-    
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      console.log("Verificando roles de administrador en el token JWT");
-      console.log("Cliente ID configurado:", KEYCLOAK_CONFIG.CLIENT_ID);
-      
-      // Para depuración, mostrar todos los roles disponibles
-      if (payload.realm_access && Array.isArray(payload.realm_access.roles)) {
-        console.log("Roles de realm disponibles:", payload.realm_access.roles);
-      } else {
-        console.log("No se encontraron roles de realm en el token");
-      }
-      
-      if (payload.resource_access && payload.resource_access[KEYCLOAK_CONFIG.CLIENT_ID]) {
-        console.log("Roles de cliente disponibles:", 
-          payload.resource_access[KEYCLOAK_CONFIG.CLIENT_ID].roles || "ninguno");
-      } else {
-        console.log("No se encontraron roles de cliente específicos en el token");
-      }
-      
-      // Verificar si tiene el rol 'ADMIN' en realm_access.roles
-      if (payload.realm_access && Array.isArray(payload.realm_access.roles)) {
-        if (payload.realm_access.roles.includes('ADMIN')) {
-          console.log("¡Es admin! (por rol de realm)");
-          return true;
-        }
-      }
-      
-      // Verificar roles en resource_access para el cliente específico
-      if (payload.resource_access && 
-          payload.resource_access[KEYCLOAK_CONFIG.CLIENT_ID] && 
-          Array.isArray(payload.resource_access[KEYCLOAK_CONFIG.CLIENT_ID].roles)) {
-        if (payload.resource_access[KEYCLOAK_CONFIG.CLIENT_ID].roles.includes('ADMIN')) {
-          console.log("¡Es admin! (por rol de cliente)");
-          return true;
-        }
-      }
-      
-      console.log("No tiene rol de administrador");
-      return false;
-    } catch (error) {
-      console.error('Error al verificar rol de administrador:', error);
-      return false;
-    }
+    localStorage.removeItem('userRoles');
+    console.log('Sesión limpiada');
   }
 }
 
 const authService = new AuthService();
-export default authService;
+export default authService; 

@@ -32,7 +32,7 @@ public class AdminController {
      * Solo accesible para administradores
      */
     @PostMapping(value = "/cards/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Map<String, Object>> importCardsFromJson(@RequestParam("file") MultipartFile file) {
         log.info("Recibida solicitud para importar cartas desde archivo JSON: {}", file.getOriginalFilename());
         Map<String, Object> response = new HashMap<>();

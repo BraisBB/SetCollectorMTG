@@ -5,15 +5,22 @@ import { SearchParams } from '../components/SearchBar';
 
 // Función helper para construir la ruta de API correctamente
 function apiPath(path: string): string {
-  // Si la ruta ya comienza con /api/, no añadir nada más
+  // Si la ruta ya comienza con /api/, no añadir el prefijo nuevamente
   if (path.startsWith('/api/')) {
+    console.log(`Ruta ya contiene prefijo /api/, manteniendo: ${path}`);
     return path;
   }
+  
+  // No usar API_BASE_URL aquí ya que esto sólo construye la ruta relativa
+  // httpClient.ts ya maneja la base URL completa
   
   // Asegurar que la ruta comience con /api/
   // Eliminar la barra inicial si existe para evitar duplicar barras
   const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-  return `/api/${cleanPath}`;
+  const result = `/api/${cleanPath}`;
+  console.log(`Ruta normalizada: ${path} → ${result}`);
+  
+  return result;
 }
 
 // Servicio para operaciones de la API
@@ -35,82 +42,16 @@ const apiService = {
   },
 
   // Decks
-  getUserDecks: async (userId?: number): Promise<Deck[]> => {
+  getUserDecks: async (): Promise<Deck[]> => {
     try {
-      // Intento 1: Usar Keycloak UUID (más confiable con backends basados en Keycloak)
-      const keycloakId = localStorage.getItem('user_keycloak_id');
-      if (keycloakId) {
-        console.log(`Intentando obtener mazos con Keycloak ID: ${keycloakId}`);
-        try {
-          console.log(`Llamando endpoint: /decks/user/keycloak/${keycloakId}`);
-          const decks = await httpClient.get<Deck[]>(apiPath(`/decks/user/keycloak/${keycloakId}`));
-          
-          if (Array.isArray(decks) && decks.length > 0) {
-            console.log(`¡Éxito! Encontrados ${decks.length} mazos con Keycloak ID`);
-            return decks;
-          } else {
-            console.log('No se encontraron mazos con Keycloak ID');
-          }
-        } catch (error) {
-          console.error(`Error al obtener mazos con Keycloak ID: ${keycloakId}`, error);
-        }
-      }
-
-      // Intento 2: Usar el endpoint del usuario actual
-      try {
-        console.log(`Intentando obtener mazos con el endpoint de usuario actual`);
-        const decks = await httpClient.get<Deck[]>(apiPath(`/decks/current-user`));
-        
-        if (Array.isArray(decks) && decks.length > 0) {
-          console.log(`¡Éxito! Encontrados ${decks.length} mazos con el endpoint de usuario actual`);
-          return decks;
-        } else {
-          console.log('No se encontraron mazos con el endpoint de usuario actual');
-        }
-      } catch (error) {
-        console.error('Error al obtener mazos con el endpoint de usuario actual', error);
-      }
+      console.log('Solicitando mazos del usuario actual');
       
-      // Intento 3: Usar username real del usuario
-      const username = localStorage.getItem('username') || '';
-      if (username) {
-        console.log(`Intentando obtener mazos con username: ${username}`);
-        try {
-          const decks = await httpClient.get<Deck[]>(apiPath(`/decks/user/byUsername/${username}`));
-          
-          if (Array.isArray(decks) && decks.length > 0) {
-            console.log(`¡Éxito! Encontrados ${decks.length} mazos con username`);
-            return decks;
-          } else {
-            console.log('No se encontraron mazos con username');
-          }
-        } catch (error) {
-          console.error(`Error al obtener mazos con username: ${username}`, error);
-        }
-      }
-      
-      // Si llegamos aquí, intentamos el enfoque original (userId numérico)
-      if (userId) {
-        console.log(`Intentando obtener mazos con userId: ${userId}`);
-        try {
-          const decks = await httpClient.get<Deck[]>(apiPath(`/decks/user/${userId}`));
-          
-          if (Array.isArray(decks) && decks.length > 0) {
-            console.log(`¡Éxito! Encontrados ${decks.length} mazos con userId`);
-            return decks;
-          } else {
-            console.log('No se encontraron mazos con userId');
-          }
-        } catch (error) {
-          console.error(`Error al obtener mazos con userId: ${userId}`, error);
-        }
-      }
-      
-      // Si llegamos aquí, ninguno de los enfoques funcionó
-      console.warn('No se pudo obtener los mazos con ninguno de los métodos disponibles');
-      return [];
+      // Usar el endpoint correcto que obtiene los mazos del usuario autenticado
+      const decks = await httpClient.get<Deck[]>(apiPath('/decks/current-user'));
+      console.log(`Encontrados ${decks.length} mazos para el usuario actual`);
+      return decks;
     } catch (error) {
-      console.error('Error general al obtener mazos del usuario:', error);
+      console.error('Error al obtener mazos del usuario:', error);
       return [];
     }
   },
@@ -122,7 +63,46 @@ const apiService = {
 
   createDeck: async (deck: DeckCreateDto): Promise<Deck> => {
     console.log('Creating deck:', deck);
-    return httpClient.post<Deck>(apiPath('/decks'), deck);
+    try {
+      // Verificar si el usuario está autenticado antes de intentar crear un mazo
+      if (!authService.isAuthenticated()) {
+        console.error('No se puede crear un mazo sin autenticación');
+        throw new Error('Authentication required to create a deck');
+      }
+      
+      // Asegurarse de que los campos requeridos están presentes
+      if (!deck.deckName) {
+        console.error('No se puede crear un mazo sin nombre');
+        throw new Error('Deck name is required');
+      }
+      
+      // Establecer gameType por defecto si no se proporciona
+      if (!deck.gameType) {
+        console.log('No se especificó tipo de juego, usando STANDARD por defecto');
+        deck.gameType = 'STANDARD';
+      }
+      
+      // Realizar la petición para crear el mazo
+      const createdDeck = await httpClient.post<Deck>(apiPath('/decks'), deck);
+      console.log('Mazo creado exitosamente:', createdDeck);
+      return createdDeck;
+    } catch (error: any) {
+      console.error('Error al crear mazo:', error);
+      
+      // Propagar error con información más útil
+      if (error.response) {
+        const status = error.response.status;
+        if (status === 401 || status === 403) {
+          throw new Error('No tienes permisos para crear mazos. Por favor, inicia sesión de nuevo.');
+        } else if (status === 400) {
+          throw new Error('Datos de mazo inválidos. Verifica el nombre y tipo de juego.');
+        } else {
+          throw new Error(`Error del servidor (${status}): ${error.response.data?.message || 'Error desconocido'}`);
+        }
+      }
+      
+      throw error; // Re-lanzar el error original si no se puede manejar específicamente
+    }
   },
   
   updateDeck: async (deckId: number, deck: Partial<Deck>): Promise<Deck> => {
@@ -207,51 +187,12 @@ const apiService = {
   // User Collection
   getUserCollection: async (): Promise<UserCollectionCard[]> => {
     try {
-      // Primero intentamos con el UUID de Keycloak
-      const keycloakId = localStorage.getItem('user_keycloak_id');
-      if (keycloakId) {
-        try {
-          console.log(`Requesting collection for user with Keycloak ID: ${keycloakId}`);
-          const data = await httpClient.get<UserCollectionCard[]>(apiPath(`/collections/user/keycloak/${keycloakId}/cards`));
-          if (data && data.length > 0) {
-            console.log(`Collection found with Keycloak ID. Cards: ${data.length}`);
-            return data;
-          }
-        } catch (error) {
-          console.error('Error fetching collection with Keycloak ID:', error);
-        }
-      }
+      console.log('Requesting user collection');
       
-      // Luego probamos con el username
-      const username = localStorage.getItem('username');
-      if (username) {
-        try {
-          console.log(`Requesting collection for user with username: ${username}`);
-          const data = await httpClient.get<UserCollectionCard[]>(apiPath(`/collections/user/byUsername/${username}/cards`));
-          if (data && data.length > 0) {
-            console.log(`Collection found with username. Cards: ${data.length}`);
-            return data;
-          }
-        } catch (error) {
-          console.error('Error fetching collection with username:', error);
-        }
-      }
-      
-      // Finalmente, probamos con el ID de usuario
-      const userId = authService.getUserIdentifier();
-      if (userId && userId.match(/^\d+$/)) {
-        try {
-          console.log(`Requesting collection for user with ID: ${userId}`);
-          const data = await httpClient.get<UserCollectionCard[]>(apiPath(`/collections/user/${userId}/cards`));
-          console.log(`Collection found with user ID. Cards: ${data.length}`);
-          return data;
-        } catch (error) {
-          console.error('Error fetching collection with user ID:', error);
-        }
-      }
-      
-      console.warn('Could not fetch user collection with any available method');
-      return [];
+      // Usar el endpoint simplificado que obtiene las cartas de la colección del usuario autenticado
+      const data = await httpClient.get<UserCollectionCard[]>(apiPath('/collections/current-user/cards'));
+      console.log(`Collection cards found: ${data.length}`);
+      return data;
     } catch (error) {
       console.error('Error fetching user collection:', error);
       return [];
@@ -263,48 +204,14 @@ const apiService = {
     try {
       console.log(`Updating card ${cardId} in collection with ${copies} copies`);
       
-      // Intentar primero con Keycloak UUID
-      const keycloakId = localStorage.getItem('user_keycloak_id');
-      if (keycloakId) {
-        try {
-          const data = await httpClient.put<UserCollectionCard>(
-            apiPath(`/collections/user/keycloak/${keycloakId}/cards/${cardId}`), 
-            { copies }
-          );
-          console.log(`Card updated in collection using Keycloak ID`);
-          return data;
-        } catch (error) {
-          console.error('Error updating card with Keycloak ID:', error);
-        }
-      }
-      
-      // Intentar con username
-      const username = localStorage.getItem('username');
-      if (username) {
-        try {
-          const data = await httpClient.put<UserCollectionCard>(
-            apiPath(`/collections/user/byUsername/${username}/cards/${cardId}`), 
-            { copies }
-          );
-          console.log(`Card updated in collection using username`);
-          return data;
-        } catch (error) {
-          console.error('Error updating card with username:', error);
-        }
-      }
-      
-      // Intentar con user ID
-      const userId = authService.getUserIdentifier();
-      if (userId && userId.match(/^\d+$/)) {
-        const data = await httpClient.put<UserCollectionCard>(
-          apiPath(`/collections/user/${userId}/cards/${cardId}`), 
-          { copies }
-        );
-        console.log(`Card updated in collection using user ID`);
-        return data;
-      }
-      
-      throw new Error('Could not update card in collection with any available method');
+      // Usar el endpoint para agregar/actualizar carta en la colección del usuario actual
+      const data = await httpClient.put<UserCollectionCard>(
+        apiPath(`/collection/cards/${cardId}`), 
+        {},
+        { params: { quantity: copies } }
+      );
+      console.log(`Card updated in collection`);
+      return data;
     } catch (error) {
       console.error(`Error updating card ${cardId} in collection:`, error);
       throw error;

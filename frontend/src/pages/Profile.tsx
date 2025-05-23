@@ -8,12 +8,7 @@ import './Profile.css';
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<User>({
-    username: '',
-    email: '',
-    firstName: '',
-    lastName: ''
-  });
+    const [profile, setProfile] = useState<User>({    userId: 0,    username: '',    email: '',    firstName: '',    lastName: '',    roles: [],    enabled: true  });
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);

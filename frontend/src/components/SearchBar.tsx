@@ -16,7 +16,7 @@ export interface SearchParams {
 }
 
 // URL base del backend
-const API_BASE_URL = 'http://localhost:8080';
+const API_BASE_URL = 'http://localhost:5173';
 
 // Interfaz para los sets recibidos del backend
 interface SetResponse {

@@ -9,6 +9,8 @@ public interface UserCollectionService {
 
     UserCollectionDto getCollectionByUserId(Long userId);
 
+    UserCollectionDto getOrCreateCollectionByUserId(Long userId);
+
     UserCollectionDto updateCollection(Long id, UserCollectionDto collectionDto);
 
     void deleteCollection(Long id);

@@ -12,15 +12,12 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    Optional<User> findByKeycloakId(String keycloakId);
     Optional<User> findByUsername(String username);
     Optional<User> findByEmail(String email);
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
-    boolean existsByUsernameAndKeycloakIdNot(String username, String keycloakId);
-    boolean existsByEmailAndKeycloakIdNot(String email, String keycloakId);
 
-    @Query("SELECT u.username FROM User u WHERE u.id = :userId")
+    @Query("SELECT u.username FROM User u WHERE u.userId = :userId")
     Optional<String> findUsernameById(@Param("userId") Long userId);
 
     Page<User> findAll(Pageable pageable);

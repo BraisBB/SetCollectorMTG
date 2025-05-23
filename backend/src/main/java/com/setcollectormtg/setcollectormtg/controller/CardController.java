@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import org.slf4j.Logger;
@@ -113,6 +114,7 @@ public class CardController {
      * @return Carta creada
      */
     @PostMapping
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<CardDto> createCard(@Valid @RequestBody CardCreateDto cardCreateDto) {
         return new ResponseEntity<>(cardService.createCard(cardCreateDto), HttpStatus.CREATED);
     }
@@ -125,6 +127,7 @@ public class CardController {
      * @return Carta actualizada
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<CardDto> updateCard(@PathVariable Long id, @Valid @RequestBody CardDto cardDto) {
         logger.info("Recibida solicitud para actualizar carta con ID: {}", id);
         logger.info("Datos recibidos: {}", cardDto);
@@ -142,6 +145,7 @@ public class CardController {
      * @return Respuesta sin contenido
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Void> deleteCard(@PathVariable Long id) {
         cardService.deleteCard(id);
         return ResponseEntity.noContent().build();

@@ -186,7 +186,20 @@ const DeckList: React.FC<DeckListProps> = ({
         if (apiError.response) {
           console.error("DeckList: Datos de respuesta:", apiError.response.data);
           console.error("DeckList: Estado HTTP:", apiError.response.status);
-          setError(`Error del servidor: ${apiError.response.data?.message || apiError.response.statusText || 'Error desconocido'}`);
+          
+          const errorData = apiError.response.data;
+          
+          // Manejo mejorado de errores de validación del backend
+          if (errorData.errors && typeof errorData.errors === 'object') {
+            const validationMessages = Object.entries(errorData.errors)
+              .map(([field, message]) => `${field}: ${message}`)
+              .join(', ');
+            setError(`Validation errors: ${validationMessages}`);
+          } else if (errorData.message) {
+            setError(`Error: ${errorData.message}`);
+          } else {
+            setError(`Error del servidor (${apiError.response.status}): ${apiError.response.statusText || 'Error desconocido'}`);
+          }
         } else {
           setError(`Error de red: ${apiError.message || 'No se pudo conectar con el servidor'}`);
         }

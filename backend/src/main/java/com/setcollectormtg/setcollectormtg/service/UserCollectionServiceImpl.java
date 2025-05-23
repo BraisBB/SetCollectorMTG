@@ -2,6 +2,9 @@ package com.setcollectormtg.setcollectormtg.service;
 
 
 import com.setcollectormtg.setcollectormtg.exception.ResourceNotFoundException;
+import com.setcollectormtg.setcollectormtg.model.User;
+import com.setcollectormtg.setcollectormtg.model.UserCollection;
+import com.setcollectormtg.setcollectormtg.repository.UserRepository;
 
 
 import com.setcollectormtg.setcollectormtg.repository.UserCollectionRepository;
@@ -18,6 +21,7 @@ public class UserCollectionServiceImpl implements UserCollectionService {
 
     private final UserCollectionRepository userCollectionRepository;
     private final UserCollectionMapper userCollectionMapper;
+    private final UserRepository userRepository;
 
     /**
      * Crea una nueva colección para un usuario, validando que no exista previamente.
@@ -69,6 +73,34 @@ public class UserCollectionServiceImpl implements UserCollectionService {
         var collection = userCollectionRepository.findByUser_UserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Collection not found for user id: " + userId));
         return userCollectionMapper.toDto(collection);
+    }
+
+    /**
+     * Obtiene la colección asociada a un usuario por su ID, o la crea si no existe.
+     *
+     * @param userId ID del usuario
+     * @return Colección del usuario como DTO (existente o recién creada)
+     */
+    @Override
+    @Transactional
+    public UserCollectionDto getOrCreateCollectionByUserId(Long userId) {
+        var optionalCollection = userCollectionRepository.findByUser_UserId(userId);
+        
+        if (optionalCollection.isPresent()) {
+            return userCollectionMapper.toDto(optionalCollection.get());
+        }
+        
+        // Buscar el usuario
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+        
+        // Crear nueva colección directamente
+        UserCollection newCollection = new UserCollection();
+        newCollection.setUser(user);
+        newCollection.setTotalCards(0);
+        
+        UserCollection savedCollection = userCollectionRepository.save(newCollection);
+        return userCollectionMapper.toDto(savedCollection);
     }
 
     /**

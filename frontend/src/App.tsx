@@ -76,7 +76,7 @@ const App: React.FC = () => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && authService.isAuthenticated()) {
         console.log('Usuario regresó a la pestaña, verificando token...');
-        authService.refreshTokenIfNeeded(true)
+        authService.refreshTokenIfNeeded()
           .then(refreshed => {
             if (refreshed) {
               console.log('Token renovado al regresar a la pestaña');

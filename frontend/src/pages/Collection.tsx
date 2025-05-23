@@ -176,7 +176,25 @@ const Collection = () => {
       handleDeckCreated();
     } catch (error: any) {
       console.error("Collection: Error al crear mazo:", error);
-      setCreateDeckError(error.message || 'Error creating deck');
+      
+      // Manejo mejorado de errores de validación del backend
+      if (error.response && error.response.data) {
+        const errorData = error.response.data;
+        
+        // Si hay errores de validación específicos, mostrarlos
+        if (errorData.errors && typeof errorData.errors === 'object') {
+          const validationMessages = Object.entries(errorData.errors)
+            .map(([field, message]) => `${field}: ${message}`)
+            .join(', ');
+          setCreateDeckError(`Validation errors: ${validationMessages}`);
+        } else if (errorData.message) {
+          setCreateDeckError(`Error: ${errorData.message}`);
+        } else {
+          setCreateDeckError(`Error del servidor (${error.response.status}): ${error.response.statusText || 'Error desconocido'}`);
+        }
+      } else {
+        setCreateDeckError(error.message || 'Error creating deck');
+      }
     } finally {
       setCreateDeckLoading(false);
     }

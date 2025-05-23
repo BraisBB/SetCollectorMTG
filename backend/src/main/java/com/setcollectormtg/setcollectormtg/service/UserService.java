@@ -3,7 +3,7 @@ package com.setcollectormtg.setcollectormtg.service;
 import com.setcollectormtg.setcollectormtg.dto.UserCreateDto;
 import com.setcollectormtg.setcollectormtg.dto.UserDto;
 import com.setcollectormtg.setcollectormtg.model.User;
-import org.springframework.security.oauth2.jwt.Jwt;
+
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,7 +11,7 @@ import org.springframework.data.domain.Pageable;
 public interface UserService {
     UserDto createUser(UserCreateDto userCreateDto);
 
-    User synchronizeUser(Jwt jwt);
+
 
     List<UserDto> getAllUsers();
 

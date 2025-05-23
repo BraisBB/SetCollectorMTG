@@ -17,11 +17,21 @@ public interface UserMapper {
     @Mapping(target = "joinDate", ignore = true)
     @Mapping(target = "decks", ignore = true)
     @Mapping(target = "userCollection", ignore = true)
+    @Mapping(target = "enabled", ignore = true)
+    @Mapping(target = "roles", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "authorities", ignore = true)
     User toEntity(UserCreateDto userCreateDto);
 
     @Mapping(target = "joinDate", ignore = true)
     @Mapping(target = "decks", ignore = true)
     @Mapping(target = "userCollection", ignore = true)
-    @Mapping(target = "keycloakId", ignore = true)
+    @Mapping(target = "enabled", ignore = true)
+    @Mapping(target = "roles", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "authorities", ignore = true)
+    @Mapping(target = "password", ignore = true)
     void updateUserFromDto(UserDto userDto, @MappingTarget User user);
 }

@@ -70,26 +70,33 @@ export interface DeckCreateDto {
   deckColor: string;
 }
 
-// Autenticación
+// Autenticación - Sistema JWT Simple
 export interface LoginCredentials {
   username: string;
   password: string;
 }
 
-export interface AuthTokens {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
-  refresh_expires_in: number;
-  token_type: string;
+export interface RegisterCredentials {
+  username: string;
+  password: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  username: string;
+  roles: string[];
 }
 
 export interface User {
-  id?: number;      // Campo usado en el frontend
-  userId?: number;  // Campo usado en el backend
+  userId: number;
   username: string;
-  email?: string;
+  email: string;
   firstName?: string;
   lastName?: string;
   joinDate?: string;
+  roles: string[];
+  enabled: boolean;
 } 

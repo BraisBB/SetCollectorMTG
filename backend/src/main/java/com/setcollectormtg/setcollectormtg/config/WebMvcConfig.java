@@ -6,6 +6,7 @@ import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.boot.web.servlet.MultipartConfigFactory;
 import jakarta.servlet.MultipartConfigElement;
 import org.springframework.util.unit.DataSize;
@@ -46,15 +47,24 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 "http://127.0.0.1:5173",     // Frontend alternativo
                 "http://localhost:8080",     // Aplicación completa en producción
                 "http://localhost",          // Nginx en producción sin puerto
-                "http://setcollector-frontend" // Nombre de servicio en red Docker
+                "http://setcollector-frontend", // Nombre de servicio en red Docker
+                "*"                         // Permitir cualquier origen para desarrollo
             )
             .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
             .allowedHeaders("Origin", "Content-Type", "Accept", "Authorization", 
                            "X-Requested-With", "X-CSRF-Token", "X-XSRF-Token",
-                           "Cache-Control", "Pragma")
+                           "Cache-Control", "Pragma", "*")
             .exposedHeaders("Authorization", "Content-Disposition", "X-CSRF-Token", "Content-Type")
-            .allowCredentials(true)
+            .allowCredentials(false)
             .maxAge(3600);
+    }
+    
+    /**
+     * Configura el gestor de rutas para manejar tanto rutas con prefijo /api como sin él
+     */
+    @Override
+    public void configurePathMatch(PathMatchConfigurer configurer) {
+        log.info("Configurando manejo de rutas con prefijo /api");
     }
     
     /**

@@ -21,7 +21,7 @@ public class CardDeckController {
     private final CardDeckService cardDeckService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #deckId)")
+    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER', 'ADMIN', 'ROLE_ADMIN') and @userSecurity.isOwner(authentication, #deckId)")
     public ResponseEntity<List<CardDeckDto>> getAllCardsInDeck(
             @PathVariable Long deckId, 
             Authentication authentication) {
@@ -38,7 +38,7 @@ public class CardDeckController {
     }
 
     @PostMapping("/{cardId}")
-    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #deckId)")
+    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER') and @userSecurity.isOwner(authentication, #deckId)")
     public ResponseEntity<CardDeckDto> addCardToDeck(
             @PathVariable Long deckId,
             @PathVariable Long cardId,
@@ -49,7 +49,7 @@ public class CardDeckController {
     }
 
     @PutMapping("/{cardId}")
-    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #deckId)")
+    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER') and @userSecurity.isOwner(authentication, #deckId)")
     public ResponseEntity<CardDeckDto> updateCardQuantity(
             @PathVariable Long deckId,
             @PathVariable Long cardId,
@@ -59,7 +59,7 @@ public class CardDeckController {
     }
 
     @DeleteMapping("/{cardId}")
-    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #deckId) or hasRole('ADMIN')")
+    @PreAuthorize("(hasAnyAuthority('USER', 'ROLE_USER') and @userSecurity.isOwner(authentication, #deckId)) or hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Void> removeCardFromDeck(
             @PathVariable Long deckId,
             @PathVariable Long cardId) {
@@ -68,7 +68,7 @@ public class CardDeckController {
     }
 
     @GetMapping("/{cardId}")
-    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #deckId) or hasRole('ADMIN')")
+    @PreAuthorize("(hasAnyAuthority('USER', 'ROLE_USER') and @userSecurity.isOwner(authentication, #deckId)) or hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<CardDeckDto> getCardDeckInfo(
             @PathVariable Long deckId,
             @PathVariable Long cardId) {
@@ -77,7 +77,7 @@ public class CardDeckController {
     }
 
     @GetMapping("/{cardId}/quantity")
-    @PreAuthorize("hasAuthority('USER') and @userSecurity.isOwner(authentication, #deckId) or hasRole('ADMIN')")
+    @PreAuthorize("(hasAnyAuthority('USER', 'ROLE_USER') and @userSecurity.isOwner(authentication, #deckId)) or hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Integer> getCardQuantity(
             @PathVariable Long deckId,
             @PathVariable Long cardId) {

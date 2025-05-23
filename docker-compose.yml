@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: setcollector-mysql
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_DATABASE: setcollector
+      MYSQL_USER: setcollector
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+    networks:
+      - setcollector-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./docker/backend/Dockerfile
+    container_name: setcollector-backend
+    environment:
+      # MySQL host para conectarse al contenedor
+      MYSQL_HOST: mysql
+      
+      # JWT configuration (sobrescribe valores del properties)
+      APP_JWT_SECRET: MySecretKey123456789012345678901234567890SuperSecure
+      APP_JWT_EXPIRATION: 86400000
+      
+      # Database configuration (sobrescribe valores del properties)
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/setcollector?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: setcollector
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: false
+      
+      # Logging configuration for production
+      LOGGING_LEVEL_ROOT: INFO
+      LOGGING_LEVEL_COM_SETCOLLECTORMTG: INFO
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: WARN
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: WARN
+      
+      # Spring Boot Actuator
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
+      MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: when-authorized
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - setcollector-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/cards/search?name=health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: ./docker/frontend/Dockerfile
+    container_name: setcollector-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    networks:
+      - setcollector-network
+    environment:
+      - NGINX_HOST=localhost
+      - NGINX_PORT=80
+
+networks:
+  setcollector-network:
+    driver: bridge
+
+volumes:
+  mysql_data: 

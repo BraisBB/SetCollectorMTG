@@ -26,12 +26,7 @@ public interface DeckService {
      */
     List<DeckDto> getDecksByUsername(String username);
     
-    /**
-     * Busca los mazos de un usuario por su ID de Keycloak
-     * @param keycloakId El ID de Keycloak del usuario
-     * @return Lista de mazos pertenecientes al usuario
-     */
-    List<DeckDto> getDecksByKeycloakId(String keycloakId);
+    
 
     int getCardCountInDeck(Long deckId);
 

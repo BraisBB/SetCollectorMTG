@@ -4,23 +4,13 @@ import com.setcollectormtg.setcollectormtg.dto.UserCollectionCardDto;
 import com.setcollectormtg.setcollectormtg.dto.UserCollectionDto;
 import com.setcollectormtg.setcollectormtg.service.UserCollectionCardService;
 import com.setcollectormtg.setcollectormtg.service.UserCollectionService;
-import com.setcollectormtg.setcollectormtg.service.UserService;
+import com.setcollectormtg.setcollectormtg.util.CurrentUserUtil;
 import com.setcollectormtg.setcollectormtg.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/collection/cards")
@@ -29,22 +19,19 @@ public class UserCollectionCardController {
 
     private final UserCollectionCardService userCollectionCardService;
     private final UserCollectionService userCollectionService;
-    private final UserService userService;  
-
-    private User getCurrentUser(Authentication authentication) {
-        Jwt jwt = (Jwt) authentication.getPrincipal();
-        User syncedUser = userService.synchronizeUser(jwt);
-        return syncedUser;
-    }
+    private final CurrentUserUtil currentUserUtil;
 
     @PostMapping("/{cardId}")
-    @PreAuthorize("hasAuthority('USER')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER')")
     public ResponseEntity<UserCollectionCardDto> addCardToCollection(
-            Authentication authentication,
             @PathVariable Long cardId,
             @RequestParam(defaultValue = "1") Integer quantity) {
         
-        User user = getCurrentUser(authentication);
+        User user = currentUserUtil.getCurrentUser();
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        
         UserCollectionDto userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
         
         return new ResponseEntity<>(
@@ -53,13 +40,16 @@ public class UserCollectionCardController {
     }
 
     @PutMapping("/{cardId}")
-    @PreAuthorize("hasAuthority('USER')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER')")
     public ResponseEntity<UserCollectionCardDto> updateCardQuantity(
-            Authentication authentication,
             @PathVariable Long cardId,
             @RequestParam Integer quantity) {
         
-        User user = getCurrentUser(authentication);
+        User user = currentUserUtil.getCurrentUser();
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        
         UserCollectionDto userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
         
         return ResponseEntity.ok(
@@ -67,12 +57,14 @@ public class UserCollectionCardController {
     }
 
     @DeleteMapping("/{cardId}")
-    @PreAuthorize("hasAuthority('USER')")
-    public ResponseEntity<Void> removeCardFromCollection(
-            Authentication authentication,
-            @PathVariable Long cardId) {
+    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER')")
+    public ResponseEntity<Void> removeCardFromCollection(@PathVariable Long cardId) {
         
-        User user = getCurrentUser(authentication);
+        User user = currentUserUtil.getCurrentUser();
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        
         UserCollectionDto userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
         
         userCollectionCardService.removeCardFromCollection(userCollection.getCollectionId(), cardId);
@@ -80,12 +72,14 @@ public class UserCollectionCardController {
     }
 
     @GetMapping("/{cardId}")
-    @PreAuthorize("hasAuthority('USER')")
-    public ResponseEntity<UserCollectionCardDto> getCardCollectionInfo(
-            Authentication authentication,
-            @PathVariable Long cardId) {
+    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER')")
+    public ResponseEntity<UserCollectionCardDto> getCardCollectionInfo(@PathVariable Long cardId) {
         
-        User user = getCurrentUser(authentication);
+        User user = currentUserUtil.getCurrentUser();
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        
         UserCollectionDto userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
         
         return ResponseEntity.ok(
@@ -93,12 +87,14 @@ public class UserCollectionCardController {
     }
 
     @GetMapping("/{cardId}/quantity")
-    @PreAuthorize("hasAuthority('USER')")
-    public ResponseEntity<Integer> getCardQuantity(
-            Authentication authentication,
-            @PathVariable Long cardId) {
+    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER')")
+    public ResponseEntity<Integer> getCardQuantity(@PathVariable Long cardId) {
         
-        User user = getCurrentUser(authentication);
+        User user = currentUserUtil.getCurrentUser();
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        
         UserCollectionDto userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
         
         return ResponseEntity.ok(

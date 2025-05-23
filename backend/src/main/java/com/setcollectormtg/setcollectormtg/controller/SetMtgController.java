@@ -35,19 +35,19 @@ public class SetMtgController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<SetMtgDto> createSet(@RequestBody SetMtgCreateDto setMtgCreateDto) {
         return new ResponseEntity<>(setMtgService.createSet(setMtgCreateDto), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<SetMtgDto> updateSet(@PathVariable Long id, @RequestBody SetMtgCreateDto setMtgCreateDto) {
         return ResponseEntity.ok(setMtgService.updateSet(id, setMtgCreateDto));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Void> deleteSet(@PathVariable Long id) {
         setMtgService.deleteSet(id);
         return ResponseEntity.noContent().build();

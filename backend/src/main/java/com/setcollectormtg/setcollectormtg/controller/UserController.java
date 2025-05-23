@@ -61,20 +61,21 @@ public class UserController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<List<UserDto>> getAllUsers() {
         log.debug("Obteniendo todos los usuarios (requiere ADMIN)");
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN') or @userSecurity.isOwner(authentication, #id)")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN') or @userSecurity.isOwner(authentication, #id)")
     public ResponseEntity<UserDto> getUserById(@PathVariable Long id) {
         log.debug("Obteniendo usuario por ID: {}", id);
         return ResponseEntity.ok(userService.getUserById(id));
     }
     
     @GetMapping("/username/{username}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN') or @userSecurity.canAccessUserByUsername(authentication, #username)")
     public ResponseEntity<UserDto> getUserByUsername(@PathVariable String username) {
         log.debug("Obteniendo usuario por username: {}", username);
         return ResponseEntity.ok(userService.getUserByUsername(username));
@@ -90,6 +91,7 @@ public class UserController {
     }
     
     @PutMapping("/username/{username}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN') or @userSecurity.canAccessUserByUsername(authentication, #username)")
     public ResponseEntity<UserDto> updateUserByUsername(
             @PathVariable String username,
             @Valid @RequestBody UserDto userDto) {
@@ -98,7 +100,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         log.debug("Eliminando usuario con ID: {}", id);
         userService.deleteUser(id);
@@ -106,7 +108,7 @@ public class UserController {
     }
 
     @PostMapping("/{id}/roles")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Void> assignRolesToUser(
             @PathVariable Long id,
             @RequestBody List<String> roles) {
@@ -116,7 +118,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}/roles/{roleName}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Void> removeRoleFromUser(
             @PathVariable Long id,
             @PathVariable String roleName) {
@@ -126,14 +128,14 @@ public class UserController {
     }
 
     @GetMapping("/{id}/roles")
-    @PreAuthorize("hasAuthority('ADMIN') or @userSecurity.isOwner(authentication, #id)")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN') or @userSecurity.isOwner(authentication, #id)")
     public ResponseEntity<List<String>> getUserRoles(@PathVariable Long id) {
         log.debug("Obteniendo roles del usuario con ID: {}", id);
         return ResponseEntity.ok(userService.getUserRoles(id));
     }
 
     @GetMapping("/paged")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Page<UserDto>> getAllUsersPaged(Pageable pageable) {
         log.debug("Obteniendo usuarios paginados (requiere ADMIN)");
         return ResponseEntity.ok(userService.getAllUsersPaged(pageable));

@@ -1,57 +1,77 @@
 package com.setcollectormtg.setcollectormtg.service;
 
+import com.setcollectormtg.setcollectormtg.dto.AuthRequest;
+import com.setcollectormtg.setcollectormtg.dto.AuthResponse;
+import com.setcollectormtg.setcollectormtg.dto.RegisterRequest;
+import com.setcollectormtg.setcollectormtg.enums.Role;
 import com.setcollectormtg.setcollectormtg.model.User;
-import com.setcollectormtg.setcollectormtg.util.CurrentUserUtil;
+import com.setcollectormtg.setcollectormtg.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-/**
- * Servicio que proporciona métodos útiles para la autenticación y obtención del usuario actual.
- */
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AuthService {
 
-    private final CurrentUserUtil currentUserUtil;
-    
-    /**
-     * Obtiene el usuario actual autenticado.
-     * 
-     * @return El usuario actual o null si no hay usuario autenticado
-     */
-    public User getCurrentUser() {
-        return currentUserUtil.getCurrentUser();
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
+
+    public AuthResponse register(RegisterRequest request) {
+        // Verificar si el usuario ya existe
+        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+            throw new RuntimeException("El usuario ya existe");
     }
     
-    /**
-     * Obtiene el ID del usuario actual autenticado.
-     * 
-     * @return El ID del usuario actual o null si no hay usuario autenticado
-     */
-    public Long getCurrentUserId() {
-        return currentUserUtil.getCurrentUserId();
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new RuntimeException("El email ya está registrado");
+        }
+
+        // Crear nuevo usuario
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setEnabled(true);
+        user.setRoles(Set.of(Role.USER)); // Por defecto asignar rol USER
+
+        userRepository.save(user);
+
+        String jwtToken = jwtService.generateToken(user);
+        Set<String> roleNames = user.getRoles().stream()
+                .map(Role::name)
+                .collect(Collectors.toSet());
+
+        return new AuthResponse(jwtToken, user.getUsername(), user.getEmail(), roleNames);
     }
-    
-    /**
-     * Comprueba si el usuario actual es propietario de un recurso.
-     * 
-     * @param resourceId ID del recurso
-     * @return true si el usuario actual es propietario del recurso, false en caso contrario
-     */
-    public boolean isResourceOwner(Long resourceId) {
-        User currentUser = getCurrentUser();
-        if (currentUser == null) {
-            return false;
-        }
-        
-        // Si el recurso es el propio usuario
-        if (currentUser.getUserId().equals(resourceId)) {
-            return true;
-        }
-        
-        // Para otros tipos de recursos, se delegará en UserSecurity
-        return false;
+
+    public AuthResponse login(AuthRequest request) {
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getUsername(),
+                        request.getPassword()
+                )
+        );
+
+        User user = userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        String jwtToken = jwtService.generateToken(user);
+        Set<String> roleNames = user.getRoles().stream()
+                .map(Role::name)
+                .collect(Collectors.toSet());
+
+        return new AuthResponse(jwtToken, user.getUsername(), user.getEmail(), roleNames);
     }
 } 
