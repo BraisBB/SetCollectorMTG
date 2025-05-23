@@ -1312,7 +1312,7 @@ const Admin: React.FC = () => {
         <div className="collection-header">
           <h1 className="collection-title">Admin Panel</h1>
           <p className="collection-description">
-            Gestiona usuarios, sets, cartas y mazos de Magic: The Gathering.
+            Manage users, sets, cards and decks for Magic: The Gathering.
           </p>
         </div>
         

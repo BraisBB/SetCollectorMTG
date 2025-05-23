@@ -164,44 +164,6 @@ POST /users/me/collection/{cardId}
 Authorization: Bearer {jwt_token}
 ```
 
-## Desarrollo Local
-
-### Backend (Spring Boot)
-```bash
-cd backend
-
-# Compilar proyecto
-mvn clean compile
-
-# Ejecutar tests
-mvn test
-
-# Ejecutar aplicación
-mvn spring-boot:run
-
-# Generar JAR
-mvn clean package
-```
-
-### Frontend (React + Vite)
-```bash
-cd frontend
-
-# Instalar dependencias
-npm install
-
-# Ejecutar en modo desarrollo
-npm run dev
-
-# Compilar para producción
-npm run build
-
-# Previsualizar build de producción
-npm run preview
-
-# Análisis de código
-npm run lint
-```
 
 ### Base de Datos MySQL
 
@@ -212,6 +174,17 @@ npm run lint
 - **Usuario**: setcollector
 - **Password**: password
 - **Charset**: utf8mb4
+
+**Uso de la Base de Datos (para comprobaciones)**
+- Abrimos terminal de Docker (puede abrirse desde Docker Desktop)
+mysql -u setcollector -p
+- Entrar con la contraseña 
+- Ver Base de Datos
+SHOW DATABASES;
+- Cambiar a la base de setcollector
+USE setcollector;
+- Ver nombre de las tablas para realizar las consultas que se consideren
+SHOW TABLES;
 
 ## Comandos de Administración Docker
 
