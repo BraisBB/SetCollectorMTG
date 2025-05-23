@@ -190,10 +190,22 @@ const Admin: React.FC = () => {
       };
       
       console.log(`Calling updateUser with userId: ${userId} and data:`, userDto);
+      
+      // Update user basic information
       await apiService.updateUser(userId, userDto);
+      
+      // If we're editing a user and have roles selected, update roles as well
+      if (selectedUser && selectedUserRoles.length > 0) {
+        console.log(`Updating roles for user ${userId}:`, selectedUserRoles);
+        await apiService.assignRolesToUser(userId, selectedUserRoles);
+        console.log('Roles updated successfully');
+      }
+      
       setShowUserForm(false);
       setSelectedUser(null);
+      setSelectedUserRoles([]);
       loadTabData('users');
+      setError(null); // Clear any previous errors
     } catch (err: any) {
       setDetailedError('Error updating user', err);
     }
@@ -673,25 +685,6 @@ const Admin: React.FC = () => {
                 <div className="warning">
                   ⚠️ User must have at least one role
                 </div>
-              )}
-              {selectedUser && selectedUserRoles.length > 0 && (
-                <button
-                  type="button"
-                  className="btn-update-roles"
-                  onClick={async () => {
-                    try {
-                      const userId = selectedUser.id || selectedUser.userId;
-                      await apiService.assignRolesToUser(userId, selectedUserRoles);
-                      // Refresh user data
-                      loadTabData('users');
-                      setError(null);
-                    } catch (err: any) {
-                      setError(`Error updating roles: ${err.message}`);
-                    }
-                  }}
-                >
-                  Update Roles
-                </button>
               )}
             </div>
           </div>
