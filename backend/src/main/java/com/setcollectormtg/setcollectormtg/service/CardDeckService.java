@@ -13,9 +13,10 @@ public interface CardDeckService {
     CardDeckDto getCardDeckInfo(Long deckId, Long cardId);
 
     Integer getCardCountInDeck(Long deckId, Long cardId);
-    
+
     /**
      * Obtiene todas las cartas de un mazo específico
+     * 
      * @param deckId ID del mazo
      * @return Lista de CardDeckDto con información de las cartas y sus cantidades
      */

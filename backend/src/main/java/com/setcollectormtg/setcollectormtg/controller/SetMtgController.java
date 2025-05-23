@@ -67,7 +67,7 @@ public class SetMtgController {
         log.debug("Updating MTG set with ID: {}", id);
         log.debug("Received set data: {}", setMtgCreateDto);
         log.debug("Release date from request: {}", setMtgCreateDto.getReleaseDate());
-        
+
         try {
             SetMtgDto result = setMtgService.updateSet(id, setMtgCreateDto);
             log.debug("Set updated successfully: {}", result);

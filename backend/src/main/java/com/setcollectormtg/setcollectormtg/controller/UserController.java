@@ -38,29 +38,29 @@ public class UserController {
             log.debug("User data to create: username={}, email={}, firstName={}, lastName={}",
                     userCreateDto.getUsername(), userCreateDto.getEmail(),
                     userCreateDto.getFirstName(), userCreateDto.getLastName());
-                    
+
             UserDto createdUser = userService.createUser(userCreateDto);
             log.info("User created successfully: {}", createdUser.getUsername());
             return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
         } catch (Exception e) {
             log.error("Error creating user {}: {}", userCreateDto.getUsername(), e.getMessage(), e);
-            
+
             String errorMsg = e.getMessage();
             HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
-            
+
             if (errorMsg != null) {
-                if (errorMsg.contains("Username already exists") || 
-                    errorMsg.contains("Email already in use")) {
+                if (errorMsg.contains("Username already exists") ||
+                        errorMsg.contains("Email already in use")) {
                     status = HttpStatus.CONFLICT;
-                } else if (errorMsg.contains("validation") || 
-                           errorMsg.contains("invalid")) {
+                } else if (errorMsg.contains("validation") ||
+                        errorMsg.contains("invalid")) {
                     status = HttpStatus.BAD_REQUEST;
                 }
             }
-            
+
             return ResponseEntity
-                .status(status)
-                .body(new ErrorResponse("Error creating user", errorMsg));
+                    .status(status)
+                    .body(new ErrorResponse("Error creating user", errorMsg));
         }
     }
 
@@ -83,7 +83,7 @@ public class UserController {
         log.debug("Getting user by ID: {}", id);
         return ResponseEntity.ok(userService.getUserById(id));
     }
-    
+
     /**
      * Gets a user by username. Accessible by ADMIN or the user themselves.
      */
@@ -105,7 +105,7 @@ public class UserController {
         log.debug("Updating user with ID: {}", id);
         return ResponseEntity.ok(userService.updateUser(id, userDto));
     }
-    
+
     /**
      * Updates a user by username. Accessible by ADMIN or the user themselves.
      */
@@ -141,23 +141,22 @@ public class UserController {
         log.debug("Received role update DTO: {}", roleUpdateDto);
         log.debug("Role update DTO class: {}", roleUpdateDto.getClass().getName());
         log.debug("Roles field: {}", roleUpdateDto.getRoles());
-        log.debug("Roles field class: {}", roleUpdateDto.getRoles() != null ? roleUpdateDto.getRoles().getClass().getName() : "null");
-        
+        log.debug("Roles field class: {}",
+                roleUpdateDto.getRoles() != null ? roleUpdateDto.getRoles().getClass().getName() : "null");
+
         try {
             userService.assignRolesToUser(id, List.copyOf(roleUpdateDto.getRoles()));
             log.info("Roles assigned successfully to user {}: {}", id, roleUpdateDto.getRoles());
             return ResponseEntity.ok().body(Map.of(
-                "success", true,
-                "message", "Roles assigned successfully",
-                "userId", id,
-                "assignedRoles", roleUpdateDto.getRoles()
-            ));
+                    "success", true,
+                    "message", "Roles assigned successfully",
+                    "userId", id,
+                    "assignedRoles", roleUpdateDto.getRoles()));
         } catch (Exception e) {
             log.error("Error assigning roles to user {}: {}", id, e.getMessage(), e);
             return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "message", "Error assigning roles: " + e.getMessage()
-            ));
+                    "success", false,
+                    "message", "Error assigning roles: " + e.getMessage()));
         }
     }
 
@@ -193,7 +192,7 @@ public class UserController {
         log.debug("Getting paginated users (requires ADMIN)");
         return ResponseEntity.ok(userService.getAllUsersPaged(pageable));
     }
-    
+
     /**
      * Gets the current authenticated user's profile.
      */
@@ -203,23 +202,23 @@ public class UserController {
         log.debug("Getting current user profile");
         return ResponseEntity.ok(userService.getUserById(currentUserUtil.getCurrentUserId()));
     }
-    
+
     /**
      * Error response DTO for consistent error handling
      */
     private static class ErrorResponse {
         private final String message;
         private final String details;
-        
+
         public ErrorResponse(String message, String details) {
             this.message = message;
             this.details = details;
         }
-        
+
         public String getMessage() {
             return message;
         }
-        
+
         public String getDetails() {
             return details;
         }

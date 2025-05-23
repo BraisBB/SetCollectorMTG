@@ -18,7 +18,8 @@ import org.springframework.context.annotation.Primary;
 public class ServiceConfiguration {
 
     /**
-     * Define explícitamente el bean DeckService para evitar problemas de dependencia circular
+     * Define explícitamente el bean DeckService para evitar problemas de
+     * dependencia circular
      * con CardDeckService
      */
     @Bean
@@ -31,4 +32,4 @@ public class ServiceConfiguration {
             CurrentUserUtil currentUserUtil) {
         return new DeckServiceImpl(deckRepository, userRepository, cardDeckRepository, deckMapper, currentUserUtil);
     }
-} 
+}

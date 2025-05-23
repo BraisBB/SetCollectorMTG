@@ -22,7 +22,8 @@ public class UserCollectionCardServiceImpl implements UserCollectionCardService 
     private final UserCollectionCardMapper mapper;
 
     /**
-     * Agrega una carta a la colección de un usuario. Lanza excepción si la carta ya existe en la colección.
+     * Agrega una carta a la colección de un usuario. Lanza excepción si la carta ya
+     * existe en la colección.
      *
      * @param collectionId ID de la colección de usuario
      * @param cardId       ID de la carta
@@ -55,7 +56,8 @@ public class UserCollectionCardServiceImpl implements UserCollectionCardService 
 
     /**
      * Actualiza la cantidad de copias de una carta en la colección de un usuario.
-     * Lanza excepción si la cantidad es inválida o la carta no existe en la colección.
+     * Lanza excepción si la cantidad es inválida o la carta no existe en la
+     * colección.
      *
      * @param collectionId ID de la colección de usuario
      * @param cardId       ID de la carta
@@ -81,7 +83,8 @@ public class UserCollectionCardServiceImpl implements UserCollectionCardService 
     }
 
     /**
-     * Elimina una carta de la colección de un usuario y actualiza el contador total de cartas.
+     * Elimina una carta de la colección de un usuario y actualiza el contador total
+     * de cartas.
      * Lanza excepción si la carta no existe en la colección.
      *
      * @param collectionId ID de la colección de usuario
@@ -142,11 +145,11 @@ public class UserCollectionCardServiceImpl implements UserCollectionCardService 
         // Primero verificamos que la colección exista
         userCollectionRepository.findById(collectionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Collection not found with id: " + collectionId));
-                
+
         // Obtenemos todas las cartas de la colección
         List<UserCollectionCard> collectionCards = userCollectionCardRepository
                 .findByUserCollection_CollectionId(collectionId);
-                
+
         // Convertimos a DTOs
         return collectionCards.stream()
                 .map(mapper::toDto)

@@ -18,18 +18,13 @@ import java.util.Objects;
 
 @Getter
 @Setter
-@ToString(exclude = {"deck", "card"})
+@ToString(exclude = { "deck", "card" })
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(
-        name = "card_deck",
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        columnNames = { "deck_id", "card_id" }
-                )
-        }
-)
+@Table(name = "card_deck", uniqueConstraints = {
+        @UniqueConstraint(columnNames = { "deck_id", "card_id" })
+})
 public class CardDeck {
 
     @EmbeddedId
@@ -47,11 +42,13 @@ public class CardDeck {
 
     @Column(name = "n_copies", nullable = false)
     private Integer nCopies;
-    
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         CardDeck cardDeck = (CardDeck) o;
         return Objects.equals(id, cardDeck.id);
     }

@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 @Getter
 @Setter
-@ToString(exclude = {"decks", "userCollection", "password"})
+@ToString(exclude = { "decks", "userCollection", "password" })
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -41,7 +41,7 @@ public class User implements UserDetails {
     private String email;
 
     @Column(nullable = false)
-    private String password;  // Reemplaza keycloakId con password
+    private String password; // Reemplaza keycloakId con password
 
     @Column(name = "first_name", nullable = false)
     private String firstName;
@@ -101,11 +101,13 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return enabled;
     }
-    
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         User user = (User) o;
         return Objects.equals(userId, user.userId);
     }
@@ -115,4 +117,3 @@ public class User implements UserDetails {
         return Objects.hash(userId);
     }
 }
-

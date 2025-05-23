@@ -31,43 +31,44 @@ public class UserCollectionCardController {
     public ResponseEntity<UserCollectionCardDto> addCardToCollection(
             @PathVariable Long cardId,
             @RequestParam(defaultValue = "1") Integer quantity) {
-        
+
         log.debug("Adding card {} to user collection with quantity {}", cardId, quantity);
-        
+
         User user = currentUserUtil.getCurrentUser();
         if (user == null) {
             log.warn("Could not get current user");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        
+
         UserCollectionDto userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
-        
+
         return new ResponseEntity<>(
-            userCollectionCardService.addCardToCollection(userCollection.getCollectionId(), cardId, quantity),
-            HttpStatus.CREATED);
+                userCollectionCardService.addCardToCollection(userCollection.getCollectionId(), cardId, quantity),
+                HttpStatus.CREATED);
     }
 
     /**
-     * Updates the quantity of a card in the current user's collection. USER authority only.
+     * Updates the quantity of a card in the current user's collection. USER
+     * authority only.
      */
     @PutMapping("/{cardId}")
     @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<UserCollectionCardDto> updateCardQuantity(
             @PathVariable Long cardId,
             @RequestParam Integer quantity) {
-        
+
         log.debug("Updating card {} quantity to {} in user collection", cardId, quantity);
-        
+
         User user = currentUserUtil.getCurrentUser();
         if (user == null) {
             log.warn("Could not get current user");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        
+
         UserCollectionDto userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
-        
+
         return ResponseEntity.ok(
-            userCollectionCardService.updateCardQuantity(userCollection.getCollectionId(), cardId, quantity));
+                userCollectionCardService.updateCardQuantity(userCollection.getCollectionId(), cardId, quantity));
     }
 
     /**
@@ -76,60 +77,62 @@ public class UserCollectionCardController {
     @DeleteMapping("/{cardId}")
     @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<Void> removeCardFromCollection(@PathVariable Long cardId) {
-        
+
         log.debug("Removing card {} from user collection", cardId);
-        
+
         User user = currentUserUtil.getCurrentUser();
         if (user == null) {
             log.warn("Could not get current user");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        
+
         UserCollectionDto userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
-        
+
         userCollectionCardService.removeCardFromCollection(userCollection.getCollectionId(), cardId);
         return ResponseEntity.noContent().build();
     }
 
     /**
-     * Gets information about a specific card in the current user's collection. USER authority only.
+     * Gets information about a specific card in the current user's collection. USER
+     * authority only.
      */
     @GetMapping("/{cardId}")
     @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<UserCollectionCardDto> getCardCollectionInfo(@PathVariable Long cardId) {
-        
+
         log.debug("Getting card {} info from user collection", cardId);
-        
+
         User user = currentUserUtil.getCurrentUser();
         if (user == null) {
             log.warn("Could not get current user");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        
+
         UserCollectionDto userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
-        
+
         return ResponseEntity.ok(
-            userCollectionCardService.getCardCollectionInfo(userCollection.getCollectionId(), cardId));
+                userCollectionCardService.getCardCollectionInfo(userCollection.getCollectionId(), cardId));
     }
 
     /**
-     * Gets the quantity of a specific card in the current user's collection. USER authority only.
+     * Gets the quantity of a specific card in the current user's collection. USER
+     * authority only.
      */
     @GetMapping("/{cardId}/quantity")
     @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<Integer> getCardQuantity(@PathVariable Long cardId) {
-        
+
         log.debug("Getting card {} quantity from user collection", cardId);
-        
+
         User user = currentUserUtil.getCurrentUser();
         if (user == null) {
             log.warn("Could not get current user");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        
+
         UserCollectionDto userCollection = userCollectionService.getCollectionByUserId(user.getUserId());
-        
+
         return ResponseEntity.ok(
-            userCollectionCardService.getCardCountInCollection(userCollection.getCollectionId(), cardId));
+                userCollectionCardService.getCardCountInCollection(userCollection.getCollectionId(), cardId));
     }
 }

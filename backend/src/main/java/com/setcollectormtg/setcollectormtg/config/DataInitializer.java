@@ -70,4 +70,4 @@ public class DataInitializer implements CommandLineRunner {
             log.error("❌ Error al crear usuario administrador: {}", e.getMessage(), e);
         }
     }
-} 
+}

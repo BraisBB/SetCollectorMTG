@@ -18,22 +18,22 @@ public interface DeckService {
     void deleteDeck(Long id);
 
     List<DeckDto> getDecksByUser(Long userId);
-    
+
     /**
      * Busca los mazos de un usuario por su nombre de usuario
+     * 
      * @param username El nombre de usuario a buscar
      * @return Lista de mazos pertenecientes al usuario
      */
     List<DeckDto> getDecksByUsername(String username);
-    
-    
 
     int getCardCountInDeck(Long deckId);
 
     Page<DeckDto> getDecksByUserPaged(Long userId, Pageable pageable);
-    
+
     /**
      * Actualiza el color del mazo basado en las cartas que contiene
+     * 
      * @param deckId ID del mazo a actualizar
      * @return DTO del mazo actualizado con su nuevo color
      */

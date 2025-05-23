@@ -14,36 +14,37 @@ import org.springframework.context.annotation.Configuration;
  *
  * Define el esquema de seguridad JWT Bearer Token para autenticación simple
  * y expone la información básica de la API Set Collector MTG.
- * Permite probar endpoints protegidos usando autenticación Bearer Token desde Swagger UI.
+ * Permite probar endpoints protegidos usando autenticación Bearer Token desde
+ * Swagger UI.
  */
 @Configuration
 public class SwaggerConfig {
 
-    @Bean
-    public OpenAPI customOpenAPI() {
-        return new OpenAPI()
-                .info(new Info()
-                        .title("Set Collector MTG API")
-                        .version("2.0")
-                        .description("API REST para gestión de colecciones de cartas Magic: The Gathering. "
-                                + "Sistema de autenticación JWT simple integrado. "
-                                + "\n\n**Uso:**\n"
-                                + "1. Registrarse en `/auth/register`\n"
-                                + "2. Hacer login en `/auth/login` para obtener el token JWT\n"
-                                + "3. Usar el token en el header Authorization: `Bearer <token>`\n"
-                                + "4. El botón 'Authorize' permite configurar el token para todas las peticiones")
-                        .contact(new Contact()
-                                .name("Set Collector MTG")
-                                .url("https://github.com/setcollectormtg")
-                                .email("admin@setcollector.com")))
-                .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
-                .components(new Components()
-                        .addSecuritySchemes("Bearer Authentication",
-                                new SecurityScheme()
-                                        .type(SecurityScheme.Type.HTTP)
-                                        .scheme("bearer")
-                                        .bearerFormat("JWT")
-                                        .description("Token JWT obtenido del endpoint /auth/login. "
-                                                + "Debe incluirse en el header Authorization: Bearer <token>")));
-    }
+        @Bean
+        public OpenAPI customOpenAPI() {
+                return new OpenAPI()
+                                .info(new Info()
+                                                .title("Set Collector MTG API")
+                                                .version("2.0")
+                                                .description("API REST para gestión de colecciones de cartas Magic: The Gathering. "
+                                                                + "Sistema de autenticación JWT simple integrado. "
+                                                                + "\n\n**Uso:**\n"
+                                                                + "1. Registrarse en `/auth/register`\n"
+                                                                + "2. Hacer login en `/auth/login` para obtener el token JWT\n"
+                                                                + "3. Usar el token en el header Authorization: `Bearer <token>`\n"
+                                                                + "4. El botón 'Authorize' permite configurar el token para todas las peticiones")
+                                                .contact(new Contact()
+                                                                .name("Set Collector MTG")
+                                                                .url("https://github.com/setcollectormtg")
+                                                                .email("admin@setcollector.com")))
+                                .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
+                                .components(new Components()
+                                                .addSecuritySchemes("Bearer Authentication",
+                                                                new SecurityScheme()
+                                                                                .type(SecurityScheme.Type.HTTP)
+                                                                                .scheme("bearer")
+                                                                                .bearerFormat("JWT")
+                                                                                .description("Token JWT obtenido del endpoint /auth/login. "
+                                                                                                + "Debe incluirse en el header Authorization: Bearer <token>")));
+        }
 }

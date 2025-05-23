@@ -39,14 +39,13 @@ public class CardServiceImpl implements CardService {
                     // Forzar inclusión de campos
                     dto.setCardId(card.getCardId());
                     dto.setOracleText(card.getOracleText());
-                    
+
                     // Logging para depuración
-                    System.out.println("Card: " + 
-                        "id=" + dto.getCardId() + 
-                        ", name=" + dto.getName() + 
-                        ", oracleText=" + dto.getOracleText()
-                    );
-                    
+                    System.out.println("Card: " +
+                            "id=" + dto.getCardId() +
+                            ", name=" + dto.getName() +
+                            ", oracleText=" + dto.getOracleText());
+
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -78,11 +77,12 @@ public class CardServiceImpl implements CardService {
     @Transactional
     public CardDto createCard(CardCreateDto cardCreateDto) {
         Card card = cardMapper.toEntity(cardCreateDto);
-        
+
         // Asociar al set solo si se proporciona un setId
         if (cardCreateDto.getSetId() != null) {
             SetMtg setMtg = setMtgRepository.findById(cardCreateDto.getSetId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Set not found with id: " + cardCreateDto.getSetId()));
+                    .orElseThrow(
+                            () -> new ResourceNotFoundException("Set not found with id: " + cardCreateDto.getSetId()));
             card.setSetMtg(setMtg);
         } else {
             // Si no se proporciona un setId, la carta no estará asociada a ningún set
@@ -94,7 +94,8 @@ public class CardServiceImpl implements CardService {
     }
 
     /**
-     * Actualiza los datos de una carta, validando que el set asociado exista si se modifica.
+     * Actualiza los datos de una carta, validando que el set asociado exista si se
+     * modifica.
      * Lanza excepción si la carta o el set no existen.
      *
      * @param id      ID de la carta a actualizar
@@ -137,7 +138,7 @@ public class CardServiceImpl implements CardService {
                 .orElseThrow(() -> new ResourceNotFoundException("Card not found with id: " + id));
         cardRepository.delete(card);
     }
-    
+
     /**
      * Busca cartas por nombre (parcial, ignorando mayúsculas/minúsculas).
      *
@@ -176,14 +177,14 @@ public class CardServiceImpl implements CardService {
     @Transactional(readOnly = true)
     public List<CardDto> getCardsByColor(String colorSymbol) {
         List<Card> cards;
-        
+
         // Si es C (incoloro), usar la consulta especial para cartas incoloras
         if ("C".equals(colorSymbol)) {
             cards = cardRepository.findColorlessCards();
         } else {
             cards = cardRepository.findByColorSymbol(colorSymbol);
         }
-        
+
         return cards.stream()
                 .map(cardMapper::toDto)
                 .collect(Collectors.toList());
@@ -193,32 +194,37 @@ public class CardServiceImpl implements CardService {
      * Busca cartas aplicando múltiples filtros de forma combinada.
      * Los parámetros nulos se ignoran.
      *
-     * @param name Nombre o parte del nombre de la carta (opcional)
-     * @param cardType Tipo o parte del tipo de la carta (opcional)
-     * @param colorSymbol Símbolo de color o múltiples símbolos separados por comas (opcional)
-     * @param setCode Código del set (opcional)
-     * @param rarity Rareza de la carta (opcional)
+     * @param name        Nombre o parte del nombre de la carta (opcional)
+     * @param cardType    Tipo o parte del tipo de la carta (opcional)
+     * @param colorSymbol Símbolo de color o múltiples símbolos separados por comas
+     *                    (opcional)
+     * @param setCode     Código del set (opcional)
+     * @param rarity      Rareza de la carta (opcional)
      * @param manaCostMin Coste mínimo de maná (opcional)
      * @param manaCostMax Coste máximo de maná (opcional)
      * @return Lista de cartas que cumplen todos los criterios proporcionados
      */
     @Override
     @Transactional(readOnly = true)
-    public List<CardDto> getCardsByFilters(String name, String cardType, String colorSymbol, String setCode, String rarity, Integer manaCostMin, Integer manaCostMax) {
-        // Si hay múltiples colores separados por comas, realizar búsquedas para cada color
+    public List<CardDto> getCardsByFilters(String name, String cardType, String colorSymbol, String setCode,
+            String rarity, Integer manaCostMin, Integer manaCostMax) {
+        // Si hay múltiples colores separados por comas, realizar búsquedas para cada
+        // color
         // y devolver la intersección de los resultados
         if (colorSymbol != null && colorSymbol.contains(",") && !colorSymbol.equals("C")) {
             String[] colors = colorSymbol.split(",");
-            
-            // Si uno de los colores es C (incoloro), es una contradicción, devolvemos lista vacía
+
+            // Si uno de los colores es C (incoloro), es una contradicción, devolvemos lista
+            // vacía
             // Una carta no puede ser incolora y tener color al mismo tiempo
             if (Arrays.asList(colors).contains("C")) {
                 return new ArrayList<>();
             }
-            
+
             // Obtenemos los resultados para el primer color
-            List<Card> result = cardRepository.findByFilters(name, cardType, rarity, setCode, colors[0], manaCostMin, manaCostMax);
-            
+            List<Card> result = cardRepository.findByFilters(name, cardType, rarity, setCode, colors[0], manaCostMin,
+                    manaCostMax);
+
             // Para cada color adicional, filtramos los resultados
             for (int i = 1; i < colors.length; i++) {
                 final String currentColor = colors[i];
@@ -227,14 +233,15 @@ public class CardServiceImpl implements CardService {
                         .filter(card -> card.getManaCost() != null && card.getManaCost().contains(currentColor))
                         .collect(Collectors.toList());
             }
-            
+
             return result.stream()
                     .map(cardMapper::toDto)
                     .collect(Collectors.toList());
         }
-        
+
         // Caso normal: un solo color o ninguno
-        return cardRepository.findByFilters(name, cardType, rarity, setCode, colorSymbol, manaCostMin, manaCostMax).stream()
+        return cardRepository.findByFilters(name, cardType, rarity, setCode, colorSymbol, manaCostMin, manaCostMax)
+                .stream()
                 .map(cardMapper::toDto)
                 .collect(Collectors.toList());
     }

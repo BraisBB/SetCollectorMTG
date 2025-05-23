@@ -11,6 +11,8 @@ import java.util.List;
 @Repository
 public interface DeckRepository extends JpaRepository<Deck, Long> {
     boolean existsByDeckNameAndUser_UserId(String deckName, Long userId);
+
     List<Deck> findByUser_UserId(Long userId);
+
     Page<Deck> findByUser_UserId(Long userId, Pageable pageable);
 }

@@ -1,6 +1,5 @@
 package com.setcollectormtg.setcollectormtg.model;
 
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -23,7 +22,7 @@ import java.util.Objects;
 
 @Getter
 @Setter
-@ToString(exclude = {"user", "userCollectionCards"})
+@ToString(exclude = { "user", "userCollectionCards" })
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -43,11 +42,13 @@ public class UserCollection {
 
     @OneToMany(mappedBy = "userCollection", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<UserCollectionCard> userCollectionCards;
-    
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         UserCollection that = (UserCollection) o;
         return Objects.equals(collectionId, that.collectionId);
     }

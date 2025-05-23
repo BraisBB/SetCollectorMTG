@@ -85,7 +85,8 @@ public class SetMtgServiceImpl implements SetMtgService {
     }
 
     /**
-     * Actualiza los datos de un set, validando que el nuevo código no esté repetido.
+     * Actualiza los datos de un set, validando que el nuevo código no esté
+     * repetido.
      * Lanza excepción si el código ya está en uso por otro set.
      *
      * @param id         ID del set a actualizar

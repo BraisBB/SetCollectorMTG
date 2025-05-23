@@ -39,13 +39,14 @@ public class UserCollectionController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         collectionDto.setUserId(currentUserId);
-        
+
         UserCollectionDto created = userCollectionService.createCollection(collectionDto);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
     /**
-     * Gets a collection by ID. Accessible by ADMIN (for moderation) or the collection owner.
+     * Gets a collection by ID. Accessible by ADMIN (for moderation) or the
+     * collection owner.
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMIN') or (hasAuthority('USER') and @userSecurity.isOwner(authentication, #id))")
@@ -55,7 +56,8 @@ public class UserCollectionController {
     }
 
     /**
-     * Gets a collection by user ID. Accessible by ADMIN (for moderation) or the user themselves.
+     * Gets a collection by user ID. Accessible by ADMIN (for moderation) or the
+     * user themselves.
      */
     @GetMapping("/user/{userId}")
     @PreAuthorize("hasAuthority('ADMIN') or (hasAuthority('USER') and @userSecurity.isOwner(authentication, #userId))")
@@ -74,19 +76,19 @@ public class UserCollectionController {
         try {
             log.debug("Starting request to get current user's collection");
             User currentUser = currentUserUtil.getCurrentUser();
-            
+
             if (currentUser == null) {
                 log.warn("Could not get current user");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
-            
+
             log.debug("User obtained with ID: {}", currentUser.getUserId());
-            
+
             // Get or create collection if it doesn't exist
             UserCollectionDto collection = userCollectionService.getOrCreateCollectionByUserId(currentUser.getUserId());
-            log.debug("Collection obtained for user {}: {}", currentUser.getUserId(), 
+            log.debug("Collection obtained for user {}: {}", currentUser.getUserId(),
                     collection != null ? collection.getCollectionId() : "null");
-                    
+
             return ResponseEntity.ok(collection);
         } catch (Exception e) {
             log.error("Error getting current user's collection", e);
@@ -104,19 +106,20 @@ public class UserCollectionController {
         try {
             log.debug("Getting current user's collection cards");
             User currentUser = currentUserUtil.getCurrentUser();
-            
+
             if (currentUser == null) {
                 log.warn("Could not get current user");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
-            
+
             // Get or create collection if it doesn't exist
             UserCollectionDto collection = userCollectionService.getOrCreateCollectionByUserId(currentUser.getUserId());
-            
+
             // Get collection cards
-            List<UserCollectionCardDto> cards = userCollectionCardService.getCardsByCollectionId(collection.getCollectionId());
+            List<UserCollectionCardDto> cards = userCollectionCardService
+                    .getCardsByCollectionId(collection.getCollectionId());
             log.debug("Retrieved {} cards for user {}'s collection", cards.size(), currentUser.getUserId());
-            
+
             return ResponseEntity.ok(cards);
         } catch (Exception e) {
             log.error("Error getting current user's collection cards", e);
@@ -125,12 +128,14 @@ public class UserCollectionController {
     }
 
     /**
-     * Gets cards from a specific collection. Accessible by ADMIN (for moderation) or the collection owner.
+     * Gets cards from a specific collection. Accessible by ADMIN (for moderation)
+     * or the collection owner.
      */
     @GetMapping("/{id}/cards")
     @PreAuthorize("hasAuthority('ADMIN') or (hasAuthority('USER') and @userSecurity.isOwner(authentication, #id))")
-    public ResponseEntity<List<UserCollectionCardDto>> getCollectionCards(@PathVariable Long id, Authentication authentication) {
-        log.debug("User {} requesting cards from collection {}", 
+    public ResponseEntity<List<UserCollectionCardDto>> getCollectionCards(@PathVariable Long id,
+            Authentication authentication) {
+        log.debug("User {} requesting cards from collection {}",
                 authentication != null ? authentication.getName() : "anonymous", id);
         List<UserCollectionCardDto> cards = userCollectionCardService.getCardsByCollectionId(id);
         return ResponseEntity.ok(cards);
@@ -147,7 +152,8 @@ public class UserCollectionController {
     }
 
     /**
-     * Deletes a collection. Accessible by ADMIN (for moderation) or the collection owner.
+     * Deletes a collection. Accessible by ADMIN (for moderation) or the collection
+     * owner.
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMIN') or (hasAuthority('USER') and @userSecurity.isOwner(authentication, #id))")
@@ -157,7 +163,8 @@ public class UserCollectionController {
     }
 
     /**
-     * Gets total number of cards in a collection. Accessible by ADMIN (for moderation) or the collection owner.
+     * Gets total number of cards in a collection. Accessible by ADMIN (for
+     * moderation) or the collection owner.
      */
     @GetMapping("/{id}/total-cards")
     @PreAuthorize("hasAuthority('ADMIN') or (hasAuthority('USER') and @userSecurity.isOwner(authentication, #id))")

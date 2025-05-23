@@ -11,7 +11,7 @@ import java.util.Objects;
 
 @Getter
 @Setter
-@ToString(exclude = {"setMtg", "userCollectionCards"})
+@ToString(exclude = { "setMtg", "userCollectionCards" })
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -66,11 +66,13 @@ public class Card {
     public Integer getConvertedManaCost() {
         return manaValue != null ? manaValue.intValue() : null;
     }
-    
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Card card = (Card) o;
         return Objects.equals(cardId, card.cardId);
     }

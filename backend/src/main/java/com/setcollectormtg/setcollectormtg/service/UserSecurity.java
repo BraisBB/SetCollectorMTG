@@ -1,6 +1,5 @@
 package com.setcollectormtg.setcollectormtg.service;
 
-
 import com.setcollectormtg.setcollectormtg.model.Deck;
 import com.setcollectormtg.setcollectormtg.model.User;
 import com.setcollectormtg.setcollectormtg.repository.DeckRepository;
@@ -32,12 +31,15 @@ public class UserSecurity {
     private static final List<String> ADMIN_AUTHORITIES = List.of("ADMIN");
 
     /**
-     * Verifica si el usuario autenticado es el propietario del recurso identificado por resourceId.
-     * Detecta automáticamente el tipo de recurso (usuario, mazo o colección) y verifica la propiedad.
+     * Verifica si el usuario autenticado es el propietario del recurso identificado
+     * por resourceId.
+     * Detecta automáticamente el tipo de recurso (usuario, mazo o colección) y
+     * verifica la propiedad.
      *
      * @param authentication Información de autenticación de Spring Security
      * @param resourceId     ID del recurso a verificar
-     * @return true si el usuario autenticado es el propietario, false en caso contrario
+     * @return true si el usuario autenticado es el propietario, false en caso
+     *         contrario
      */
     public boolean isOwner(Authentication authentication, Long resourceId) {
         try {
@@ -45,7 +47,7 @@ public class UserSecurity {
                 log.debug("Autenticación nula o no autenticada");
                 return false;
             }
-            
+
             // Si el usuario es admin, siempre permitir
             if (isAdmin(authentication)) {
                 log.debug("Usuario con rol de admin, permitiendo acceso: {}", authentication.getName());
@@ -58,9 +60,9 @@ public class UserSecurity {
                 log.warn("No se pudo obtener el usuario actual de la petición");
                 return false;
             }
-            
-            log.debug("Verificando propiedad: usuario={}, resourceId={}", 
-                     currentUser.getUserId(), resourceId);
+
+            log.debug("Verificando propiedad: usuario={}, resourceId={}",
+                    currentUser.getUserId(), resourceId);
 
             // 1. Verificar si es el ID del propio usuario
             if (currentUser.getUserId().equals(resourceId)) {
@@ -75,16 +77,15 @@ public class UserSecurity {
                         log.debug("El recurso es un mazo. Propiedad: {}", isOwner);
                         return isOwner;
                     })
-                    .orElseGet(() -> 
-                        // 3. Verificar si es un ID de colección
-                        collectionRepository.findById(resourceId)
+                    .orElseGet(() ->
+                    // 3. Verificar si es un ID de colección
+                    collectionRepository.findById(resourceId)
                             .map(collection -> {
                                 boolean isOwner = collection.getUser().getUserId().equals(currentUser.getUserId());
                                 log.debug("El recurso es una colección. Propiedad: {}", isOwner);
                                 return isOwner;
                             })
-                            .orElse(false)
-                    );
+                            .orElse(false));
         } catch (Exception e) {
             log.error("Error inesperado en isOwner", e);
             // En caso de error, siempre rechazar por seguridad
@@ -107,9 +108,9 @@ public class UserSecurity {
                 return false;
             }
 
-            log.debug("Verificando acceso: usuario={}, roles={}", 
-                authentication.getName(),
-                authentication.getAuthorities());
+            log.debug("Verificando acceso: usuario={}, roles={}",
+                    authentication.getName(),
+                    authentication.getAuthorities());
 
             // Verificar rol de administrador
             boolean isAdmin = isAdmin(authentication);
@@ -123,9 +124,9 @@ public class UserSecurity {
 
             // Si no es admin, verificar propiedad
             boolean isOwner = isOwner(authentication, resourceId);
-            log.info("Usuario {} es propietario del recurso {}: {}", 
-                authentication.getName(), resourceId, isOwner);
-            
+            log.info("Usuario {} es propietario del recurso {}: {}",
+                    authentication.getName(), resourceId, isOwner);
+
             return isOwner;
         } catch (Exception e) {
             log.error("Error inesperado en canAccessUserResource", e);
@@ -133,7 +134,7 @@ public class UserSecurity {
             return false;
         }
     }
-    
+
     /**
      * Verifica si el usuario actual es administrador.
      * Busca cualquiera de los roles de administrador conocidos.
@@ -142,41 +143,44 @@ public class UserSecurity {
         if (authentication == null || !authentication.isAuthenticated()) {
             return false;
         }
-        
+
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-        
+
         if (log.isDebugEnabled()) {
             String authoritiesList = authorities.stream()
                     .map(GrantedAuthority::getAuthority)
                     .collect(Collectors.joining(", "));
-            log.debug("Verificando si el usuario {} es admin. Authorities: {}", 
+            log.debug("Verificando si el usuario {} es admin. Authorities: {}",
                     authentication.getName(), authoritiesList);
         }
-        
+
         boolean isAdmin = authorities.stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(ADMIN_AUTHORITIES::contains);
-        
+
         log.debug("¿El usuario {} es admin? {}", authentication.getName(), isAdmin);
         return isAdmin;
     }
-    
+
     /**
      * Verifica si el contexto de seguridad actual tiene el rol de administrador.
-     * Método de conveniencia para uso en código cuando no hay autenticación disponible.
+     * Método de conveniencia para uso en código cuando no hay autenticación
+     * disponible.
      */
     public boolean isCurrentUserAdmin() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return isAdmin(auth);
     }
-    
+
     /**
-     * Verifica si el usuario autenticado puede acceder a un recurso de usuario por username.
+     * Verifica si el usuario autenticado puede acceder a un recurso de usuario por
+     * username.
      * Permite acceso si el usuario es ADMIN o es el mismo usuario.
      *
      * @param authentication Información de autenticación de Spring Security
      * @param username       Username del usuario al que se quiere acceder
-     * @return true si el usuario es ADMIN o es el mismo usuario, false en caso contrario
+     * @return true si el usuario es ADMIN o es el mismo usuario, false en caso
+     *         contrario
      */
     public boolean canAccessUserByUsername(Authentication authentication, String username) {
         try {
@@ -185,8 +189,8 @@ public class UserSecurity {
                 return false;
             }
 
-            log.debug("Verificando acceso por username: usuario={}, target={}", 
-                authentication.getName(), username);
+            log.debug("Verificando acceso por username: usuario={}, target={}",
+                    authentication.getName(), username);
 
             // Verificar rol de administrador
             if (isAdmin(authentication)) {
@@ -200,17 +204,24 @@ public class UserSecurity {
                 log.warn("No se pudo obtener el usuario actual");
                 return false;
             }
-            
+
             boolean isSameUser = currentUser.getUsername().equals(username);
-            log.info("Usuario {} intentando acceder a usuario {}: es el mismo: {}", 
-                currentUser.getUsername(), username, isSameUser);
-            
+            log.info("Usuario {} intentando acceder a usuario {}: es el mismo: {}",
+                    currentUser.getUsername(), username, isSameUser);
+
             return isSameUser;
         } catch (Exception e) {
             log.error("Error inesperado en canAccessUserByUsername", e);
             return false;
         }
     }
-    
-    /**     * Obtiene el usuario actual desde el contexto de seguridad de Spring.     */    private User getCurrentUserFromRequest() {        Authentication auth = SecurityContextHolder.getContext().getAuthentication();        if (auth != null && auth.isAuthenticated() && auth.getName() != null) {            return userRepository.findByUsername(auth.getName()).orElse(null);        }        return null;    }
+
+    /** * Obtiene el usuario actual desde el contexto de seguridad de Spring. */
+    private User getCurrentUserFromRequest() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && auth.getName() != null) {
+            return userRepository.findByUsername(auth.getName()).orElse(null);
+        }
+        return null;
+    }
 }

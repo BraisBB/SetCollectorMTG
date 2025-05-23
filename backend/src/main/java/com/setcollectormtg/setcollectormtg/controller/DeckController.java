@@ -34,7 +34,8 @@ public class DeckController {
     }
 
     /**
-     * Gets a specific deck by ID. Accessible by ADMIN (for moderation) or the deck owner.
+     * Gets a specific deck by ID. Accessible by ADMIN (for moderation) or the deck
+     * owner.
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMIN') or (hasAuthority('USER') and @userSecurity.isOwner(authentication, #id))")
@@ -43,7 +44,8 @@ public class DeckController {
     }
 
     /**
-     * Gets decks by user ID. Accessible by ADMIN (for moderation) or the user themselves.
+     * Gets decks by user ID. Accessible by ADMIN (for moderation) or the user
+     * themselves.
      */
     @GetMapping("/user/{userId}")
     @PreAuthorize("hasAuthority('ADMIN') or (hasAuthority('USER') and @userSecurity.isOwner(authentication, #userId))")
@@ -53,7 +55,8 @@ public class DeckController {
     }
 
     /**
-     * Gets decks by username. Accessible by ADMIN (for moderation) or the user themselves.
+     * Gets decks by username. Accessible by ADMIN (for moderation) or the user
+     * themselves.
      */
     @GetMapping("/user/byUsername/{username}")
     @PreAuthorize("hasAuthority('ADMIN') or (hasAuthority('USER') and @userSecurity.canAccessUserByUsername(authentication, #username))")
@@ -61,7 +64,7 @@ public class DeckController {
         log.info("Requesting decks for user with username: {}", username);
         return ResponseEntity.ok(deckService.getDecksByUsername(username));
     }
-    
+
     /**
      * Gets decks for the current authenticated user. USER authority only.
      */
@@ -69,16 +72,16 @@ public class DeckController {
     @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<List<DeckDto>> getDecksForCurrentUser() {
         log.info("Requesting decks for the currently authenticated user");
-        
+
         User currentUser = currentUserUtil.getCurrentUser();
         if (currentUser == null) {
             log.warn("Could not get current user");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        
-        log.info("Authenticated user with ID: {}, username: {}", 
+
+        log.info("Authenticated user with ID: {}, username: {}",
                 currentUser.getUserId(), currentUser.getUsername());
-        
+
         return ResponseEntity.ok(deckService.getDecksByUser(currentUser.getUserId()));
     }
 
@@ -99,17 +102,17 @@ public class DeckController {
     public ResponseEntity<DeckDto> createDeck(@Valid @RequestBody DeckCreateDto deckCreateDto) {
         try {
             log.info("Deck creation request received: {}", deckCreateDto);
-            
+
             // Explicitly validate that the DTO is correct
             if (deckCreateDto.getDeckName() == null || deckCreateDto.getDeckName().trim().isEmpty()) {
                 log.warn("Attempt to create deck with empty name");
                 return ResponseEntity.badRequest().build();
             }
-            
+
             // Create the deck
             DeckDto createdDeck = deckService.createDeck(deckCreateDto);
             log.info("Deck successfully created with ID: {}", createdDeck.getDeckId());
-            
+
             return ResponseEntity.status(HttpStatus.CREATED).body(createdDeck);
         } catch (Exception e) {
             log.error("Error creating deck: {}", e.getMessage(), e);

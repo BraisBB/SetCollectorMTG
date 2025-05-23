@@ -83,7 +83,7 @@ public class UserServiceImpl implements UserService {
 
         userMapper.updateUserFromDto(userDto, user);
         User updatedUser = userRepository.save(user);
-        
+
         return userMapper.toDto(updatedUser);
     }
 
@@ -95,7 +95,7 @@ public class UserServiceImpl implements UserService {
 
         userMapper.updateUserFromDto(userDto, user);
         User updatedUser = userRepository.save(user);
-        
+
         return userMapper.toDto(updatedUser);
     }
 
@@ -113,7 +113,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void assignRolesToUser(Long id, List<String> roleNames) {
         log.debug("UserServiceImpl.assignRolesToUser called with id={}, roleNames={}", id, roleNames);
-        
+
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + id));
 
@@ -134,11 +134,11 @@ public class UserServiceImpl implements UserService {
                 .collect(Collectors.toSet());
 
         log.debug("Converted roles: {}", roles);
-        
+
         user.setRoles(roles);
         User savedUser = userRepository.save(user);
-        
-        log.info("Roles asignados al usuario {}: {} (saved user roles: {})", 
+
+        log.info("Roles asignados al usuario {}: {} (saved user roles: {})",
                 user.getUsername(), roleNames, savedUser.getRoles());
     }
 
@@ -150,7 +150,7 @@ public class UserServiceImpl implements UserService {
 
         user.getRoles().remove(Role.valueOf(roleName));
         userRepository.save(user);
-        
+
         log.info("Rol {} removido del usuario {}", roleName, user.getUsername());
     }
 
@@ -169,4 +169,4 @@ public class UserServiceImpl implements UserService {
         return userRepository.findAll(pageable)
                 .map(userMapper::toDto);
     }
-} 
+}

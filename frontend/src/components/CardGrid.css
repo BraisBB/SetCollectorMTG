@@ -3,7 +3,7 @@
   margin-top: 2rem;
   margin-bottom: 2rem;
   padding: 1rem;
-  font-family: 'Noto Sans', sans-serif;
+  font-family: "Noto Sans", sans-serif;
 }
 
 .results-title {
@@ -16,7 +16,7 @@
   margin-left: auto;
   margin-right: auto;
   text-align: center;
-  font-family: 'Noto Sans', sans-serif;
+  font-family: "Noto Sans", sans-serif;
 }
 
 .card-grid {
@@ -65,7 +65,7 @@
 }
 
 .card-item:after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -102,8 +102,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* No results state */
@@ -123,7 +127,7 @@
     grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
     gap: 1rem;
   }
-  
+
   .card-item:hover {
     transform: translateY(-8px) scale(1.08);
   }
@@ -134,7 +138,7 @@
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 0.75rem;
   }
-  
+
   .card-item:hover {
     transform: translateY(-5px) scale(1.05);
   }
@@ -159,7 +163,7 @@
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  font-family: 'Noto Sans', sans-serif;
+  font-family: "Noto Sans", sans-serif;
 }
 
 .load-more-button:hover {
@@ -201,4 +205,4 @@
   font-size: 0.8rem;
   font-weight: bold;
   z-index: 2;
-} 
+}

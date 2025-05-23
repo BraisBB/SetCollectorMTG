@@ -16,9 +16,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @Slf4j
 public class CurrentUserUtil {
-    
+
     private final UserRepository userRepository;
-    
+
     /**
      * Gets the current user from security context.
      * 
@@ -26,13 +26,13 @@ public class CurrentUserUtil {
      */
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        
-        if (authentication == null || !authentication.isAuthenticated() || 
-            authentication.getName() == null || "anonymousUser".equals(authentication.getName())) {
+
+        if (authentication == null || !authentication.isAuthenticated() ||
+                authentication.getName() == null || "anonymousUser".equals(authentication.getName())) {
             log.debug("No authenticated user found in security context");
             return null;
         }
-        
+
         try {
             log.debug("Getting current user for username: {}", authentication.getName());
             return userRepository.findByUsername(authentication.getName()).orElse(null);
@@ -41,7 +41,7 @@ public class CurrentUserUtil {
             return null;
         }
     }
-    
+
     /**
      * Gets the current user's ID.
      * 
@@ -51,7 +51,7 @@ public class CurrentUserUtil {
         User currentUser = getCurrentUser();
         return currentUser != null ? currentUser.getUserId() : null;
     }
-    
+
     /**
      * Gets the current username from security context.
      * 
@@ -59,15 +59,15 @@ public class CurrentUserUtil {
      */
     public String getCurrentUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        
-        if (authentication == null || !authentication.isAuthenticated() || 
-            "anonymousUser".equals(authentication.getName())) {
+
+        if (authentication == null || !authentication.isAuthenticated() ||
+                "anonymousUser".equals(authentication.getName())) {
             return null;
         }
-        
+
         return authentication.getName();
     }
-    
+
     /**
      * Checks if there's a currently authenticated user.
      * 
@@ -75,7 +75,7 @@ public class CurrentUserUtil {
      */
     public boolean isUserAuthenticated() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication != null && authentication.isAuthenticated() && 
-               authentication.getName() != null && !"anonymousUser".equals(authentication.getName());
+        return authentication != null && authentication.isAuthenticated() &&
+                authentication.getName() != null && !"anonymousUser".equals(authentication.getName());
     }
-} 
+}

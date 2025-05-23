@@ -10,7 +10,7 @@ import java.util.Objects;
 
 @Getter
 @Setter
-@ToString(exclude = {"cards"})
+@ToString(exclude = { "cards" })
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -41,11 +41,13 @@ public class SetMtg {
         cards.add(card);
         card.setSetMtg(this);
     }
-    
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         SetMtg setMtg = (SetMtg) o;
         return Objects.equals(setId, setMtg.setId);
     }

@@ -14,8 +14,8 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./podman/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./podman/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
     networks:
       - setcollector-network
     healthcheck:
@@ -26,7 +26,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: ./podman/backend/Dockerfile
+      dockerfile: ./docker/backend/Dockerfile
     container_name: setcollector-backend
     environment:
       # MySQL host para conectarse al contenedor
@@ -69,7 +69,7 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: ./podman/frontend/Dockerfile
+      dockerfile: ./docker/frontend/Dockerfile
     container_name: setcollector-frontend
     ports:
       - "5173:80"

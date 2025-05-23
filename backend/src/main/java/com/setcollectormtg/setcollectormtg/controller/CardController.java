@@ -25,11 +25,11 @@ public class CardController {
      * Gets all cards or filters them by parameters if present.
      * This endpoint is public - no authentication required.
      *
-     * @param name Card name or part of the name (optional)
-     * @param type Card type (optional)
-     * @param color Card color (W, U, B, R, G or colorless) (optional)
-     * @param setCode Set code (optional)
-     * @param rarity Card rarity (optional)
+     * @param name        Card name or part of the name (optional)
+     * @param type        Card type (optional)
+     * @param color       Card color (W, U, B, R, G or colorless) (optional)
+     * @param setCode     Set code (optional)
+     * @param rarity      Card rarity (optional)
      * @param manaCostMin Minimum mana cost (optional)
      * @param manaCostMax Maximum mana cost (optional)
      * @return List of all cards or filtered cards
@@ -43,14 +43,15 @@ public class CardController {
             @RequestParam(required = false) String rarity,
             @RequestParam(required = false) Integer manaCostMin,
             @RequestParam(required = false) Integer manaCostMax) {
-        
-        log.debug("Getting cards with filters: name={}, type={}, color={}, setCode={}, rarity={}, manaCost={}-{}", 
+
+        log.debug("Getting cards with filters: name={}, type={}, color={}, setCode={}, rarity={}, manaCost={}-{}",
                 name, type, color, setCode, rarity, manaCostMin, manaCostMax);
-        
+
         List<CardDto> cards;
-        
+
         // If any filter is applied, use filtered search
-        if (name != null || type != null || color != null || setCode != null || rarity != null || manaCostMin != null || manaCostMax != null) {
+        if (name != null || type != null || color != null || setCode != null || rarity != null || manaCostMin != null
+                || manaCostMax != null) {
             cards = cardService.getCardsByFilters(name, type, color, setCode, rarity, manaCostMin, manaCostMax);
             log.debug("Found {} cards with filters", cards.size());
         } else {
@@ -58,7 +59,7 @@ public class CardController {
             cards = cardService.getAllCards();
             log.debug("Retrieved all {} cards", cards.size());
         }
-        
+
         return ResponseEntity.ok(cards);
     }
 
@@ -75,13 +76,14 @@ public class CardController {
     }
 
     /**
-     * Searches cards applying filters. This endpoint is public - no authentication required.
+     * Searches cards applying filters. This endpoint is public - no authentication
+     * required.
      * 
-     * @param name Card name or part of the name (optional)
-     * @param cardType Card type (optional)
-     * @param color Card color (W, U, B, R, G or colorless) (optional)
-     * @param setCode Set code (optional)
-     * @param rarity Card rarity (optional)
+     * @param name        Card name or part of the name (optional)
+     * @param cardType    Card type (optional)
+     * @param color       Card color (W, U, B, R, G or colorless) (optional)
+     * @param setCode     Set code (optional)
+     * @param rarity      Card rarity (optional)
      * @param manaCostMin Minimum mana cost (optional)
      * @param manaCostMax Maximum mana cost (optional)
      * @return List of cards that meet the criteria
@@ -95,13 +97,14 @@ public class CardController {
             @RequestParam(required = false) String rarity,
             @RequestParam(required = false) Integer manaCostMin,
             @RequestParam(required = false) Integer manaCostMax) {
-        
-        log.debug("Searching cards with filters: name={}, cardType={}, color={}, setCode={}, rarity={}, manaCost={}-{}", 
+
+        log.debug("Searching cards with filters: name={}, cardType={}, color={}, setCode={}, rarity={}, manaCost={}-{}",
                 name, cardType, color, setCode, rarity, manaCostMin, manaCostMax);
-        
-        List<CardDto> results = cardService.getCardsByFilters(name, cardType, color, setCode, rarity, manaCostMin, manaCostMax);
+
+        List<CardDto> results = cardService.getCardsByFilters(name, cardType, color, setCode, rarity, manaCostMin,
+                manaCostMax);
         log.debug("Search returned {} cards", results.size());
-        
+
         return ResponseEntity.ok(results);
     }
 
@@ -132,10 +135,10 @@ public class CardController {
     public ResponseEntity<CardDto> updateCard(@PathVariable Long id, @Valid @RequestBody CardDto cardDto) {
         log.info("Received request to update card with ID: {}", id);
         log.debug("Received data: {}", cardDto);
-        
+
         CardDto updatedCard = cardService.updateCard(id, cardDto);
         log.info("Card updated successfully: {}", updatedCard.getName());
-        
+
         return ResponseEntity.ok(updatedCard);
     }
 

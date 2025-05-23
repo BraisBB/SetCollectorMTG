@@ -23,8 +23,10 @@ public class UserCollectionCardId implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         UserCollectionCardId that = (UserCollectionCardId) o;
         return Objects.equals(collectionId, that.collectionId) && Objects.equals(cardId, that.cardId);
     }

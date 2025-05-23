@@ -14,7 +14,7 @@ import java.util.Set;
 
 @Getter
 @Setter
-@ToString(exclude = {"user", "cardDecks"})
+@ToString(exclude = { "user", "cardDecks" })
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -44,11 +44,13 @@ public class Deck {
 
     @OneToMany(mappedBy = "deck", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<CardDeck> cardDecks = new HashSet<>();
-    
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Deck deck = (Deck) o;
         return Objects.equals(deckId, deck.deckId);
     }

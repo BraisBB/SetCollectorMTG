@@ -55,18 +55,18 @@ public class DeckServiceImpl implements DeckService {
     @Transactional
     public DeckDto createDeck(DeckCreateDto deckCreateDto) {
         log.debug("Iniciando proceso de creación de mazo: {}", deckCreateDto);
-        
+
         // Obtener el usuario autenticado
         User currentUser = currentUserUtil.getCurrentUser();
         if (currentUser == null) {
             throw new IllegalStateException("User authentication required");
         }
-        
+
         log.debug("Usuario autenticado: ID={}, username={}", currentUser.getUserId(), currentUser.getUsername());
 
         // Verificar si ya existe un deck con el mismo nombre para este usuario
         if (deckRepository.existsByDeckNameAndUser_UserId(deckCreateDto.getDeckName(), currentUser.getUserId())) {
-            log.warn("Ya existe un mazo con nombre '{}' para el usuario {}", 
+            log.warn("Ya existe un mazo con nombre '{}' para el usuario {}",
                     deckCreateDto.getDeckName(), currentUser.getUsername());
             throw new IllegalArgumentException(
                     "Deck with name '" + deckCreateDto.getDeckName() + "' already exists for this user");
@@ -75,10 +75,10 @@ public class DeckServiceImpl implements DeckService {
         // Crear entidad Deck
         Deck deck = deckMapper.toEntity(deckCreateDto, currentUser);
         deck.setTotalCards(0); // Inicializar contador de cartas
-        
+
         Deck savedDeck = deckRepository.save(deck);
         log.info("Mazo creado exitosamente con ID: {}", savedDeck.getDeckId());
-        
+
         return deckMapper.toDto(savedDeck);
     }
 
@@ -120,13 +120,13 @@ public class DeckServiceImpl implements DeckService {
     @Transactional(readOnly = true)
     public List<DeckDto> getDecksByUser(Long userId) {
         log.info("Buscando mazos para usuario ID: {}", userId);
-        
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-        
+
         List<Deck> decks = deckRepository.findByUser_UserId(userId);
         log.info("Se encontraron {} mazos para el usuario {}", decks.size(), user.getUsername());
-        
+
         return decks.stream()
                 .map(deckMapper::toDto)
                 .toList();
@@ -155,7 +155,7 @@ public class DeckServiceImpl implements DeckService {
 
         // Obtener todas las cartas del deck
         List<CardDeck> deckCards = cardDeckRepository.findByDeck_DeckId(deckId);
-        
+
         if (deckCards.isEmpty()) {
             // Si no hay cartas, el deck no tiene color
             deck.setDeckColor(null);
@@ -173,12 +173,13 @@ public class DeckServiceImpl implements DeckService {
 
     /**
      * Calcula el color del deck basado en las cartas que contiene
+     * 
      * @param deckCards Lista de cartas del deck
      * @return String representando el color del deck
      */
     private String calculateDeckColor(List<CardDeck> deckCards) {
         Set<String> colors = new HashSet<>();
-        
+
         // Analizamos cada carta en el deck
         for (CardDeck cardDeck : deckCards) {
             String manaCost = cardDeck.getCard().getManaCost();
@@ -188,9 +189,9 @@ public class DeckServiceImpl implements DeckService {
                 colors.addAll(cardColors);
             }
         }
-        
+
         log.debug("Colors found in deck: {}", colors);
-        
+
         // Determinar el tipo de color del deck
         if (colors.isEmpty()) {
             return "colorless";
@@ -210,36 +211,44 @@ public class DeckServiceImpl implements DeckService {
 
     /**
      * Extrae los símbolos de color del coste de maná
+     * 
      * @param manaCost String del coste de maná (ej: "{2}{W}{U}")
      * @return Set de símbolos de color encontrados
      */
     private Set<String> extractColorsFromManaCost(String manaCost) {
         Set<String> colors = new HashSet<>();
-        
+
         // Patrón para encontrar símbolos de mana de color: {W}, {U}, {B}, {R}, {G}
         Pattern colorPattern = Pattern.compile("\\{([WUBRG])\\}");
         Matcher matcher = colorPattern.matcher(manaCost);
-        
+
         while (matcher.find()) {
             colors.add(matcher.group(1)); // Agregar solo la letra (W, U, B, R, G)
         }
-        
+
         return colors;
     }
 
     /**
      * Mapea símbolos de mana a nombres de colores
+     * 
      * @param manaSymbol Símbolo de mana (W, U, B, R, G)
      * @return Nombre del color correspondiente
      */
     private String mapManaSymbolToColorName(String manaSymbol) {
         switch (manaSymbol) {
-            case "W": return "white";
-            case "U": return "blue";
-            case "B": return "black";
-            case "R": return "red";
-            case "G": return "green";
-            default: return "colorless";
+            case "W":
+                return "white";
+            case "U":
+                return "blue";
+            case "B":
+                return "black";
+            case "R":
+                return "red";
+            case "G":
+                return "green";
+            default:
+                return "colorless";
         }
     }
 
@@ -248,7 +257,7 @@ public class DeckServiceImpl implements DeckService {
     public List<DeckDto> getDecksByUsername(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
-        
+
         return getDecksByUser(user.getUserId());
     }
-} 
+}

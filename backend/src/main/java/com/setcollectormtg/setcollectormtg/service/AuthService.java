@@ -23,57 +23,55 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AuthService {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
-    private final AuthenticationManager authenticationManager;
+        private final UserRepository userRepository;
+        private final PasswordEncoder passwordEncoder;
+        private final JwtService jwtService;
+        private final AuthenticationManager authenticationManager;
 
-    public AuthResponse register(RegisterRequest request) {
-        // Verificar si el usuario ya existe
-        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            throw new UserAlreadyExistsException("Username already exists");
-    }
-    
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new UserAlreadyExistsException("Email is already registered");
+        public AuthResponse register(RegisterRequest request) {
+                // Verificar si el usuario ya existe
+                if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+                        throw new UserAlreadyExistsException("Username already exists");
+                }
+
+                if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+                        throw new UserAlreadyExistsException("Email is already registered");
+                }
+
+                // Crear nuevo usuario
+                User user = new User();
+                user.setUsername(request.getUsername());
+                user.setEmail(request.getEmail());
+                user.setPassword(passwordEncoder.encode(request.getPassword()));
+                user.setFirstName(request.getFirstName());
+                user.setLastName(request.getLastName());
+                user.setEnabled(true);
+                user.setRoles(Set.of(Role.USER)); // Por defecto asignar rol USER
+
+                userRepository.save(user);
+
+                String jwtToken = jwtService.generateToken(user);
+                Set<String> roleNames = user.getRoles().stream()
+                                .map(Role::name)
+                                .collect(Collectors.toSet());
+
+                return new AuthResponse(jwtToken, user.getUsername(), user.getEmail(), roleNames);
         }
 
-        // Crear nuevo usuario
-        User user = new User();
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        user.setEnabled(true);
-        user.setRoles(Set.of(Role.USER)); // Por defecto asignar rol USER
+        public AuthResponse login(AuthRequest request) {
+                authenticationManager.authenticate(
+                                new UsernamePasswordAuthenticationToken(
+                                                request.getUsername(),
+                                                request.getPassword()));
 
-        userRepository.save(user);
+                User user = userRepository.findByUsername(request.getUsername())
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        String jwtToken = jwtService.generateToken(user);
-        Set<String> roleNames = user.getRoles().stream()
-                .map(Role::name)
-                .collect(Collectors.toSet());
+                String jwtToken = jwtService.generateToken(user);
+                Set<String> roleNames = user.getRoles().stream()
+                                .map(Role::name)
+                                .collect(Collectors.toSet());
 
-        return new AuthResponse(jwtToken, user.getUsername(), user.getEmail(), roleNames);
-    }
-
-    public AuthResponse login(AuthRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
-                        request.getPassword()
-                )
-        );
-
-        User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        String jwtToken = jwtService.generateToken(user);
-        Set<String> roleNames = user.getRoles().stream()
-                .map(Role::name)
-                .collect(Collectors.toSet());
-
-        return new AuthResponse(jwtToken, user.getUsername(), user.getEmail(), roleNames);
-    }
-} 
+                return new AuthResponse(jwtToken, user.getUsername(), user.getEmail(), roleNames);
+        }
+}

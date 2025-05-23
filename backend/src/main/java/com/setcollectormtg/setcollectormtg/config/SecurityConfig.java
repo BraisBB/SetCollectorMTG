@@ -26,7 +26,7 @@ import java.util.Arrays;
 
 /**
  * Configuración de seguridad simple usando JWT y base de datos local.
- * Reemplaza la integración con Keycloak por un sistema más sencillo.
+ * 
  */
 @Configuration
 @EnableWebSecurity
@@ -51,7 +51,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/", "/actuator/**", "/health/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        
+
                         // Autenticación y registro públicos
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
@@ -59,7 +59,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                         .requestMatchers(HttpMethod.GET, "/users/username/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/username/**").permitAll()
-                        
+
                         // Endpoints públicos para sets y cards
                         .requestMatchers(HttpMethod.GET, "/sets").permitAll()
                         .requestMatchers(HttpMethod.GET, "/sets/**").permitAll()
@@ -69,7 +69,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/sets/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/cards").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/cards/**").permitAll()
-                        
+
                         // Rutas protegidas
                         .requestMatchers("/users/**").authenticated()
                         .requestMatchers("/api/users/**").authenticated()
@@ -77,14 +77,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/decks/**").hasAnyAuthority("USER", "ADMIN")
                         .requestMatchers("/collections/**").hasAnyAuthority("USER", "ADMIN")
                         .requestMatchers("/api/collections/**").hasAnyAuthority("USER", "ADMIN")
-                        
+
                         // Rutas de administración
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
-                        
+
                         // Todo lo demás requiere autenticación
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -100,18 +99,17 @@ public class SecurityConfig {
     @Bean
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
+
         configuration.setAllowedOrigins(Arrays.asList(
-            "http://localhost:5173",
-            "http://127.0.0.1:5173",
-            "http://localhost:3000"
-        ));
-        
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+                "http://localhost:3000"));
+
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
