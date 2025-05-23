@@ -514,10 +514,6 @@ npm run build
 - **Commits**: Formato conventional commits
 - **Testing**: Cobertura mínima del 80%
 
-## Licencia
-
-Este proyecto está bajo la licencia MIT. Ver archivo `LICENSE` para más detalles.
-
 ## Soporte
 
 Para problemas o preguntas:
@@ -530,6 +526,5 @@ Para problemas o preguntas:
 ---
 
 **Versión**: 1.0.0  
-**Última actualización**: $(date +'%Y-%m-%d')  
 **Java**: 21 | **Spring Boot**: 3.4.3 | **React**: 19 | **MySQL**: 8.0
 
