@@ -408,11 +408,18 @@ const DeckCardSelector: React.FC<DeckCardSelectorProps> = ({
       {/* Imagen de la carta seleccionada o primera */}
       <div className="deck-card-image-panel">
         {cardToShow && cardToShow.cardImageUrl && (
-          <img
-            src={cardToShow.cardImageUrl}
-            alt={cardToShow.cardName}
-            className="side-card-image"
-          />
+          <>
+            <img
+              src={cardToShow.cardImageUrl}
+              alt={cardToShow.cardName}
+              className="side-card-image"
+            />
+            {!isCardInCollection(cardToShow.cardId) && (
+              <div className="not-in-collection-label">
+                Not in collection
+              </div>
+            )}
+          </>
         )}
       </div>
       <div className="deck-card-list-panel">

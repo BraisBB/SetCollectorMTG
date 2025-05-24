@@ -134,16 +134,7 @@
   z-index: 1;
 }
 
-/* Imagen de carta */
-.side-card-image {
-  width: 100%;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  background: #fff;
-  border: 1px solid #e65100;
-  aspect-ratio: 745/1040;
-
-}
+/* Imagen de carta */.side-card-image {  width: 100%;  border-radius: 8px;  box-shadow: 0 4px 8px rgba(0,0,0,0.2);  background: #fff;  border: 1px solid #e65100;  aspect-ratio: 745/1040;}/* Etiqueta para cartas no en colección */.not-in-collection-label {  text-align: center;  font-size: 0.75rem;  color: #999;  margin-top: 0.5rem;  padding: 0.25rem;  font-style: italic;  opacity: 0.8;}
 
 /* Modo visualización */
 .deck-view-mode {
@@ -600,4 +591,15 @@
 .deck-edit-mode .filter-group i,
 .deck-edit-mode .search-input-group .control-icon {
   font-size: 0.5em;
+}
+
+/* Etiqueta para cartas no en colección */
+.not-in-collection-label {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #999;
+  margin-top: 0.5rem;
+  padding: 0.25rem;
+  font-style: italic;
+  opacity: 0.8;
 } 
