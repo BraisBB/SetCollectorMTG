@@ -35,9 +35,14 @@ Desarrollada con Spring Boot 3, React 19, y MySQL 8.0, desplegada con Docker.
 
 - **Docker Desktop** (versión 20.10 o superior)
 - **Git** para clonar el repositorio
-- Al menos **4GB RAM** disponible
 
 #### Instalar Docker
+
+**WSL**
+```se necesita tener WSL instalado previamente 
+# Instalar WSL
+wsl --install
+```
 
 **Windows:**
 ```powershell
