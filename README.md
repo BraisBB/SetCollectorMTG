@@ -149,7 +149,7 @@ La aplicación permite importar sets y cartas de Magic: The Gathering desde arch
 
 ### Importación vía Panel Administrativo
 
-1. **Acceso Admin**: Inicia sesión con una cuenta de administrador
+1. **Acceso Admin**: Inicia sesión con una cuenta de administrador (se hardcodea uno con nombre admin y contraseña Admin123)
 2. **Panel Admin**: Ve a la sección de administración
 3. **Importar Set**: 
    - Selecciona la pestaña "Sets" 
