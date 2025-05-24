@@ -857,14 +857,7 @@
   background-color: rgba(230, 81, 0, 0.8);
 }
 
-.remove-btn {
-  color: #ddd;
-}
-
-.remove-btn:hover {
-  background-color: rgba(220, 53, 69, 0.2);
-  color: white;
-}
+.remove-btn {  color: #ddd;  border-radius: 50% !important;}.remove-btn:hover {  background-color: rgba(220, 53, 69, 0.2);  color: white;}
 
 .minimal-copies {
   display: flex;
@@ -890,16 +883,4 @@
   text-align: center;
 }
 
-.copies-display {
-  width: auto;
-  min-width: 120px;
-  text-align: center;
-  margin-top: 10px;
-  background-color: rgba(230, 81, 0, 0.2);
-  border-radius: 15px;
-  padding: 5px;
-  color: #fff;
-  font-size: 0.9rem;
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
+.copies-display {  width: auto;  min-width: 120px;  text-align: center;  margin-top: 10px;  background-color: rgba(230, 81, 0, 0.2);  border-radius: 15px;  padding: 5px;  color: #fff;  font-size: 0.9rem;  font-weight: 600;  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);}.collection-help-text {  color: #999;  font-size: 0.75rem;  text-align: center;  margin-bottom: 8px;  font-style: italic;  opacity: 0.8;}

@@ -407,6 +407,9 @@ const CardModal: React.FC<CardModalProps> = ({
               {/* Collection Controls - Posicionados debajo de la imagen */}
               {hasCollectionAccess && (
                 <div className="image-overlay-controls">
+                  <div className="collection-help-text">
+                    Add card to collection
+                  </div>
                   <div className="minimal-controls">
                     <button 
                       className="minimal-btn remove-btn"
