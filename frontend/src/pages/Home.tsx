@@ -4,7 +4,7 @@ import SearchBar from '../components/SearchBar';
 import CardGrid from '../components/CardGrid';
 import { SearchParams } from '../components/SearchBar';
 import { Card } from '../components/CardGrid';
-import './Home.css';
+import './styles/Home.css';
 import { apiService } from '../services';
 import authService from '../services/authService';
 

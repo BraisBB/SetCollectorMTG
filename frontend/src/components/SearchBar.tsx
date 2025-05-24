@@ -1,5 +1,5 @@
 import { useState, FormEvent, useEffect } from 'react';
-import './SearchBar.css';
+import './styles/SearchBar.css';
 import { apiService } from '../services';
 
 interface SearchBarProps {

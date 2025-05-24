@@ -1,4 +1,4 @@
-import './CardGrid.css';
+import './styles/CardGrid.css';
 import { useState } from 'react';
 import CardModal, { Card as CardModalType } from './CardModal'; // Importamos el tipo Card desde CardModal
 

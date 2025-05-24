@@ -4,7 +4,7 @@ import Header from '../components/Header';
 import authService from '../services/authService';
 import api from '../services/apiService';
 import { User } from '../services/types';
-import './Profile.css';
+import './styles/Profile.css';
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();

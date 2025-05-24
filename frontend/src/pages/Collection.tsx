@@ -8,7 +8,7 @@ import { Card } from '../components/CardGrid';
 import SearchBar from '../components/SearchBar';
 import { SearchParams } from '../components/SearchBar';
 import DeckList from '../components/DeckList';
-import './Collection.css';
+import './styles/Collection.css';
 
 const Collection = () => {
   const [collectionCards, setCollectionCards] = useState<Card[]>([]);

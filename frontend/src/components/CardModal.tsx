@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import './CardModal.css';
+import './styles/CardModal.css';
 import { httpClient } from '../services/httpClient';
 import { collectionService } from '../services';
 import authService from '../services/authService';

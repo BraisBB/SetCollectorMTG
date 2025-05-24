@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import authService from '../services/authService';
 import { apiService } from '../services';
-import './Admin.css';
+import './styles/Admin.css';
 // Importar el CSS de Collection para reutilizar sus estilos
-import './Collection.css';
+import './styles/Collection.css';
 
 const Admin: React.FC = () => {
   const navigate = useNavigate();

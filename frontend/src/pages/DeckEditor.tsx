@@ -4,7 +4,7 @@ import Header from '../components/Header';
 import { apiService } from '../services';
 import DeckCardSelector from '../components/DeckCardSelector';
 import { Deck, CardDeck } from '../services/types';
-import './DeckEditor.css';
+import './styles/DeckEditor.css';
 
 // Componente para mostrar símbolos de mana para los colores
 const DeckColorDisplay = ({ deckColor }: { deckColor: string | null }) => {

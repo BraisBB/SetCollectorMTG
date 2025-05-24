@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService, authService } from '../services';
 import { Deck, DeckCreateDto } from '../services/types';
-import './DeckList.css';
+import './styles/DeckList.css';
 
 // Componente para mostrar símbolos de mana para los colores
 const DeckColorDisplay = ({ deckColor }: { deckColor: string | null }) => {

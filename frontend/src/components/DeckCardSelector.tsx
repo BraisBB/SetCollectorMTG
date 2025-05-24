@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardDeck } from '../services/types';
 import SearchBar, { SearchParams } from './SearchBar';
-import './DeckCardSelector.css';
+import './styles/DeckCardSelector.css';
 import { apiService } from '../services';
 import { collectionService } from '../services';
 import { useNavigate } from 'react-router-dom';

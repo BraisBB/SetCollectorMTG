@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 import Header from '../components/Header';
-import './Register.css';
+import './styles/Register.css';
 
 interface RegisterData {
   username: string;
